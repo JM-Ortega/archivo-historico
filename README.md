@@ -5,7 +5,7 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 
 - **Baseline AtoM:** v2.10.2, incluida como submódulo Git sin modificar en `upstream/atom`
   (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen se construye con el `Dockerfile` upstream.
-- **Runtime DEV** (`compose.dev.yaml`): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
+- **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
   (instalación inicial segura), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
 
@@ -23,63 +23,50 @@ Solo DEV. Producción, TLS, backups y CI/CD **no** están definidos todavía.
 **Plataforma:** el flujo de este documento (incluido el E2E de checkout limpio y RESET) se validó en Linux/WSL2.
 Windows nativo todavía no se ha validado. No se ha fijado WSL como requisito obligatorio del proyecto.
 
-## Clonar
-
-El submódulo es imprescindible: sin él no hay nada que construir.
+## Primera vez
 
 ```bash
 git clone --recurse-submodules <URL-DEL-REPO> archivo-historico
 cd archivo-historico
+docker compose up -d --wait
 ```
 
-Si ya clonaste sin `--recurse-submodules`:
+Abre <http://localhost:8080>. Un solo comando: Compose construye las imágenes que faltan (la primera vez tarda varios
+minutos), arranca la infraestructura, ejecuta `bootstrap` y levanta `atom`, `atom_worker` y `nginx`. `up` termina cuando
+todos los servicios están `healthy` y `bootstrap` ha terminado con éxito.
 
-```bash
-git submodule update --init --recursive
-```
-
-`git -C upstream/atom status --porcelain` debe salir vacío: el submódulo no se modifica.
-
-## Arrancar DEV
-
-Todos los comandos desde la raíz del repo. La primera vez hay que construir las imágenes:
-
-```bash
-docker compose -f compose.dev.yaml --profile runtime build
-docker compose -f compose.dev.yaml --profile runtime up -d --wait
-```
-
-En el primer arranque la base de datos está vacía: `bootstrap` ejecuta `tools:install` **una sola vez** y crea el
-administrador. Arranques posteriores no reinstalan nada (una BD ya instalada no se toca). `up` termina cuando todos los
-servicios están `healthy` y `bootstrap` ha terminado con éxito.
-
-- **URL local:** <http://localhost:8080> (solo loopback, `127.0.0.1`)
 - **Administrador DEV:** `admin@example.com` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
   de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**)
+- En el primer arranque la base de datos está vacía: `bootstrap` ejecuta `tools:install` **una sola vez**. Arranques
+  posteriores no reinstalan nada.
+- Solo `nginx` publica un puerto (`127.0.0.1:8080`; otro con `ATOM_WEB_PORT`). La BD, Elasticsearch, Gearmand,
+  Memcached y PHP-FPM no son accesibles desde el host.
 
-Solo `nginx` publica un puerto. PHP-FPM, la BD, Elasticsearch, Gearmand y Memcached no son accesibles desde el host.
+Si clonaste sin `--recurse-submodules`: `git submodule update --init --recursive` (el submódulo es imprescindible).
+`git -C upstream/atom status --porcelain` debe salir vacío: el submódulo no se modifica.
 
-## Comprobar que está READY
+## Día a día
+
+Desde la raíz del repo:
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime ps
-scripts/web-ready.sh --wait
+docker compose up -d --wait     # arrancar / reconciliar (también tras un reinicio de la máquina)
+docker compose stop             # parar conservando contenedores y datos
 ```
+
+| Quiero… | Comando |
+| --- | --- |
+| Ver el estado | `docker compose ps` |
+| Ver logs | `docker compose logs -f` (o `logs -f atom`) |
+| Comprobar que la web es AtoM (READY) | `scripts/web-ready.sh --wait` |
+| Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
+
+`stop` y `down` (sin `-v`) conservan la base de datos y los ficheros subidos; `up -d --wait` siempre vuelve a pasar por
+el gate de `bootstrap`. `up` **no** reconstruye una imagen ya existente: tras cambiar `upstream/atom` o `docker/nginx`
+usa `docker compose up -d --build --wait` (ver [runbook](docs/dev-runbook.md#reconstruir-imágenes)).
 
 `web-ready.sh` exige HTTP 200 **y** el marcador de AtoM (cookie `atom_culture`): un 200 de Nginx sin AtoM detrás
 no cuenta. Con otro puerto: `ATOM_WEB_PORT=<puerto> scripts/web-ready.sh --wait`.
-
-## Parar y volver a arrancar (sin borrar datos)
-
-```bash
-docker compose -f compose.dev.yaml --profile runtime stop      # pausa; conserva contenedores y datos
-docker compose -f compose.dev.yaml --profile runtime up -d --wait   # vuelve a arrancar
-
-docker compose -f compose.dev.yaml --profile runtime down      # elimina contenedores y red; CONSERVA los volúmenes
-```
-
-Tanto `stop` como `down` (sin `-v`) conservan la base de datos y los ficheros subidos. Para volver a arrancar usa
-siempre `up -d --wait`, que vuelve a pasar por el gate de `bootstrap`.
 
 ## Dónde vive el estado
 
@@ -100,7 +87,6 @@ La configuración de AtoM se regenera en cada arranque y el código y los estát
   irreversible. Ver [RESET DEV](docs/dev-runbook.md#reset-dev-destructivo).
 - No uses `docker system prune` ni `docker volume prune`: pueden llevarse volúmenes de otros proyectos.
 - No modifiques `upstream/atom` (es el baseline exacto de AtoM).
-- No ejecutes `docker compose up` sin `--profile runtime` esperando la web: sin el perfil solo sube la infraestructura.
 - No publiques puertos de servicios internos ni cambies el bind de `nginx` a `0.0.0.0` en DEV.
 
 ## Pruebas

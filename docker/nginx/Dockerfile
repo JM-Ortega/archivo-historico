@@ -4,7 +4,7 @@
 # images/js/css de los plugins), copiado de la MISMA imagen `atom` contra la que corre PHP-FPM:
 # así los assets con hash de `dist` coinciden siempre con los que referencia la aplicación y no
 # hay copia manual ni bind del checkout. Es contenido derivado y reconstruible, no estado.
-# La configuración (nginx.conf) no va en la imagen: se monta RO desde el repo (ver compose.dev.yaml).
+# La configuración (nginx.conf) no va en la imagen: se monta RO desde el repo (ver compose.yaml).
 # No incluye código PHP de AtoM: `index.php` solo lo necesita PHP-FPM (en el contenedor `atom`).
 #
 # `atom` llega como contexto adicional (`additional_contexts: atom: service:atom` en Compose).
