@@ -90,6 +90,13 @@ mini_schema() {
 }
 
 counters() { admin -e "SHOW GLOBAL STATUS WHERE Variable_name IN ('Com_insert','Com_update','Com_delete','Com_replace','Com_create_table','Com_drop_table','Com_alter_table','Com_truncate','Com_create_db','Com_drop_db')"; }
+# Huella de contenido de TODAS las tablas base de <db> (nombre + CHECKSUM TABLE, solo lectura, determinista).
+# Detecta cualquier cambio de datos aunque el nº de tablas no cambie; BD sin tablas → "sin tablas".
+db_fingerprint() { # <db>
+  local tables
+  tables="$(admin -e "SET SESSION group_concat_max_len = 1048576; SELECT GROUP_CONCAT(CONCAT('\`', table_schema, '\`.\`', table_name, '\`') ORDER BY table_name) FROM information_schema.tables WHERE table_schema='$1' AND table_type='BASE TABLE'")"
+  if [[ -z "$tables" || "$tables" == NULL ]]; then echo "sin tablas"; else admin -e "CHECKSUM TABLE $tables"; fi
+}
 db_snapshot() { # <db> <tabla a checksumear>
   admin -e "SELECT table_name, table_rows, create_time, update_time FROM information_schema.tables WHERE table_schema='$1' ORDER BY 1; CHECKSUM TABLE \`$1\`.\`$2\`"
 }
@@ -107,6 +114,10 @@ mini_schema "${DB[late]}" 197 admin
 mini_schema "${DB[noadmin]}" 197 nonadmin
 mini_schema "${DB[notable]}" 197
 mini_schema "${DB[chk]}" 197 admin
+
+# La base/índice `atom` pueden estar vacíos o ya instalados (runtime DEV): solo se exige que esta prueba no los altere.
+ATOM_FINGERPRINT_BEFORE="$(db_fingerprint atom)"
+ATOM_INDICES_BEFORE="$(es_index_count atom)"
 
 echo "== A. FRESH → install → post-probe =="
 bootstrap inst
@@ -274,8 +285,8 @@ leftover_dbs=$(admin -e "SHOW DATABASES LIKE 'pt${RUN}%'" | wc -l)
 leftover_users=$(admin -e "SELECT user FROM mysql.user WHERE user IN ('$USR','$LATE_USR')" | wc -l)
 leftover_idx=$("${COMPOSE[@]}" exec -T elasticsearch curl -s "http://127.0.0.1:9200/_cat/indices/pt${RUN}*?h=index" | wc -l)
 expect "BDs / usuarios / índices ES de esta ejecución tras cleanup" "0 0 0" "$leftover_dbs $leftover_users $leftover_idx"
-expect "base atom intacta (sin tablas)" "0" "$(table_count atom)"
-expect "índices ES 'atom_*' no creados" "0" "$(es_index_count atom)"
+expect "base atom intacta (huella de contenido de todas las tablas)" "$ATOM_FINGERPRINT_BEFORE" "$(db_fingerprint atom)"
+expect "índices ES 'atom_*' sin cambios" "$ATOM_INDICES_BEFORE" "$(es_index_count atom)"
 
 echo
 if ((fails)); then echo "$fails fallo(s)"; exit 1; fi

@@ -61,6 +61,10 @@ mini_schema() { # <db> <version|''>  Estructura mínima de AtoM (subconjunto del
   fi
 }
 
+# La base `atom` puede estar vacía o ya instalada (runtime DEV): solo se exige que esta prueba no la altere.
+atom_tables() { admin -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='atom'"; }
+ATOM_TABLES_BEFORE="$(atom_tables)"
+
 echo "== preparación =="
 "${COMPOSE[@]}" up -d --wait percona >/dev/null
 # El schema esperado del probe debe coincidir con la última migración de upstream.
@@ -117,7 +121,7 @@ cleanup
 leftover_dbs=$(admin -e "SHOW DATABASES LIKE 'pt${RUN}%'" | wc -l)
 leftover_users=$(admin -e "SELECT user FROM mysql.user WHERE user = '$RO_USER'" | wc -l)
 expect "recursos de esta ejecución tras cleanup (BDs usuarios)" "0 0" "$leftover_dbs $leftover_users"
-expect "base atom intacta (sin tablas)" "0" "$(admin -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='atom'")"
+expect "base atom intacta (mismo nº de tablas)" "$ATOM_TABLES_BEFORE" "$(atom_tables)"
 
 echo
 if ((fails)); then echo "$fails fallo(s)"; exit 1; fi
