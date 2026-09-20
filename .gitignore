@@ -1,0 +1,16 @@
+# Entorno local y secretos. Compose carga `.env` automáticamente.
+.env
+.env.*
+!.env.example
+*.key
+
+# Datos reales de migración: workspace local, NUNCA en Git (ver migration/README.md).
+# La protección es por boundary, no por extensión: no se ignora *.pdf, *.docx ni *.xlsx globalmente.
+/migration/local/
+
+# Temporales locales y residuos de SO
+/tmp/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
