@@ -21,7 +21,7 @@
 #
 # DB_COMPATIBLE solo significa "AtoM con el schema esperado": un tools:install interrumpido puede dejar
 # esa BD incompleta, por eso installation-check.php (invariante: admin en acl_user_group, grupo 100)
-# es un requisito aparte de todo éxito. Una BD incompleta no se repara aquí (requiere reset DEV).
+# es un requisito aparte de todo éxito. Una BD incompleta no se repara ni se reinstala aquí (STOP): si es desechable, RESET DEV; si hay datos que conservar, recuperación explícita.
 #
 # Exit: 0 éxito; 20/21/30/64/70 el del probe (STOP); 40 tools:install falló;
 #       41 el probe posterior no dio DB_COMPATIBLE; 42 dependencia (Elasticsearch/Memcached) no disponible;
@@ -52,7 +52,7 @@ require_complete_install() {
   run_check
   case "$CHECK_RC" in
     0) log "instalación completa verificada (administrador en el grupo 100)" ;;
-    1) log "instalación INCOMPLETA: la BD es compatible pero no tiene administrador; requiere reset DEV (no se reinstala)"; exit 43 ;;
+    1) log "instalación INCOMPLETA: la BD es compatible pero no tiene administrador. STOP: no se reinstala ni se repara automáticamente. Si esta instancia DEV es desechable: RESET DEV. Si hay datos que conservar: NO hacer RESET; investigar y recuperar explícitamente"; exit 43 ;;
     *) log "installation-check falló (exit $CHECK_RC)"; exit "$CHECK_RC" ;;
   esac
 }
