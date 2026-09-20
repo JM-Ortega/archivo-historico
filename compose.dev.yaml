@@ -98,6 +98,27 @@ services:
       timeout: 5s
       retries: 10
 
+  # Herramienta puntual (no arranca con `up`): detector de estado de la BD.
+  #
+  #   docker compose -f compose.dev.yaml run --rm db-probe; echo $?
+  #
+  # Reutiliza la imagen directa de AtoM (solo por su PHP/PDO) y monta RO únicamente el script.
+  db-probe:
+    profiles: [tools]
+    image: archivo-historico/atom:2.10.2
+    build:
+      context: upstream/atom
+    entrypoint: ["php", "/probe/db-probe.php"]
+    environment:
+      ATOM_MYSQL_DSN: ${ATOM_MYSQL_DSN:-mysql:host=percona;port=3306;dbname=${MYSQL_DATABASE:-atom};charset=utf8mb4}
+      ATOM_MYSQL_USERNAME: ${MYSQL_USER:-atom}
+      ATOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atom_12345}
+    volumes:
+      - ./scripts/db-probe.php:/probe/db-probe.php:ro
+    depends_on:
+      percona:
+        condition: service_healthy
+
 volumes:
   percona_data:
   elasticsearch_data:
