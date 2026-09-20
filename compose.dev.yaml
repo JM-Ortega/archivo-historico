@@ -1,5 +1,5 @@
 # Compose DEV: servicios de soporte (percona, elasticsearch, memcached, gearmand) y, con `--profile runtime`,
-# bootstrap + atom (PHP-FPM) + nginx.
+# bootstrap + atom (PHP-FPM) + atom_worker (jobs:worker) + nginx.
 #
 #   docker compose -f compose.dev.yaml up -d --wait
 #
@@ -16,7 +16,8 @@ x-atom-connection-env: &atom-connection-env
   ATOM_MYSQL_USERNAME: ${MYSQL_USER:-atom}
   ATOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atom_12345}
   ATOM_ELASTICSEARCH_HOST: ${ATOM_ELASTICSEARCH_HOST:-elasticsearch:9200}
-  # QubitCache y sesiones usan Memcached; Gearman solo lo exige el bootstrap upstream (aún sin worker).
+  # QubitCache y sesiones usan Memcached. Gearman: el entrypoint upstream lo exige siempre y de él sale
+  # apps/qubit/config/gearman.yml (servidor que usan `atom_worker` y el encolado de jobs desde `atom`).
   ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
   ATOM_GEARMAND_HOST: gearmand:4730
 
@@ -211,6 +212,51 @@ services:
       gearmand:
         condition: service_healthy
 
+  # Worker de jobs de AtoM (Gearman): `php symfony jobs:worker`. Mismo build/imagen que `atom`.
+  #
+  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait atom_worker
+  #
+  # Gate: igual que `atom`, depende de `bootstrap` con service_completed_successfully; nunca ejecuta
+  # jobs:worker contra una BD sin instalar/incompatible. No duplica el probe ni el installation-check.
+  #
+  # `command: worker` es el atajo del entrypoint upstream (regenera la configuración runtime desde el
+  # entorno, espera 10 s y hace exec de `php symfony jobs:worker`). Persistencia: solo uploads/ y downloads/
+  # (RW, mismos volúmenes que `atom`, porque los jobs de exportación/importación los escriben); el código
+  # viene de la imagen. Sin puerto ni bind del checkout.
+  atom_worker:
+    profiles: [runtime]
+    image: archivo-historico/atom:2.10.2
+    build:
+      context: upstream/atom
+    command: ["worker"]
+    # jobs:worker sale con error si pierde la BD (su ping SELECT 1 cada ~30 s); Gearmand, en cambio, se reconecta solo.
+    # on-failure:5 (como upstream) recupera fallos TRANSITORIOS reintentando contra la MISMA BD (cada arranque espera
+    # 10 s); agotado, queda unhealthy/exited. Un reinicio automático NO ejecuta el bootstrap ni sustituye su gate: ante
+    # un restore/reemplazo/reset de la BD el worker debe recrearse con `up` (que vuelve a pasar por el bootstrap).
+    restart: on-failure:5
+    environment:
+      <<: *atom-connection-env
+    volumes:
+      - uploads_data:/atom/src/uploads
+      - downloads_data:/atom/src/downloads
+      # Solo el script del healthcheck, RO.
+      - ./scripts/worker-health.sh:/project/scripts/worker-health.sh:ro
+    healthcheck:
+      # Operativo = proceso jobs:worker + conexión suya registrada en Gearmand con funciones (ver el script).
+      test: ["CMD", "bash", "/project/scripts/worker-health.sh"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      # El entrypoint espera 10 s antes de lanzar jobs:worker.
+      start_period: 30s
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      percona:
+        condition: service_healthy
+      gearmand:
+        condition: service_healthy
+
   # Web DEV: Nginx (imagen propia mínima) delante de PHP-FPM. Único servicio con puerto publicado.
   #
   #   docker compose -f compose.dev.yaml --profile runtime up -d --wait nginx
@@ -250,6 +296,6 @@ services:
 volumes:
   percona_data:
   elasticsearch_data:
-  # atom (RW) y nginx (RO); más adelante también atom_worker (RW).
+  # atom y atom_worker (RW); nginx (RO).
   uploads_data:
   downloads_data:
