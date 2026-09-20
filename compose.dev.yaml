@@ -8,6 +8,17 @@
 # Nombre fijo para que los recursos (red, volúmenes) no dependan del nombre del directorio.
 name: archivo-historico
 
+# Conexión de AtoM a sus dependencias. La comparten `bootstrap` y `atom`: el bootstrap prepara
+# exactamente la BD/índice/caché contra los que después opera el runtime.
+x-atom-connection-env: &atom-connection-env
+  ATOM_MYSQL_DSN: ${ATOM_MYSQL_DSN:-mysql:host=percona;port=3306;dbname=${MYSQL_DATABASE:-atom};charset=utf8mb4}
+  ATOM_MYSQL_USERNAME: ${MYSQL_USER:-atom}
+  ATOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atom_12345}
+  ATOM_ELASTICSEARCH_HOST: ${ATOM_ELASTICSEARCH_HOST:-elasticsearch:9200}
+  # QubitCache y sesiones usan Memcached; Gearman solo lo exige el bootstrap upstream (aún sin worker).
+  ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
+  ATOM_GEARMAND_HOST: gearmand:4730
+
 services:
   percona:
     image: percona/percona-server:8.4.11-11.1
@@ -126,19 +137,14 @@ services:
   # Conserva el entrypoint upstream (genera la configuración runtime desde el entorno) y monta RO
   # solo los scripts del proyecto. No levanta web ni worker.
   bootstrap:
-    profiles: [tools]
+    # `runtime` solo para que `atom` pueda depender de él (Compose exige que la dependencia esté en el perfil activo).
+    profiles: [tools, runtime]
     image: archivo-historico/atom:2.10.2
     build:
       context: upstream/atom
     command: ["bash", "/project/scripts/bootstrap.sh"]
     environment:
-      ATOM_MYSQL_DSN: ${ATOM_MYSQL_DSN:-mysql:host=percona;port=3306;dbname=${MYSQL_DATABASE:-atom};charset=utf8mb4}
-      ATOM_MYSQL_USERNAME: ${MYSQL_USER:-atom}
-      ATOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atom_12345}
-      ATOM_ELASTICSEARCH_HOST: ${ATOM_ELASTICSEARCH_HOST:-elasticsearch:9200}
-      # tools:install usa Memcached (QubitCache); Gearman solo lo exige el bootstrap upstream y no se usa.
-      ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
-      ATOM_GEARMAND_HOST: gearmand:4730
+      <<: *atom-connection-env
       ATOM_SEARCH_INDEX: ${ATOM_SEARCH_INDEX:-atom}
       # Credenciales de admin locales de DEV (no sensibles).
       ATOM_ADMIN_EMAIL: ${ATOM_ADMIN_EMAIL:-admin@example.com}
@@ -161,6 +167,52 @@ services:
       memcached:
         condition: service_healthy
 
+  # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; Nginx llegará en otra WU).
+  # No arranca con `up` de la infraestructura: requiere el perfil `runtime`.
+  #
+  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait atom
+  #
+  # Gate: depende de `bootstrap` con service_completed_successfully, así que `atom` solo puede arrancar
+  # después de un bootstrap exitoso (BD DB_COMPATIBLE + instalación completa; sobre una BD FRESH la instala,
+  # en cualquier otro estado hace STOP). El bootstrap es idempotente: una BD DB_COMPATIBLE + INSTALL_COMPLETE
+  # nunca se reinstala.
+  #
+  # Conserva el CMD y el entrypoint upstream (regeneran la configuración runtime desde el entorno en cada
+  # arranque); el código viene de la imagen, sin bind del checkout. Solo uploads/ y downloads/ se persisten.
+  atom:
+    profiles: [runtime]
+    image: archivo-historico/atom:2.10.2
+    build:
+      context: upstream/atom
+    environment:
+      <<: *atom-connection-env
+    volumes:
+      # Estado autoritativo: objetos digitales (no reconstruibles).
+      - uploads_data:/atom/src/uploads
+      # Política conservadora: mezcla de reconstruible (informes, EAD/XML) y no reconstruible; se persiste.
+      - downloads_data:/atom/src/downloads
+    healthcheck:
+      # Vivacidad de PHP-FPM: el socket de la pool acepta conexiones (sin ejecutar AtoM; HTTP llegará con Nginx).
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      percona:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+      gearmand:
+        condition: service_healthy
+
 volumes:
   percona_data:
   elasticsearch_data:
+  # Compartidos más adelante por atom_worker (RW) y Nginx (RO).
+  uploads_data:
+  downloads_data:
