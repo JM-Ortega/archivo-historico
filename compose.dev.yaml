@@ -119,6 +119,48 @@ services:
       percona:
         condition: service_healthy
 
+  # Herramienta puntual (no arranca con `up`): bootstrap de AtoM (probe → tools:install si la BD está FRESH → installation-check).
+  #
+  #   docker compose -f compose.dev.yaml run --rm bootstrap; echo $?
+  #
+  # Conserva el entrypoint upstream (genera la configuración runtime desde el entorno) y monta RO
+  # solo los scripts del proyecto. No levanta web ni worker.
+  bootstrap:
+    profiles: [tools]
+    image: archivo-historico/atom:2.10.2
+    build:
+      context: upstream/atom
+    command: ["bash", "/project/scripts/bootstrap.sh"]
+    environment:
+      ATOM_MYSQL_DSN: ${ATOM_MYSQL_DSN:-mysql:host=percona;port=3306;dbname=${MYSQL_DATABASE:-atom};charset=utf8mb4}
+      ATOM_MYSQL_USERNAME: ${MYSQL_USER:-atom}
+      ATOM_MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atom_12345}
+      ATOM_ELASTICSEARCH_HOST: ${ATOM_ELASTICSEARCH_HOST:-elasticsearch:9200}
+      # tools:install usa Memcached (QubitCache); Gearman solo lo exige el bootstrap upstream y no se usa.
+      ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
+      ATOM_GEARMAND_HOST: gearmand:4730
+      ATOM_SEARCH_INDEX: ${ATOM_SEARCH_INDEX:-atom}
+      # Credenciales de admin locales de DEV (no sensibles).
+      ATOM_ADMIN_EMAIL: ${ATOM_ADMIN_EMAIL:-admin@example.com}
+      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME:-admin}
+      ATOM_ADMIN_PASSWORD: ${ATOM_ADMIN_PASSWORD:-admin_dev_12345}
+      ATOM_SITE_TITLE: ${ATOM_SITE_TITLE:-Archivo Histórico (DEV)}
+      # El límite por defecto de upstream (512M) se agota en tools:install (carga de fixtures/i18n).
+      ATOM_PHP_MEMORY_LIMIT: ${ATOM_PHP_MEMORY_LIMIT:-2G}
+      BOOTSTRAP_WAIT_ATTEMPTS: ${BOOTSTRAP_WAIT_ATTEMPTS:-30}
+      BOOTSTRAP_WAIT_INTERVAL: ${BOOTSTRAP_WAIT_INTERVAL:-2}
+    volumes:
+      - ./scripts/bootstrap.sh:/project/scripts/bootstrap.sh:ro
+      - ./scripts/db-probe.php:/project/scripts/db-probe.php:ro
+      - ./scripts/installation-check.php:/project/scripts/installation-check.php:ro
+    depends_on:
+      percona:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+
 volumes:
   percona_data:
   elasticsearch_data:
