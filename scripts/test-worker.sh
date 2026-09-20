@@ -14,7 +14,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose -f compose.dev.yaml --profile runtime)
+COMPOSE=(docker compose)
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 MARK="worker-test-$RUN"
 UP=/atom/src/uploads
@@ -58,10 +58,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== A. Infra-only: sin perfil no hay atom_worker =="
-SERVICES="$(docker compose -f compose.dev.yaml config --services | sort | tr '\n' ' ' | sed 's/ $//')"
-expect "sin perfil solo la infraestructura" "elasticsearch gearmand memcached percona" "$SERVICES"
-expect "atom_worker solo en el perfil runtime" "1" "$("${COMPOSE[@]}" config --services | grep -c '^atom_worker$')"
+echo "== A. atom_worker forma parte del runtime por defecto =="
+expect "sin profiles: atom_worker está en el runtime por defecto" "1" "$("${COMPOSE[@]}" config --services | grep -c '^atom_worker$')"
+expect "atom_worker no requiere ningún profile" "0" "$("${COMPOSE[@]}" config --format json | grep -c '"profiles"' || true)"
 
 echo "== Runtime =="
 w_up
@@ -71,7 +70,7 @@ NGINX_ID="$(svc_id nginx)"
 expect "atom_worker en ejecución" "running" "$(docker inspect -f '{{.State.Status}}' "$WID")"
 expect "healthcheck del worker" "healthy" "$(docker inspect -f '{{.State.Health.Status}}' "$WID")"
 
-echo "== B. Gate de bootstrap (contrato estructural en compose.dev.yaml; el gate negativo de G lo demuestra) =="
+echo "== B. Gate de bootstrap (contrato estructural en compose.yaml; el gate negativo de G lo demuestra) =="
 expect "el bootstrap terminó con éxito" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id bootstrap)")"
 expect "en el worker solo está el script del healthcheck" "worker-health.sh" "$(in_svc atom_worker ls /project/scripts)"
 

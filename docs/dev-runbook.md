@@ -1,61 +1,87 @@
 # Runbook DEV
 
-Operación y diagnóstico del runtime DEV (`compose.dev.yaml`). Entrada rápida: [README](../README.md).
+Operación y diagnóstico del runtime DEV (`compose.yaml`, entorno local de desarrollo; no define producción). Entrada rápida: [README](../README.md).
 Alcance: **solo DEV**. Producción, TLS, backup/restore, monitorización y CI/CD no están definidos aquí.
 
-Todos los comandos se ejecutan desde la raíz del repo. Atajo usado abajo:
+Todos los comandos se ejecutan desde la raíz del repo. Compose detecta `compose.yaml` solo: no hacen falta `-f` ni
+`--profile` para el trabajo normal.
 
-```bash
-docker compose -f compose.dev.yaml --profile runtime <comando>
-```
-
-El proyecto Compose es `archivo-historico` (fijado por `name:` en el compose): contenedores `archivo-historico-<servicio>-1`,
-red `archivo-historico_default` y volúmenes `archivo-historico_<volumen>`.
+El proyecto Compose es `archivo-historico` (fijado por `name:` en el compose para la instancia DEV canónica): contenedores
+`archivo-historico-<servicio>-1`, red `archivo-historico_default` y volúmenes `archivo-historico_<volumen>`.
 
 ## Arranque
 
-**Runtime completo** (bootstrap + atom + atom_worker + nginx sobre la infraestructura):
+**Runtime completo** (el arranque por defecto):
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime build      # primera vez o tras cambiar upstream/atom o docker/nginx
-docker compose -f compose.dev.yaml --profile runtime up -d --wait
+docker compose up -d --wait
 scripts/web-ready.sh --wait
 ```
 
+Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `atom`, `atom_worker`, `nginx`.
 Orden real: infraestructura sana → `bootstrap` (termina con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap` falla,
-`up` falla y `atom`, `atom_worker` y `nginx` no arrancan (es el gate).
+`up` falla y `atom`, `atom_worker` y `nginx` no arrancan (es el gate). En un checkout sin imágenes propias, ese mismo
+`up -d --wait` las construye (no hace falta `docker compose build` antes).
 
-**Solo infraestructura** (Percona, Elasticsearch, Memcached, Gearmand; sin AtoM ni web):
+**Profiles:** ningún servicio del runtime lleva profile. `tools` es opt-in y solo contiene `db-probe`
+(`docker compose --profile tools config --services` lo añade a la lista). `docker compose run --rm db-probe` activa
+el profile por sí solo al nombrar el servicio.
+
+**Solo infraestructura** (diagnóstico; sin bootstrap, AtoM ni web): seleccionar servicios explícitamente basta.
 
 ```bash
-docker compose -f compose.dev.yaml up -d --wait
+docker compose up -d --wait percona elasticsearch memcached gearmand
 ```
 
-Para pasar de infra-only a runtime basta ejecutar el `up` del runtime completo.
+Para volver al runtime completo, `docker compose up -d --wait`.
+
+## Reconstruir imágenes
+
+`up` construye las imágenes que **no existen**, pero **no reconstruye** una imagen existente aunque su origen haya
+cambiado. Usa `--build` solo cuando cambió algo que entra en la imagen:
+
+```bash
+docker compose up -d --build --wait
+```
+
+- `upstream/atom` (p. ej. otro commit del submódulo): imagen `atom` (compartida por `bootstrap`, `atom` y `atom_worker`).
+- `docker/nginx/Dockerfile` o los estáticos de la imagen `atom` (la imagen `nginx` copia de ella su `dist`): imagen `nginx`.
+
+**No** hace falta `--build` para el uso cotidiano ni para cambios en ficheros montados por bind: el contenedor ve
+siempre el fichero actual del host, sin rebuild.
+
+- `docker/nginx/nginx.conf`: Nginx solo lee su configuración al arrancar, así que hay que hacer que la relea:
+  `docker compose restart nginx`.
+- `scripts/*` montados (`bootstrap.sh`, `db-probe.php`, `installation-check.php`, `worker-health.sh`): tampoco requieren
+  rebuild. Para ejercer un cambio, vuelve a ejecutar el servicio o comando que usa ese script (p. ej.
+  `docker compose run --rm bootstrap` o `run --rm db-probe`; `worker-health.sh` lo ejecuta el healthcheck de
+  `atom_worker` de forma periódica).
+
+Aviso: los tags de imagen son fijos (ver [Segunda instancia](#segunda-instancia-aislada-y-prueba-e2e)).
 
 ## Diagnóstico
 
 ```bash
 # estado y salud de todos los servicios (bootstrap aparece como Exited (0) cuando fue bien)
-docker compose -f compose.dev.yaml --profile runtime ps -a
+docker compose ps -a
 
 # estado de la BD (db-probe): DB_COMPATIBLE | DB_FRESH | DB_UNKNOWN | DB_SCHEMA_MISMATCH | DB_UNREACHABLE
-docker compose -f compose.dev.yaml run --rm db-probe; echo $?
+docker compose run --rm db-probe; echo $?
 
 # instalación completa: INSTALL_COMPLETE | INSTALL_INCOMPLETE
-docker compose -f compose.dev.yaml --profile runtime run --rm --no-deps --entrypoint php bootstrap /project/scripts/installation-check.php
+docker compose run --rm --no-deps --entrypoint php bootstrap /project/scripts/installation-check.php
 
 # la web responde y es AtoM (no un 200 estático)
 scripts/web-ready.sh
 
 # el worker está operativo (proceso jobs:worker + registro en Gearmand)
-docker compose -f compose.dev.yaml --profile runtime exec -T atom_worker bash /project/scripts/worker-health.sh; echo $?
+docker compose exec -T atom_worker bash /project/scripts/worker-health.sh; echo $?
 
 # logs
-docker compose -f compose.dev.yaml --profile runtime logs bootstrap
-docker compose -f compose.dev.yaml --profile runtime logs --tail=100 atom
-docker compose -f compose.dev.yaml --profile runtime logs --tail=100 atom_worker
-docker compose -f compose.dev.yaml --profile runtime logs --tail=100 nginx
+docker compose logs bootstrap
+docker compose logs --tail=100 atom
+docker compose logs --tail=100 atom_worker
+docker compose logs --tail=100 nginx
 ```
 
 Qué mirar en `logs bootstrap`: la línea `bootstrap: probe: <ESTADO> (exit N)` es el estado inicial de la BD; en una
@@ -80,9 +106,9 @@ Memcached no disponibles (solo al instalar); 64/70 configuración inválida o er
 ## Parar y rearrancar sin perder datos
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime stop            # conserva contenedores y volúmenes
-docker compose -f compose.dev.yaml --profile runtime down            # elimina contenedores y red; conserva volúmenes
-docker compose -f compose.dev.yaml --profile runtime up -d --wait    # rearranque (pasa por el bootstrap)
+docker compose stop            # conserva contenedores y volúmenes
+docker compose down            # elimina contenedores y red; conserva volúmenes
+docker compose up -d --wait    # rearranque (pasa por el bootstrap)
 ```
 
 Ninguno de los dos borra datos. Lo que borra datos es `-v` (ver RESET). Tras rearrancar, `bootstrap` ve `DB_COMPATIBLE` +
@@ -94,14 +120,14 @@ Ninguno de los dos borra datos. Lo que borra datos es `-v` (ver RESET). Tras rea
 > proyecto Docker seleccionado**. No hay vuelta atrás. No es un comando cotidiano.
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime down -v
+docker compose down -v
 ```
 
 Antes de ejecutarlo, comprueba **qué proyecto** vas a borrar (sin `-p`/`COMPOSE_PROJECT_NAME` es `archivo-historico`, la
 instancia DEV normal):
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime config --format json | grep -m1 '"name"'
+docker compose config --format json | grep -m1 '"name"'
 ```
 
 Elimina exactamente: contenedores del proyecto, su red y `percona_data`, `elasticsearch_data`, `uploads_data`,
@@ -116,17 +142,18 @@ Nunca uses `docker system prune` ni `docker volume prune` como sustituto.
 
 ## Segunda instancia aislada y prueba E2E
 
-`name: archivo-historico` está fijo en el compose, así que **cualquier otro checkout comparte proyecto Docker con la
-DEV** salvo que lo sobrescribas. La precedencia real (verificada) es `-p` > `COMPOSE_PROJECT_NAME` > `name:`. Para una
+`name: archivo-historico` está fijo en el compose (nombres DEV estables y predecibles para la instancia canónica), así que
+**cualquier otro checkout comparte proyecto Docker con la DEV** salvo que lo sobrescribas con `-p`; `-p` se documenta solo
+para instancias paralelas, no para el uso normal. La precedencia real (verificada) es `-p` > `COMPOSE_PROJECT_NAME` > `name:`. Para una
 instancia paralela hacen falta, como mínimo, un proyecto y un puerto distintos:
 
 ```bash
 export ATOM_WEB_PORT=18080
-docker compose -f compose.dev.yaml -p archivo-historico-otra --profile runtime up -d --wait
+docker compose -p archivo-historico-otra up -d --wait
 ```
 
 Aviso: los tags de imagen (`archivo-historico/atom:2.10.2`, `archivo-historico/nginx:2.10.2`) son fijos y no dependen del
-proyecto. Un `build` desde otro checkout **reasigna esos tags** a las imágenes nuevas (los contenedores DEV en marcha
+proyecto. Un build desde otro checkout (`up` en un checkout sin imágenes, o `--build`) con `-p` distinto **reasigna esos tags** a las imágenes nuevas (los contenedores DEV en marcha
 siguen con la imagen anterior, pero un futuro `up`/recreación usará la nueva). `scripts/test-fresh-e2e.sh` lo evita
 renombrando las imágenes con un override propio.
 
@@ -134,8 +161,9 @@ renombrando las imágenes con un override propio.
 scripts/test-fresh-e2e.sh          # tarda varios minutos; E2E_KEEP=1 conserva checkout y proyecto para depurar
 ```
 
-Hace un `git clone` del commit actual + `git submodule update --init --recursive` en un directorio temporal, arranca un
-proyecto `archivo-historico-e2e-<id>` en un puerto loopback libre, verifica el fresh install, hace el RESET y verifica un
+Hace un `git clone` del commit actual + `git submodule update --init --recursive` en un directorio temporal, arranca con
+un único `docker compose up -d --wait` (sin `build` previo) un proyecto `archivo-historico-e2e-<id>` en un puerto loopback
+libre —con `-f compose.yaml -f <override de imágenes> -p <proyecto>` para no tocar los tags de la DEV—, verifica el fresh install, hace el RESET y verifica un
 segundo fresh install. Comprueba antes del RESET que ningún recurso E2E coincide con los de la DEV y al final que la DEV
 queda idéntica. Limpia solo lo suyo. Requiere red (submódulo) y unos minutos.
 
@@ -144,11 +172,11 @@ queda idéntica. Limpia solo lo suyo. Requiere red (submódulo) y unos minutos.
 `docker/nginx/nginx.conf` se monta **solo lectura** en el contenedor: editarlo en el host no se aplica solo. Tras editarlo:
 
 ```bash
-docker compose -f compose.dev.yaml --profile runtime restart nginx
+docker compose restart nginx
 ```
 
 Los estáticos (`dist`, `images`, `css`, `js`) van dentro de la imagen `nginx`; cambiar el Dockerfile o `upstream/atom`
-requiere `build` y recrear `nginx`. Un 200 de Nginx no implica que AtoM funcione: usa `scripts/web-ready.sh`.
+requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). Un 200 de Nginx no implica que AtoM funcione: usa `scripts/web-ready.sh`.
 
 ## Worker (`atom_worker`)
 

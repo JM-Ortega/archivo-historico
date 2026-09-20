@@ -11,7 +11,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose -f compose.dev.yaml)
+COMPOSE=(docker compose)
 ROOT_PW="${MYSQL_ROOT_PASSWORD:-my-secret-pw}"
 # Sin "_" en los nombres: en GRANT, "_" de un nombre de base es un comodín.
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
@@ -38,7 +38,7 @@ trap cleanup EXIT
 probe() { # <clave de DB> [ENV=valor ...] -> imprime "estado exit"
   local db=$1; shift
   local out rc=0
-  out=$("${COMPOSE[@]}" --profile tools run --rm --no-deps -T \
+  out=$("${COMPOSE[@]}" run --rm --no-deps -T \
     -e ATOM_MYSQL_DSN="mysql:host=percona;port=3306;dbname=${DB[$db]};charset=utf8mb4" \
     -e ATOM_MYSQL_USERNAME="$RO_USER" -e ATOM_MYSQL_PASSWORD="$RO_PW" \
     "${@/#/-e}" db-probe 2>/dev/null) || rc=$?

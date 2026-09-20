@@ -10,7 +10,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose -f compose.dev.yaml --profile runtime)
+COMPOSE=(docker compose)
 PORT="${ATOM_WEB_PORT:-8080}"
 URL="${ATOM_WEB_URL:-http://localhost:$PORT}"
 ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}"
@@ -50,9 +50,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== I. La infraestructura sigue arrancando sin el runtime =="
-expect "sin perfil no hay atom, bootstrap ni nginx" "elasticsearch gearmand memcached percona" \
-  "$(docker compose -f compose.dev.yaml config --services | sort | tr '\n' ' ' | sed 's/ $//')"
+echo "== I. La web forma parte del arranque por defecto =="
+expect "sin profiles: nginx y su cadena (bootstrap, atom) están en el runtime por defecto" "atom bootstrap nginx" \
+  "$(docker compose config --services | grep -xE 'atom|bootstrap|nginx' | sort | tr '\n' ' ' | sed 's/ $//')"
 
 echo "== A. Runtime web =="
 "${COMPOSE[@]}" up -d --wait nginx >/dev/null 2>&1

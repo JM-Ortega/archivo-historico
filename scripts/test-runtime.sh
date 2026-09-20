@@ -12,7 +12,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose -f compose.dev.yaml --profile runtime)
+COMPOSE=(docker compose)
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 MARK="integration-test-$RUN"
 UP=/atom/src/uploads
@@ -48,9 +48,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== H. La infraestructura arranca sin el runtime =="
-expect "sin perfil no hay atom ni bootstrap" "elasticsearch gearmand memcached percona" \
-  "$(docker compose -f compose.dev.yaml config --services | sort | tr '\n' ' ' | sed 's/ $//')"
+echo "== H. El runtime completo forma parte del arranque por defecto =="
+expect "sin profiles: runtime completo (bootstrap, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona" \
+  "$(docker compose config --services | sort | tr '\n' ' ' | sed 's/ $//')"
+expect "el runtime no depende de ningún profile" "0" "$(docker compose config --format json | grep -c '"profiles"' || true)"
+expect "infra-only sigue siendo posible: seleccionar servicios no arrastra el runtime (dry-run)" \
+  "elasticsearch gearmand memcached percona" \
+  "$(docker compose up -d --dry-run percona elasticsearch memcached gearmand 2>&1 | grep -oE 'archivo-historico-[a-z_]+-1' | sed -E 's/^archivo-historico-//;s/-1$//' | sort -u | tr '\n' ' ' | sed 's/ $//')"
 
 echo "== Runtime tras el gate =="
 atom_up

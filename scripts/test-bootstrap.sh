@@ -10,7 +10,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose -f compose.dev.yaml)
+COMPOSE=(docker compose)
 ROOT_PW="${MYSQL_ROOT_PASSWORD:-my-secret-pw}"
 # Sin "_" en los nombres: en GRANT, "_" de un nombre de base es un comodín (y ES pide minúsculas).
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
@@ -63,7 +63,7 @@ bootstrap() {
     opts+=("$1"); shift
   done
   RC=0
-  OUT=$("${COMPOSE[@]}" --profile tools run --rm --no-deps -T \
+  OUT=$("${COMPOSE[@]}" run --rm --no-deps -T \
     -e ATOM_MYSQL_DSN="mysql:host=percona;port=3306;dbname=${DB[$k]};charset=utf8mb4" \
     -e ATOM_MYSQL_USERNAME="$USR" -e ATOM_MYSQL_PASSWORD="$PW" -e ATOM_SEARCH_INDEX="${DB[$k]}" \
     -e BOOTSTRAP_WAIT_ATTEMPTS=3 -e BOOTSTRAP_WAIT_INTERVAL=1 \
@@ -243,7 +243,7 @@ done
 echo "-- installation-check directo (invariante y consulta read-only) --"
 check() { # <clave> [-e VAR=valor ...] → "estado exit"
   local k=$1 rc=0 out; shift
-  out=$("${COMPOSE[@]}" --profile tools run --rm --no-deps -T \
+  out=$("${COMPOSE[@]}" run --rm --no-deps -T \
     -e ATOM_MYSQL_DSN="mysql:host=percona;port=3306;dbname=${DB[$k]};charset=utf8mb4" \
     -e ATOM_MYSQL_USERNAME="$USR" -e ATOM_MYSQL_PASSWORD="$PW" \
     ${@+"$@"} --entrypoint php bootstrap /project/scripts/installation-check.php 2>/dev/null) || rc=$?

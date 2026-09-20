@@ -1,12 +1,16 @@
-# Compose DEV: servicios de soporte (percona, elasticsearch, memcached, gearmand) y, con `--profile runtime`,
-# bootstrap + atom (PHP-FPM) + atom_worker (jobs:worker) + nginx.
+# Entorno local de desarrollo.
+# Este Compose NO define el despliegue de producción.
 #
-#   docker compose -f compose.dev.yaml up -d --wait
+# `docker compose up -d --wait` levanta el runtime DEV completo: percona, elasticsearch, memcached, gearmand,
+# bootstrap, atom (PHP-FPM), atom_worker (jobs:worker) y nginx (http://localhost:8080). Los servicios que
+# forman parte del trabajo cotidiano NO llevan `profiles`; el profile `tools` queda para helpers opt-in (db-probe).
+# Para diagnóstico se pueden seleccionar servicios explícitos (`docker compose up -d percona`).
 #
 # Los valores por defecto son credenciales locales de desarrollo;
 # pueden sobrescribirse mediante variables de entorno.
 
-# Nombre fijo para que los recursos (red, volúmenes) no dependan del nombre del directorio.
+# Nombre fijo de la instancia DEV canónica: recursos (contenedores, red, volúmenes) estables e independientes
+# del nombre del directorio. Una segunda instancia paralela usa `-p <otro-nombre>`.
 name: archivo-historico
 
 # Conexión de AtoM a sus dependencias. La comparten `bootstrap` y `atom`: el bootstrap prepara
@@ -111,9 +115,9 @@ services:
       timeout: 5s
       retries: 10
 
-  # Herramienta puntual (no arranca con `up`): detector de estado de la BD.
+  # Herramienta puntual opt-in (profile `tools`; no arranca con `up`): detector de estado de la BD.
   #
-  #   docker compose -f compose.dev.yaml run --rm db-probe; echo $?
+  #   docker compose run --rm db-probe; echo $?
   #
   # Reutiliza la imagen directa de AtoM (solo por su PHP/PDO) y monta RO únicamente el script.
   db-probe:
@@ -132,15 +136,13 @@ services:
       percona:
         condition: service_healthy
 
-  # Herramienta puntual (no arranca con `up`): bootstrap de AtoM (probe → tools:install si la BD está FRESH → installation-check).
-  #
-  #   docker compose -f compose.dev.yaml run --rm bootstrap; echo $?
+  # Bootstrap de AtoM (probe → tools:install si la BD está FRESH → installation-check). Forma parte del ciclo
+  # normal: `up` lo ejecuta antes de `atom` y `atom_worker` (gate) y queda en estado Exited (0).
+  # Ejecución manual (diagnóstico): `docker compose run --rm bootstrap; echo $?`
   #
   # Conserva el entrypoint upstream (genera la configuración runtime desde el entorno) y monta RO
   # solo los scripts del proyecto. No levanta web ni worker.
   bootstrap:
-    # `runtime` solo para que `atom` pueda depender de él (Compose exige que la dependencia esté en el perfil activo).
-    profiles: [tools, runtime]
     image: archivo-historico/atom:2.10.2
     build:
       context: upstream/atom
@@ -170,9 +172,6 @@ services:
         condition: service_healthy
 
   # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; lo consume `nginx`).
-  # No arranca con `up` de la infraestructura: requiere el perfil `runtime`.
-  #
-  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait atom
   #
   # Gate: depende de `bootstrap` con service_completed_successfully, así que `atom` solo puede arrancar
   # después de un bootstrap exitoso (BD DB_COMPATIBLE + instalación completa; sobre una BD FRESH la instala,
@@ -182,7 +181,6 @@ services:
   # Conserva el CMD y el entrypoint upstream (regeneran la configuración runtime desde el entorno en cada
   # arranque); el código viene de la imagen, sin bind del checkout. Solo uploads/ y downloads/ se persisten.
   atom:
-    profiles: [runtime]
     image: archivo-historico/atom:2.10.2
     build:
       context: upstream/atom
@@ -214,8 +212,6 @@ services:
 
   # Worker de jobs de AtoM (Gearman): `php symfony jobs:worker`. Mismo build/imagen que `atom`.
   #
-  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait atom_worker
-  #
   # Gate: igual que `atom`, depende de `bootstrap` con service_completed_successfully; nunca ejecuta
   # jobs:worker contra una BD sin instalar/incompatible. No duplica el probe ni el installation-check.
   #
@@ -224,7 +220,6 @@ services:
   # (RW, mismos volúmenes que `atom`, porque los jobs de exportación/importación los escriben); el código
   # viene de la imagen. Sin puerto ni bind del checkout.
   atom_worker:
-    profiles: [runtime]
     image: archivo-historico/atom:2.10.2
     build:
       context: upstream/atom
@@ -259,16 +254,13 @@ services:
 
   # Web DEV: Nginx (imagen propia mínima) delante de PHP-FPM. Único servicio con puerto publicado.
   #
-  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait nginx
-  #
   # Puerto: ATOM_WEB_PORT (default 8080) en 127.0.0.1. Readiness de aplicación: scripts/web-ready.sh.
-  # nginx.conf se monta RO: tras editarlo, `docker compose ... restart nginx`.
+  # nginx.conf se monta RO: tras editarlo, `docker compose restart nginx`.
   # Depende de `atom` healthy, que a su vez depende del bootstrap completado: sin cadena válida no arranca.
   # Los estáticos (dist/images/css/js) van en la imagen, copiados de la imagen `atom`; no hay bind del
   # checkout ni volumen de `dist`. uploads/ y downloads/ se montan RO: Nginx solo lee (estáticos y destino
   # de X-Accel-Redirect); las escrituras siguen siendo exclusivas del runtime PHP.
   nginx:
-    profiles: [runtime]
     image: archivo-historico/nginx:2.10.2
     build:
       context: docker/nginx
