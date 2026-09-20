@@ -1,0 +1,15 @@
+# Política mínima de fin de línea. Detección automática para el resto de ficheros.
+* text=auto
+
+# Estos ficheros se ejecutan o se montan (bind) dentro de contenedores Linux:
+# un CRLF de un checkout en Windows los rompería (shebang, heredocs, .cnf/.conf).
+# LF siempre, sin depender de core.autocrlf / core.eol del usuario.
+*.sh text eol=lf
+*.php text eol=lf
+*.cnf text eol=lf
+*.conf text eol=lf
+Dockerfile text eol=lf
+
+# Compose y demás YAML.
+*.yaml text eol=lf
+*.yml text eol=lf
