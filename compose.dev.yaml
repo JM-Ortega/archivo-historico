@@ -1,4 +1,5 @@
-# Compose DEV: servicios de soporte (percona, elasticsearch, memcached, gearmand).
+# Compose DEV: servicios de soporte (percona, elasticsearch, memcached, gearmand) y, con `--profile runtime`,
+# bootstrap + atom (PHP-FPM) + nginx.
 #
 #   docker compose -f compose.dev.yaml up -d --wait
 #
@@ -167,7 +168,7 @@ services:
       memcached:
         condition: service_healthy
 
-  # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; Nginx llegará en otra WU).
+  # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; lo consume `nginx`).
   # No arranca con `up` de la infraestructura: requiere el perfil `runtime`.
   #
   #   docker compose -f compose.dev.yaml --profile runtime up -d --wait atom
@@ -192,7 +193,7 @@ services:
       # Política conservadora: mezcla de reconstruible (informes, EAD/XML) y no reconstruible; se persiste.
       - downloads_data:/atom/src/downloads
     healthcheck:
-      # Vivacidad de PHP-FPM: el socket de la pool acepta conexiones (sin ejecutar AtoM; HTTP llegará con Nginx).
+      # Vivacidad de PHP-FPM: el socket de la pool acepta conexiones (sin ejecutar AtoM; la readiness HTTP es scripts/web-ready.sh).
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/9000"]
       interval: 5s
       timeout: 5s
@@ -210,9 +211,45 @@ services:
       gearmand:
         condition: service_healthy
 
+  # Web DEV: Nginx (imagen propia mínima) delante de PHP-FPM. Único servicio con puerto publicado.
+  #
+  #   docker compose -f compose.dev.yaml --profile runtime up -d --wait nginx
+  #
+  # Puerto: ATOM_WEB_PORT (default 8080) en 127.0.0.1. Readiness de aplicación: scripts/web-ready.sh.
+  # nginx.conf se monta RO: tras editarlo, `docker compose ... restart nginx`.
+  # Depende de `atom` healthy, que a su vez depende del bootstrap completado: sin cadena válida no arranca.
+  # Los estáticos (dist/images/css/js) van en la imagen, copiados de la imagen `atom`; no hay bind del
+  # checkout ni volumen de `dist`. uploads/ y downloads/ se montan RO: Nginx solo lee (estáticos y destino
+  # de X-Accel-Redirect); las escrituras siguen siendo exclusivas del runtime PHP.
+  nginx:
+    profiles: [runtime]
+    image: archivo-historico/nginx:2.10.2
+    build:
+      context: docker/nginx
+      additional_contexts:
+        # Compose construye antes `atom` y expone su imagen como contexto `atom`.
+        atom: service:atom
+    ports:
+      # Loopback: acceso solo desde el host. El puerto es configurable.
+      - "127.0.0.1:${ATOM_WEB_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - uploads_data:/atom/src/uploads:ro
+      - downloads_data:/atom/src/downloads:ro
+    healthcheck:
+      # Nginx sirve su capa estática (no ejecuta AtoM): la readiness de aplicación es scripts/web-ready.sh.
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/robots.txt"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    depends_on:
+      atom:
+        condition: service_healthy
+
 volumes:
   percona_data:
   elasticsearch_data:
-  # Compartidos más adelante por atom_worker (RW) y Nginx (RO).
+  # atom (RW) y nginx (RO); más adelante también atom_worker (RW).
   uploads_data:
   downloads_data:
