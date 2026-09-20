@@ -1,0 +1,3 @@
+[submodule "upstream/atom"]
+	path = upstream/atom
+	url = https://github.com/artefactual/atom.git
