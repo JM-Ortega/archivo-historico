@@ -13,12 +13,12 @@ Entrada rápida: [README](../README.md). Operación DEV: [runbook](dev-runbook.m
 | `scripts/` | existe | Herramientas **transversales** del proyecto |
 | `docs/` | existe | Documentación durable |
 | `migration/` | existe (solo `README.md`) | Pipeline y tooling de migración. Ver [migration/README.md](../migration/README.md) |
-| `plugins/arUnicaucaB5Plugin/` | **reservada** | Theme / extensión institucional de AtoM |
+| `plugins/arUnicaucaB5Plugin/` | existe | Theme institucional de AtoM (source, wrapper de build y tests del theme). Ver [theme-development.md](theme-development.md) |
 | `config/atom/` | **reservada** | Desired state de AtoM **gestionado por el proyecto** (aparece con reconcile) |
 | `deploy/` | **reservada** | Foundation y automatización de despliegue |
 
 "Reservada" significa que la ruta es la canónica pero el directorio **no existe todavía**: se crea con el primer
-contenido real, no antes. No se crean carpetas vacías.
+contenido real, no antes. No se crean carpetas vacías (`config/atom/` y `deploy/` siguen reservadas).
 
 ## Ownership
 
@@ -37,8 +37,9 @@ de una feature.
 
 ## Preguntas frecuentes
 
-- **¿Dónde va el código del theme?** En `plugins/arUnicaucaB5Plugin/`. Cómo se monta, compila y sirve (bind, webpack,
-  Nginx, caché) lo resolverá la WU del theme; no se decide aquí.
+- **¿Dónde va el código del theme?** En `plugins/arUnicaucaB5Plugin/`. Cómo se monta, compila y sirve (bind RO, `theme_build`,
+  `theme_dist`, Nginx) está en [theme-development.md](theme-development.md). Su tooling y sus tests viven dentro del plugin
+  (`tools/`, `tests/`), no en `scripts/`.
 - **¿Dónde va migration?** En `migration/`. Contrato en [migration/README.md](../migration/README.md).
 - **¿Dónde irá reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Sin implementar, sin
   seed y sin tocar la tabla `setting` hasta su WU.
@@ -52,6 +53,7 @@ de una feature.
 
 - Herramienta **transversal** del proyecto (la usan varios frentes o el runtime) → `scripts/`.
   Ejemplos actuales: `web-ready.sh`, `db-probe.php`, `bootstrap.sh`, `test-*.sh`.
+  Ejemplo de lo que NO va aquí: el wrapper de build y la prueba del theme (`plugins/arUnicaucaB5Plugin/{tools,tests}/`).
 - Herramienta **específica de un dominio** → vive con ese dominio: un parser exclusivo de migración va bajo
   `migration/`, un helper exclusivo de despliegue bajo `deploy/`.
 
@@ -79,13 +81,16 @@ Regla: **no añadir dependencias al host cuando la operación pueda ejecutarse r
 Docker.** Nadie debería tener que instalar a mano PHP, Node/npm, Webpack, cliente MySQL ni tooling de AtoM si Docker
 puede aportarlo. No se mantienen parejas `foo.sh` / `foo.ps1` solo por compatibilidad.
 
+El theme respeta la regla: Webpack/Node corren dentro de la imagen AtoM (`theme_build`); no hay Node/npm ni PHP en el host.
+Windows nativo sigue sin validarse también para este flujo.
+
 Punto abierto (no resuelto aquí): los scripts `scripts/*.sh` actuales se ejecutan en el host con Bash (y
 `web-ready.sh` además con `curl`). Cómo se cubre eso desde PowerShell se decidirá con la validación en Windows real.
 
 ### Fin de línea
 
 `.gitattributes` fija LF para lo que se ejecuta o se monta en contenedores Linux (`*.sh`, `*.php`, `*.cnf`, `*.conf`,
-`Dockerfile`, `*.yaml`/`*.yml`), de modo que el checkout no depende de `core.autocrlf` ni `core.eol` del usuario.
+`Dockerfile`, `*.yaml`/`*.yml`, y el source del theme: `*.js`, `*.scss`), de modo que el checkout no depende de `core.autocrlf` ni `core.eol` del usuario.
 `.editorconfig` fija solo codificación, EOL, salto final y espacios sobrantes; no impone estilos por lenguaje.
 
 ## Ramas

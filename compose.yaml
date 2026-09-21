@@ -2,8 +2,9 @@
 # Este Compose NO define el despliegue de producción.
 #
 # `docker compose up -d --wait` levanta el runtime DEV completo: percona, elasticsearch, memcached, gearmand,
-# bootstrap, atom (PHP-FPM), atom_worker (jobs:worker) y nginx (http://localhost:8080). Los servicios que
-# forman parte del trabajo cotidiano NO llevan `profiles`; el profile `tools` queda para helpers opt-in (db-probe).
+# bootstrap, theme_build (compila el theme), atom (PHP-FPM), atom_worker (jobs:worker) y nginx
+# (http://localhost:8080). Los servicios que forman parte del trabajo cotidiano NO llevan `profiles`;
+# el profile `tools` queda para helpers opt-in (db-probe).
 # Para diagnóstico se pueden seleccionar servicios explícitos (`docker compose up -d percona`).
 #
 # Los valores por defecto son credenciales locales de desarrollo;
@@ -24,6 +25,13 @@ x-atom-connection-env: &atom-connection-env
   # apps/qubit/config/gearman.yml (servidor que usan `atom_worker` y el encolado de jobs desde `atom`).
   ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
   ATOM_GEARMAND_HOST: gearmand:4730
+
+# Imagen AtoM del proyecto (build upstream sin modificar). La comparten db-probe, bootstrap, atom, atom_worker y
+# theme_build: una sola imagen y un solo build. Cada servicio la referencia con `<<: *atom-image`.
+x-atom-image: &atom-image
+  image: archivo-historico/atom:2.10.2
+  build:
+    context: upstream/atom
 
 services:
   percona:
@@ -122,9 +130,7 @@ services:
   # Reutiliza la imagen directa de AtoM (solo por su PHP/PDO) y monta RO únicamente el script.
   db-probe:
     profiles: [tools]
-    image: archivo-historico/atom:2.10.2
-    build:
-      context: upstream/atom
+    <<: *atom-image
     entrypoint: ["php", "/probe/db-probe.php"]
     environment:
       ATOM_MYSQL_DSN: ${ATOM_MYSQL_DSN:-mysql:host=percona;port=3306;dbname=${MYSQL_DATABASE:-atom};charset=utf8mb4}
@@ -143,9 +149,7 @@ services:
   # Conserva el entrypoint upstream (genera la configuración runtime desde el entorno) y monta RO
   # solo los scripts del proyecto. No levanta web ni worker.
   bootstrap:
-    image: archivo-historico/atom:2.10.2
-    build:
-      context: upstream/atom
+    <<: *atom-image
     command: ["bash", "/project/scripts/bootstrap.sh"]
     environment:
       <<: *atom-connection-env
@@ -171,6 +175,25 @@ services:
       memcached:
         condition: service_healthy
 
+  # Build del theme institucional arUnicaucaB5Plugin (one-shot; queda en Exited (0), como `bootstrap`).
+  #
+  #   docker compose run --rm theme_build; echo $?     # tras editar SCSS/JS del theme
+  #
+  # Misma imagen AtoM que `atom` (Webpack/Node ya están en ella: nada en el host). Ejecuta el wrapper del propio
+  # theme (tools/build.sh): `npm run build` upstream, corrección de ownership de templates/_layout_start.php y
+  # comprobación de coherencia partial <-> dist. El entrypoint upstream se omite a propósito: no hace falta
+  # configuración runtime ni BD; el build del theme es independiente del bootstrap de la BD.
+  #
+  # Escribe SOLO dos cosas derivadas: el partial generado (bind RW del plugin) y `theme_dist` (named volume).
+  # `atom`, `atom_worker` y `nginx` dependen de su éxito: el runtime no consume el theme sin un build correcto.
+  theme_build:
+    <<: *atom-image
+    entrypoint: ["bash", "/atom/src/plugins/arUnicaucaB5Plugin/tools/build.sh"]
+    volumes:
+      - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin
+      # Derivado y reconstruible (webpack `clean: true`): NO es estado, NO va a backup.
+      - theme_dist:/atom/src/dist
+
   # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; lo consume `nginx`).
   #
   # Gate: depende de `bootstrap` con service_completed_successfully, así que `atom` solo puede arrancar
@@ -179,14 +202,22 @@ services:
   # nunca se reinstala.
   #
   # Conserva el CMD y el entrypoint upstream (regeneran la configuración runtime desde el entorno en cada
-  # arranque); el código viene de la imagen, sin bind del checkout. Solo uploads/ y downloads/ se persisten.
+  # arranque); el código de AtoM viene de la imagen, sin bind del checkout. Solo uploads/ y downloads/ se persisten.
+  #
+  # Theme: el plugin del proyecto se monta RO, sobre el directorio del plugin (nunca /atom/src completo): los template
+  # overrides que edites en el host se ven sin rebuild de imagen. Depende de `theme_build` (genera su
+  # templates/_layout_start.php): no arranca con un theme sin compilar.
+  # ATOM_DEVELOPMENT_MODE (upstream): opcache.validate_timestamps=On → los template overrides se ven sin reload de
+  # FPM (hasta ~2 s, opcache.revalidate_freq por defecto); otros cambios PHP/config del plugin no tienen esa garantía.
+  # También expone /qubit_dev.php. Solo en `atom`; no lo lleva el worker.
+  # El puerto web sigue publicado solo en 127.0.0.1 (ver `nginx`). No altera NODE_ENV (el build sigue en production).
   atom:
-    image: archivo-historico/atom:2.10.2
-    build:
-      context: upstream/atom
+    <<: *atom-image
     environment:
       <<: *atom-connection-env
+      ATOM_DEVELOPMENT_MODE: "true"
     volumes:
+      - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin:ro
       # Estado autoritativo: objetos digitales (no reconstruibles).
       - uploads_data:/atom/src/uploads
       # Política conservadora: mezcla de reconstruible (informes, EAD/XML) y no reconstruible; se persiste.
@@ -200,6 +231,8 @@ services:
       start_period: 5s
     depends_on:
       bootstrap:
+        condition: service_completed_successfully
+      theme_build:
         condition: service_completed_successfully
       percona:
         condition: service_healthy
@@ -218,11 +251,9 @@ services:
   # `command: worker` es el atajo del entrypoint upstream (regenera la configuración runtime desde el
   # entorno, espera 10 s y hace exec de `php symfony jobs:worker`). Persistencia: solo uploads/ y downloads/
   # (RW, mismos volúmenes que `atom`, porque los jobs de exportación/importación los escriben); el código
-  # viene de la imagen. Sin puerto ni bind del checkout.
+  # viene de la imagen. Sin puerto ni bind del checkout (salvo el plugin del theme, RO, y el script de health).
   atom_worker:
-    image: archivo-historico/atom:2.10.2
-    build:
-      context: upstream/atom
+    <<: *atom-image
     command: ["worker"]
     # jobs:worker sale con error si pierde la BD (su ping SELECT 1 cada ~30 s); Gearmand, en cambio, se reconecta solo.
     # on-failure:5 (como upstream) recupera fallos TRANSITORIOS reintentando contra la MISMA BD (cada arranque espera
@@ -234,6 +265,8 @@ services:
     volumes:
       - uploads_data:/atom/src/uploads
       - downloads_data:/atom/src/downloads
+      # Mismo plugin RO que `atom`: paridad del source de la aplicación (no significa que todo job lo requiera).
+      - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin:ro
       # Solo el script del healthcheck, RO.
       - ./scripts/worker-health.sh:/project/scripts/worker-health.sh:ro
     healthcheck:
@@ -247,6 +280,8 @@ services:
     depends_on:
       bootstrap:
         condition: service_completed_successfully
+      theme_build:
+        condition: service_completed_successfully
       percona:
         condition: service_healthy
       gearmand:
@@ -257,9 +292,11 @@ services:
   # Puerto: ATOM_WEB_PORT (default 8080) en 127.0.0.1. Readiness de aplicación: scripts/web-ready.sh.
   # nginx.conf se monta RO: tras editarlo, `docker compose restart nginx`.
   # Depende de `atom` healthy, que a su vez depende del bootstrap completado: sin cadena válida no arranca.
-  # Los estáticos (dist/images/css/js) van en la imagen, copiados de la imagen `atom`; no hay bind del
-  # checkout ni volumen de `dist`. uploads/ y downloads/ se montan RO: Nginx solo lee (estáticos y destino
-  # de X-Accel-Redirect); las escrituras siguen siendo exclusivas del runtime PHP.
+  # Los estáticos upstream (images/css/js y el dist de la imagen) van en la imagen, copiados de la imagen `atom`.
+  # Sobre ellos, en DEV: `theme_dist` (RO) reemplaza /atom/src/dist con el build del theme (lo escribe solo
+  # `theme_build`) y solo `images/` del plugin se monta RO como estático directo: NUNCA el plugin completo (no se
+  # exponen scss/, webpack.entry.js, templates/ ni PHP). uploads/ y downloads/ se montan RO: Nginx solo lee
+  # (estáticos y destino de X-Accel-Redirect); las escrituras siguen siendo exclusivas del runtime PHP.
   nginx:
     image: archivo-historico/nginx:2.10.2
     build:
@@ -274,6 +311,8 @@ services:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - uploads_data:/atom/src/uploads:ro
       - downloads_data:/atom/src/downloads:ro
+      - theme_dist:/atom/src/dist:ro
+      - ./plugins/arUnicaucaB5Plugin/images:/atom/src/plugins/arUnicaucaB5Plugin/images:ro
     healthcheck:
       # Nginx sirve su capa estática (no ejecuta AtoM): la readiness de aplicación es scripts/web-ready.sh.
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/robots.txt"]
@@ -284,6 +323,8 @@ services:
     depends_on:
       atom:
         condition: service_healthy
+      theme_build:
+        condition: service_completed_successfully
 
 volumes:
   percona_data:
@@ -291,3 +332,6 @@ volumes:
   # atom y atom_worker (RW); nginx (RO).
   uploads_data:
   downloads_data:
+  # Bundles compilados del theme (Webpack). DERIVADO y RECONSTRUIBLE: no es estado ni entra en backup.
+  # theme_build (RW) → nginx (RO). `atom` y `atom_worker` no lo montan.
+  theme_dist:

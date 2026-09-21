@@ -6,7 +6,9 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 - **Baseline AtoM:** v2.10.2, incluida como submódulo Git sin modificar en `upstream/atom`
   (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen se construye con el `Dockerfile` upstream.
 - **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
-  (instalación inicial segura), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
+  (instalación inicial segura), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
+- **Theme institucional:** `plugins/arUnicaucaB5Plugin/` (plugin de AtoM propio, basado en el skeleton oficial `arThemeB5Plugin` y extensión de `arDominionB5Plugin`). Ciclo DEV
+  (editar → build → refresh) en [docs/theme-development.md](docs/theme-development.md).
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
 - Dónde vive cada cosa (theme, migration, config, deployment, `scripts/`) y qué no se toca: [docs/repository-layout.md](docs/repository-layout.md).
 
@@ -23,7 +25,7 @@ Solo DEV. Producción, TLS, backups y CI/CD **no** están definidos todavía.
 
 **Plataforma:** el flujo de este documento (incluido el E2E de checkout limpio y RESET) se validó en WSL2 + Docker
 Desktop, el entorno de referencia. El target a soportar es Windows 10/11 + Docker Desktop + PowerShell; **todavía no se
-ha validado** en Windows nativo. Git Bash no es un requisito. Detalle en [docs/repository-layout.md](docs/repository-layout.md#host-y-portabilidad).
+ha validado** en Windows nativo (el ciclo del theme tampoco: no requiere Node/npm en el host, pero falta el smoke real). Git Bash no es un requisito. Detalle en [docs/repository-layout.md](docs/repository-layout.md#host-y-portabilidad).
 
 ## Primera vez
 
@@ -34,8 +36,8 @@ docker compose up -d --wait
 ```
 
 Abre <http://localhost:8080>. Un solo comando: Compose construye las imágenes que faltan (la primera vez tarda varios
-minutos), arranca la infraestructura, ejecuta `bootstrap` y levanta `atom`, `atom_worker` y `nginx`. `up` termina cuando
-todos los servicios están `healthy` y `bootstrap` ha terminado con éxito.
+minutos), arranca la infraestructura, ejecuta `bootstrap` y `theme_build` (compila el theme) y levanta `atom`, `atom_worker` y
+`nginx`. `up` termina cuando todos los servicios están `healthy` y `bootstrap` y `theme_build` han terminado con éxito.
 
 - **Administrador DEV:** `admin@example.com` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
   de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**)
@@ -61,6 +63,7 @@ docker compose stop             # parar conservando contenedores y datos
 | Ver el estado | `docker compose ps` |
 | Ver logs | `docker compose logs -f` (o `logs -f atom`) |
 | Comprobar que la web es AtoM (READY) | `scripts/web-ready.sh --wait` |
+| Recompilar el theme tras editar su SCSS/JS | `docker compose run --rm theme_build` (ver [theme](docs/theme-development.md)) |
 | Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
 
 `stop` y `down` (sin `-v`) conservan la base de datos y los ficheros subidos; `up -d --wait` siempre vuelve a pasar por
@@ -80,20 +83,23 @@ Volúmenes Docker del proyecto `archivo-historico` (`docker volume ls`):
 | `archivo-historico_uploads_data` | objetos digitales subidos | **autoritativo** |
 | `archivo-historico_downloads_data` | informes y exportaciones | persistente por prudencia |
 | `archivo-historico_elasticsearch_data` | índices de búsqueda | derivado (reconstruible desde la BD) |
+| `archivo-historico_theme_dist` | bundles compilados del theme | derivado (lo reconstruye `theme_build`; sin backup) |
 
-La configuración de AtoM se regenera en cada arranque y el código y los estáticos vienen de la imagen: no son estado.
+La configuración de AtoM se regenera en cada arranque y el código y los estáticos de AtoM vienen de la imagen: no son estado.
+El source del theme vive en `plugins/arUnicaucaB5Plugin/` (repo) y se monta en los contenedores.
 
 ## Qué NO hacer
 
 - **No ejecutes `down -v`** salvo que quieras borrar TODO el estado DEV a propósito. Es el RESET DEV: destructivo e
   irreversible. Ver [RESET DEV](docs/dev-runbook.md#reset-dev-destructivo).
 - No uses `docker system prune` ni `docker volume prune`: pueden llevarse volúmenes de otros proyectos.
-- No modifiques `upstream/atom` (es el baseline exacto de AtoM).
+- No modifiques `upstream/atom` (es el baseline exacto de AtoM). El theme se desarrolla en `plugins/arUnicaucaB5Plugin/`.
 - No publiques puertos de servicios internos ni cambies el bind de `nginx` a `0.0.0.0` en DEV.
 
 ## Pruebas
 
-Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker. Los `test-db-probe`, `test-bootstrap`,
+Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la del theme vive con él:
+`plugins/arUnicaucaB5Plugin/tests/test-theme.sh`). Los `test-db-probe`, `test-bootstrap`,
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
 `scripts/test-fresh-e2e.sh` es la prueba de checkout limpio + RESET: crea su propio clon, proyecto Docker
 (`archivo-historico-e2e-<id>`), puerto e imágenes, y **no toca** la instancia DEV normal. Ver el runbook.

@@ -1,0 +1,5 @@
+// Marcador de la foundation del theme (WU-12B): franja fina superior que demuestra que el bundle de
+// arUnicaucaB5Plugin está activo. Reversible: borrar este fichero y su @import en main.scss.
+body {
+  border-top: 4px solid $primary;
+}

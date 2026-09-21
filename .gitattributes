@@ -13,3 +13,7 @@ Dockerfile text eol=lf
 # Compose y demás YAML.
 *.yaml text eol=lf
 *.yml text eol=lf
+
+# Source del theme (plugins/arUnicaucaB5Plugin): Webpack lo lee dentro del contenedor Linux por bind mount.
+*.js text eol=lf
+*.scss text eol=lf

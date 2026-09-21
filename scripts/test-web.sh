@@ -113,13 +113,14 @@ expect "una petición sin la cookie sigue anónima" "no" "$(logged_in "$TMP/othe
 
 echo "== F/G. Mounts de nginx =="
 NID="$(svc_id nginx)"
-expect "nginx: solo conf, uploads y downloads" \
-  "bind /etc/nginx/nginx.conf;volume /atom/src/downloads;volume /atom/src/uploads;" \
+expect "nginx: conf, uploads, downloads, theme_dist e images/ del theme (nunca el plugin completo)" \
+  "bind /atom/src/plugins/arUnicaucaB5Plugin/images;bind /etc/nginx/nginx.conf;volume /atom/src/dist;volume /atom/src/downloads;volume /atom/src/uploads;" \
   "$(docker inspect -f '{{range .Mounts}}{{.Type}} {{.Destination}};{{end}}' "$NID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
 expect "nginx: ningún mount es RW" "" "$(docker inspect -f '{{range .Mounts}}{{if .RW}}{{.Destination}} {{end}}{{end}}' "$NID")"
 expect "nginx: sin bind sobre /atom/src" "" \
   "$(docker inspect -f '{{range .Mounts}}{{if and (eq .Type "bind") (eq .Destination "/atom/src")}}x{{end}}{{end}}' "$NID")"
-expect "atom: sin bind del checkout" "" "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}} {{end}}{{end}}' "$(svc_id atom)")"
+expect "atom: el único bind es el plugin del theme (RO)" "/atom/src/plugins/arUnicaucaB5Plugin false" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}}{{end}}{{end}}' "$(svc_id atom)")"
 W_UP=0; W_DOWN=0
 in_svc nginx sh -c "echo x > /atom/src/uploads/nginx-write-$RUN" 2>/dev/null || W_UP=$?
 in_svc nginx sh -c "echo x > /atom/src/downloads/nginx-write-$RUN" 2>/dev/null || W_DOWN=$?

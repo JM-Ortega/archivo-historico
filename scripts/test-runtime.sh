@@ -49,7 +49,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== H. El runtime completo forma parte del arranque por defecto =="
-expect "sin profiles: runtime completo (bootstrap, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona" \
+expect "sin profiles: runtime completo (bootstrap, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona theme_build" \
   "$(docker compose config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "el runtime no depende de ningún profile" "0" "$(docker compose config --format json | grep -c '"profiles"' || true)"
 expect "infra-only sigue siendo posible: seleccionar servicios no arrastra el runtime (dry-run)" \
@@ -67,12 +67,13 @@ expect "configuración runtime generada (config.php, propel.ini, search.yml, php
   "$(in_atom sh -c 'cd /atom/src && test -s config/config.php && test -s config/propel.ini && test -s config/search.yml && test -s /usr/local/etc/php-fpm.d/atom.conf && echo ok')"
 expect "ningún puerto publicado al host" "" "$(docker port "$CID")"
 
-echo "== B. Sin bind del checkout =="
-expect "mounts = solo uploads y downloads (volúmenes nombrados)" \
-  "volume $DOWN;volume $UP;" \
+echo "== B. Sin bind del checkout (salvo el plugin del theme, RO) =="
+PLUGIN_DST=/atom/src/plugins/arUnicaucaB5Plugin
+expect "mounts = uploads y downloads (volúmenes) + el plugin del theme" \
+  "bind $PLUGIN_DST;volume $DOWN;volume $UP;" \
   "$(docker inspect -f '{{range .Mounts}}{{.Type}} {{.Destination}};{{end}}' "$CID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
-expect "ningún bind mount (el código de /atom/src viene de la imagen)" "" \
-  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}} {{end}}{{end}}' "$CID")"
+expect "el único bind es el plugin del theme, en solo lectura (el resto de /atom/src viene de la imagen)" "$PLUGIN_DST false" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}}{{end}}{{end}}' "$CID")"
 
 echo "== C/D/I. Escritura y ownership funcional =="
 in_atom sh -c "echo uploads-$RUN > $UP/$MARK && echo downloads-$RUN > $DOWN/$MARK"
