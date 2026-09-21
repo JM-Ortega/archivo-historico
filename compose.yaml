@@ -175,6 +175,33 @@ services:
       memcached:
         condition: service_healthy
 
+  # Reconcile de AtoM (one-shot; queda en Exited (0), como `bootstrap` y `theme_build`). Alinea SOLO el estado
+  # PROJECT-MANAGED de plugins: garantiza que cada plugin de config/atom/required-plugins.conf (hoy arUnicaucaB5Plugin) esté
+  # habilitado en la BD. Selectivo, aditivo, idempotente y no destructivo: solo añade el plugin requerido si falta, no gestiona
+  # ni quita plugins ajenos, y verifica la postcondición releyendo el estado. No instala, no siembra ni compila assets.
+  #
+  #   docker compose run --rm reconcile; echo $?
+  #
+  # Gate: depende de `bootstrap` (BD instalada y compatible) y `atom` / `atom_worker` dependen de su éxito: un reconcile fallido
+  # los deja sin arrancar. Independiente de `theme_build`. Supone un único writer durante este gate pre-start; no asume
+  # hot-reconcile: un `up` que cambie el estado recrea `atom`/`atom_worker` (su dependencia cambió), pero `run` manual sobre un
+  # AtoM en marcha no garantiza que lo vea sin reiniciarlo.
+  #
+  # Conserva el entrypoint upstream (configuración runtime desde el entorno) y monta RO solo lo necesario: el plugin (para validar
+  # su source y para que la CLI de AtoM lo cargue), el script y el desired state. Escribe únicamente en la BD, vía tools:atom-plugins.
+  reconcile:
+    <<: *atom-image
+    command: ["bash", "/project/scripts/reconcile-plugins.sh"]
+    environment:
+      <<: *atom-connection-env
+    volumes:
+      - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin:ro
+      - ./config/atom/reconcile-plugins.sh:/project/scripts/reconcile-plugins.sh:ro
+      - ./config/atom/required-plugins.conf:/project/config/atom/required-plugins.conf:ro
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+
   # Build del theme institucional arUnicaucaB5Plugin (one-shot; queda en Exited (0), como `bootstrap`).
   #
   #   docker compose run --rm theme_build; echo $?     # tras editar SCSS/JS del theme
@@ -232,6 +259,8 @@ services:
     depends_on:
       bootstrap:
         condition: service_completed_successfully
+      reconcile:
+        condition: service_completed_successfully
       theme_build:
         condition: service_completed_successfully
       percona:
@@ -279,6 +308,8 @@ services:
       start_period: 30s
     depends_on:
       bootstrap:
+        condition: service_completed_successfully
+      reconcile:
         condition: service_completed_successfully
       theme_build:
         condition: service_completed_successfully

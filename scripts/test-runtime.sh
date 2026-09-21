@@ -49,7 +49,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== H. El runtime completo forma parte del arranque por defecto =="
-expect "sin profiles: runtime completo (bootstrap, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona theme_build" \
+expect "sin profiles: runtime completo (bootstrap, reconcile, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$(docker compose config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "el runtime no depende de ningún profile" "0" "$(docker compose config --format json | grep -c '"profiles"' || true)"
 expect "infra-only sigue siendo posible: seleccionar servicios no arrastra el runtime (dry-run)" \

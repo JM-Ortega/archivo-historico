@@ -88,7 +88,10 @@ mapfile -t ASSETS < <(grep -Eo '(src|href)="/(dist|plugins|images|css|js|favicon
 expect_ne "la portada referencia assets locales" "0" "${#ASSETS[@]}"
 for a in "${ASSETS[@]}"; do
   expect "asset $a" "200" "$(code "$URL$a")"
-  expect "asset $a idéntico al de la imagen atom" "$(in_svc atom sha256sum "/atom/src$a" | awk '{print $1}')" \
+  # Con el theme habilitado (reconcile), la portada referencia bundles que solo existen en `theme_dist` (montado en nginx,
+  # no en atom): la fuente de verdad del fichero es entonces el propio nginx; el resto viene de la imagen atom.
+  src=atom; in_svc atom test -e "/atom/src$a" 2>/dev/null || src=nginx
+  expect "asset $a idéntico al de $src" "$(in_svc "$src" sha256sum "/atom/src$a" | awk '{print $1}')" \
     "$(curl -sS "$URL$a" | sha256sum | awk '{print $1}')"
 done
 
