@@ -86,11 +86,11 @@ expect "restart policy: máximo 5 reintentos" "5" "$(docker inspect -f '{{.HostC
 expect "sin puertos publicados" "" "$(docker port "$WID")"
 
 echo "== D. Filesystem =="
-expect "mounts = uploads RW, downloads RW y el script de health RO" \
-  "bind /project/scripts/worker-health.sh false;volume $DOWN true;volume $UP true;" \
+expect "mounts = uploads RW, downloads RW, script de health RO y plugin del theme RO" \
+  "bind /atom/src/plugins/arUnicaucaB5Plugin false;bind /project/scripts/worker-health.sh false;volume $DOWN true;volume $UP true;" \
   "$(docker inspect -f '{{range .Mounts}}{{.Type}} {{.Destination}} {{.RW}};{{end}}' "$WID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
-expect "sin bind de /atom/src ni del checkout" "" \
-  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{if ne .Destination "/project/scripts/worker-health.sh"}}{{.Destination}} {{end}}{{end}}{{end}}' "$WID")"
+expect "sin bind de /atom/src ni del checkout (solo el script de health y el plugin del theme)" "/atom/src/plugins/arUnicaucaB5Plugin" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{if ne .Destination "/project/scripts/worker-health.sh"}}{{.Destination}}{{end}}{{end}}{{end}}' "$WID")"
 in_svc atom_worker sh -c "echo uploads-$RUN > $UP/$MARK && echo downloads-$RUN > $DOWN/$MARK"
 expect "worker escribe uploads y atom lo ve (mismo volumen)" "uploads-$RUN" "$(in_svc atom cat "$UP/$MARK")"
 expect "worker escribe downloads y atom lo ve (mismo volumen)" "downloads-$RUN" "$(in_svc atom cat "$DOWN/$MARK")"

@@ -18,9 +18,10 @@ docker compose up -d --wait
 scripts/web-ready.sh --wait
 ```
 
-Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `atom`, `atom_worker`, `nginx`.
-Orden real: infraestructura sana → `bootstrap` (termina con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap` falla,
-`up` falla y `atom`, `atom_worker` y `nginx` no arrancan (es el gate). En un checkout sin imágenes propias, ese mismo
+Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `theme_build`, `atom`, `atom_worker`, `nginx`.
+Orden real: infraestructura sana → `bootstrap` (termina con 0) y, en paralelo e independiente de la BD, `theme_build` (termina
+con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap` o `theme_build` fallan, `up` falla y `atom`, `atom_worker` y `nginx`
+no arrancan (son gates). `theme_build` se ejecuta en cada `up` (~20 s); ver [theme-development.md](theme-development.md). En un checkout sin imágenes propias, ese mismo
 `up -d --wait` las construye (no hace falta `docker compose build` antes).
 
 **Profiles:** ningún servicio del runtime lleva profile. `tools` es opt-in y solo contiene `db-probe`
@@ -44,12 +45,15 @@ cambiado. Usa `--build` solo cuando cambió algo que entra en la imagen:
 docker compose up -d --build --wait
 ```
 
-- `upstream/atom` (p. ej. otro commit del submódulo): imagen `atom` (compartida por `bootstrap`, `atom` y `atom_worker`).
+- `upstream/atom` (p. ej. otro commit del submódulo): imagen `atom` (compartida por `bootstrap`, `theme_build`, `atom` y `atom_worker`).
 - `docker/nginx/Dockerfile` o los estáticos de la imagen `atom` (la imagen `nginx` copia de ella su `dist`): imagen `nginx`.
 
 **No** hace falta `--build` para el uso cotidiano ni para cambios en ficheros montados por bind: el contenedor ve
 siempre el fichero actual del host, sin rebuild.
 
+- `plugins/arUnicaucaB5Plugin/` (theme): los template overrides y `images/` se ven con solo refrescar (otros cambios PHP/config del plugin: sin garantía, ver
+  el theme guide); SCSS/JS requieren
+  `docker compose run --rm theme_build`. Nunca rebuild de imagen. Ver [theme-development.md](theme-development.md).
 - `docker/nginx/nginx.conf`: Nginx solo lee su configuración al arrancar, así que hay que hacer que la relea:
   `docker compose restart nginx`.
 - `scripts/*` montados (`bootstrap.sh`, `db-probe.php`, `installation-check.php`, `worker-health.sh`): tampoco requieren
@@ -131,7 +135,7 @@ docker compose config --format json | grep -m1 '"name"'
 ```
 
 Elimina exactamente: contenedores del proyecto, su red y `percona_data`, `elasticsearch_data`, `uploads_data`,
-`downloads_data`. No elimina imágenes, el checkout ni otros proyectos Docker. Después, el siguiente `up -d --wait` es una
+`downloads_data` y `theme_dist` (derivado: el siguiente `up` lo reconstruye con `theme_build`). No elimina imágenes, el checkout ni otros proyectos Docker. Después, el siguiente `up -d --wait` es una
 instalación completamente nueva (`DB_FRESH` → `tools:install` una vez → READY). RESET no es una reparación parcial: es la
 destrucción explícita de todo el estado.
 
@@ -175,7 +179,8 @@ queda idéntica. Limpia solo lo suyo. Requiere red (submódulo) y unos minutos.
 docker compose restart nginx
 ```
 
-Los estáticos (`dist`, `images`, `css`, `js`) van dentro de la imagen `nginx`; cambiar el Dockerfile o `upstream/atom`
+Los estáticos upstream (`dist`, `images`, `css`, `js`) van dentro de la imagen `nginx`; en DEV `theme_dist` (RO) sombrea `dist`
+y `plugins/arUnicaucaB5Plugin/images` (RO) se monta como estático directo del theme. Cambiar el Dockerfile o `upstream/atom`
 requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). Un 200 de Nginx no implica que AtoM funcione: usa `scripts/web-ready.sh`.
 
 ## Worker (`atom_worker`)
@@ -198,11 +203,12 @@ requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). U
 | `uploads_data` | **autoritativo** | Objetos digitales; no reconstruibles |
 | `downloads_data` | conservadoramente persistente | Mezcla de reconstruible (informes, EAD/XML) y no reconstruible; se conserva |
 | `elasticsearch_data` | derivado / conveniencia | Reconstruible desde la BD; no forma parte del conjunto mínimo de recuperación |
+| `theme_dist` | derivado / reconstruible | Bundles del theme (`/atom/src/dist` en nginx, RO). Lo escribe solo `theme_build`; **sin backup** |
 | `config` de AtoM | regenerable | El entrypoint la genera desde el entorno en cada arranque |
-| `dist` y estáticos | derivado | Vienen de la imagen; no hay volumen |
+| `dist` upstream y estáticos de AtoM | derivado | Vienen de la imagen; en DEV `theme_dist` sombrea `dist` en nginx |
 | Memcached, Gearmand | efímero | Sin volumen a propósito |
 
 ## Pendiente (fuera de este runbook)
 
-Producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones y personalización (tema, API): no
-están decididos y no se describen aquí.
+Producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, reconcile/activación automática del
+theme (WU-13) y el diseño institucional final: no están decididos y no se describen aquí.

@@ -1,0 +1,23 @@
+/*
+
+Customize variables:
+
+- Check the ../../arDominionB5Plugin/scss/_variables.scss file.
+- Check the B5 documentation (https://getbootstrap.com/docs/5.0/customize/sass/).
+- Import B5 functions, variables and mixins if needed.
+
+*/
+
+@import "../../arDominionB5Plugin/scss/main.scss";
+
+// Marcador de la foundation (WU-12B); reversible: borrar el fichero y esta línea.
+@import "foundation-marker";
+
+/*
+
+Extend:
+
+- Add extra SCSS and CSS imports.
+- Add custom styles directly.
+
+*/

@@ -135,6 +135,7 @@ cat >"$TMP/e2e-images.yaml" <<YAML
 services:
   db-probe: { image: $E2E_ATOM_IMAGE }
   bootstrap: { image: $E2E_ATOM_IMAGE }
+  theme_build: { image: $E2E_ATOM_IMAGE }
   atom: { image: $E2E_ATOM_IMAGE }
   atom_worker: { image: $E2E_ATOM_IMAGE }
   nginx: { image: $E2E_NGINX_IMAGE }
@@ -147,7 +148,7 @@ expect "el proyecto efectivo es el E2E (-p gana al name: del compose)" "$PROJECT
   "$("${DC[@]}" config --format json | grep -oE '^  "name": "[^"]+"' | sed -E 's/.*: "//;s/"$//')"
 [[ "$PROJECT" != "$DEV_PROJECT" && "$PROJECT" == archivo-historico-e2e-* ]] || die "nombre de proyecto E2E no válido"
 expect "compose.dev.yaml ya no existe en el checkout" "no" "$([[ -e compose.dev.yaml ]] && echo si || echo no)"
-expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona" \
+expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona theme_build" \
   "$("${DC[@]}" config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "profile tools: añade solo db-probe" "db-probe" \
   "$(comm -13 <("${DC[@]}" config --services | sort) <("${DC[@]}" --profile tools config --services | sort) | tr '\n' ' ' | sed 's/ $//')"
@@ -165,7 +166,7 @@ for n in "${planned[@]}"; do
   [[ "$n" == "$PROJECT" || "$n" == "${PROJECT}_"* ]] || { echo "FAIL  nombre planificado fuera del proyecto E2E: $n"; collisions=$((collisions + 1)); }
   grep -qxF -- "$n" <<<"$dev_names" && { echo "FAIL  el nombre $n existe en la DEV"; collisions=$((collisions + 1)); }
 done
-((${#planned[@]} == 6)) || { echo "FAIL  se esperaban 6 nombres planificados (proyecto, red, 4 volúmenes), hay ${#planned[@]}"; collisions=$((collisions + 1)); }
+((${#planned[@]} == 7)) || { echo "FAIL  se esperaban 7 nombres planificados (proyecto, red, 5 volúmenes), hay ${#planned[@]}"; collisions=$((collisions + 1)); }
 ((collisions == 0)) || die "el aislamiento del proyecto E2E no está garantizado"
 echo "PASS  nombres E2E planificados sin colisión con la DEV: ${planned[*]}"
 OWNED=1
@@ -173,6 +174,22 @@ OWNED=1
 DEV_BEFORE="$(project_resources "$DEV_PROJECT")"
 DEV_IMAGES_BEFORE="$(image_ids)"
 echo "DEV normal (solo observada):"; echo "$DEV_BEFORE" | sed 's/^/  | /'
+
+# Coherencia del theme tras un `up`: theme_build terminó bien, el partial generado existe y todo bundle que referencia
+# lo sirve Nginx (desde theme_dist); las images/ del plugin se sirven; el source no se expone.
+verify_theme() { # <etiqueta>
+  local n="$1" partial="$CK/plugins/arUnicaucaB5Plugin/templates/_layout_start.php" url="http://127.0.0.1:$PORT" r bad=0 refs
+  expect "[$n] theme_build terminó con exit 0" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id theme_build)")"
+  expect "[$n] theme_build corre la imagen E2E propia" "$E2E_ATOM_IMAGE" "$(docker inspect -f '{{.Config.Image}}' "$(svc_id theme_build)")"
+  expect "[$n] se generó templates/_layout_start.php" "yes" "$([[ -s "$partial" ]] && echo yes || echo no)"
+  refs="$(grep -oE '/dist/[^"'"'"'<> ]+\.(js|css)' "$partial" | sort -u)"
+  expect "[$n] el partial referencia los bundles custom" "2" "$(grep -cE '/arUnicaucaB5Plugin\.bundle\.' <<<"$refs" || true)"
+  for r in $refs; do [[ "$(curl -sS -o /dev/null -w '%{http_code}' "$url$r")" == 200 ]] || { echo "  no servido: $r"; bad=$((bad + 1)); }; done
+  expect "[$n] Nginx sirve todos los bundles referenciados por el partial" "0" "$bad"
+  expect "[$n] Nginx sirve images/ del plugin" "200" "$(curl -sS -o /dev/null -w '%{http_code}' "$url/plugins/arUnicaucaB5Plugin/images/image.png")"
+  expect "[$n] Nginx no expone scss/ del plugin" "no" "$([[ "$(curl -sS -o /dev/null -w '%{http_code}' "$url/plugins/arUnicaucaB5Plugin/scss/main.scss")" == 200 ]] && echo si || echo no)"
+  expect "[$n] theme_dist montado RO en nginx" "false" "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/atom/src/dist"}}{{.RW}}{{end}}{{end}}' "$(svc_id nginx)")"
+}
 
 # Verifica un arranque completo de fresh install. <n> = 1 (primero) o 2 (tras el RESET).
 verify_fresh_install() {
@@ -193,6 +210,8 @@ verify_fresh_install() {
   expect "[$n] web READY" "READY" "$(ATOM_WEB_URL="http://127.0.0.1:$PORT" "$CK/scripts/web-ready.sh" --wait 2>/dev/null | sed -E 's/^web-ready: (READY).*/\1/')"
   expect "[$n] único servicio publicado: nginx en 127.0.0.1:$PORT" "nginx 127.0.0.1:$PORT->80/tcp" \
     "$(docker ps --filter "$(label_of "$PROJECT")" --format '{{.Label "com.docker.compose.service"}} {{.Ports}}' | grep -- '->' | sed 's/, /,/g' | sort | tr '\n' ' ' | sed 's/ $//')"
+
+  verify_theme "$n"
 
   local wid gm
   wid="$(svc_id atom_worker)"
@@ -222,6 +241,17 @@ expect "el arranque no alteró los tags de imagen de la DEV" "$DEV_IMAGES_BEFORE
 verify_fresh_install 1
 login_smoke 1
 
+say "4. Ciclo del theme (test-theme.sh del propio checkout, contra este proyecto aislado)"
+# Mismo proyecto/override/puerto que el resto del E2E, seleccionados por el entorno estándar de Compose. La prueba edita
+# ficheros del plugin DEL CHECKOUT E2E (desechable), activa el theme de forma temporal en la BD E2E y lo revierte.
+THEME_RC=0
+(cd "$CK" && COMPOSE_FILE="$CK/compose.yaml:$TMP/e2e-images.yaml" COMPOSE_PROJECT_NAME="$PROJECT" ATOM_WEB_PORT="$PORT" \
+  plugins/arUnicaucaB5Plugin/tests/test-theme.sh) >"$TMP/test-theme.log" 2>&1 || THEME_RC=$?
+tail -n 3 "$TMP/test-theme.log" | sed 's/^/  | /'
+expect "plugins/arUnicaucaB5Plugin/tests/test-theme.sh (aislado) pasa" "0" "$THEME_RC"
+((THEME_RC == 0)) || grep -E '^(FAIL|STOP)' "$TMP/test-theme.log" >&2 || true
+expect "el checkout E2E sigue limpio tras la prueba del theme" "" "$(git -C "$CK" status --porcelain)"
+
 say "5. Estado antes del RESET (marcadores + recursos E2E)"
 MARK="e2e-marker-$RUN"
 in_svc atom sh -c 'printf %s "$0" >"$1"' "$MARK" "/atom/src/uploads/$MARK"
@@ -233,8 +263,8 @@ expect "marcador downloads_data" "$MARK" "$(in_svc atom cat "/atom/src/downloads
 expect "marcador BD" "e2e_marker_$RUN" "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e "SHOW DATABASES LIKE \"e2e_marker_$0\""' "$RUN" 2>/dev/null)"
 E2E_BEFORE="$(project_resources "$PROJECT")"
 echo "recursos E2E antes del RESET:"; echo "$E2E_BEFORE" | sed 's/^/  | /'
-expect "E2E: 8 contenedores (bootstrap incluido)" "8" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
-expect "E2E: 4 volúmenes propios" "4" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
+expect "E2E: 9 contenedores (bootstrap y theme_build incluidos)" "9" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
+expect "E2E: 5 volúmenes propios (theme_dist incluido)" "5" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: red propia" "${PROJECT}_default" "$(docker network ls --filter "$(label_of "$PROJECT")" --format '{{.Name}}')"
 expect "la DEV no cambió durante el primer arranque" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"
 
@@ -248,19 +278,27 @@ restart_cycle() { # <etiqueta> <installs esperados en el log del bootstrap> <com
   # `stop` conserva el contenedor bootstrap (su log acumula la instalación inicial: 1); `down` lo elimina (log nuevo: 0).
   local label="$1" installs="$2"; shift 2
   say "5b. Parada normal: $label + up -d --wait (sin borrar datos)"
+  local tb_before; tb_before="$(docker inspect -f '{{.Id}} {{.State.StartedAt}}' "$(svc_id theme_build)")"
   "${DC[@]}" "$@" >/dev/null 2>&1 || die "$label falló"
-  expect "[$label] volúmenes conservados" "4" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
+  local since; since="$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)"
+  expect "[$label] volúmenes conservados" "5" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
   "${DC[@]}" up -d --wait --wait-timeout 900 >"$TMP/up-$label.log" 2>&1 || { tail -n 40 "$TMP/up-$label.log" >&2; die "up tras $label falló"; }
-  local blog; blog="$(docker logs "$(svc_id bootstrap)" 2>&1)"
+  local blog blog_up; blog="$(docker logs "$(svc_id bootstrap)" 2>&1)"; blog_up="$(docker logs --since "$since" "$(svc_id bootstrap)" 2>&1)"
   expect "[$label] percona_data no se recreó" "$PERCONA_VOL_BEFORE" "$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_percona_data")"
   expect "[$label] el bootstrap no reinstala (ejecuciones de tools:install en su log)" "$installs" "$(grep -c 'ejecutando tools:install (una sola vez)' <<<"$blog" || true)"
-  expect "[$label] bootstrap ve una BD compatible" "1" "$(grep -c 'BD compatible; no se instala' <<<"$blog" || true)"
+  # Solo el log de ESTE up: otros `up` previos (p. ej. el de test-theme.sh) también dejan su línea en el log acumulado.
+  expect "[$label] bootstrap ve una BD compatible" "1" "$(grep -c 'BD compatible; no se instala' <<<"$blog_up" || true)"
   for s in percona elasticsearch memcached gearmand atom nginx atom_worker; do expect "[$label] $s healthy" "healthy" "$(health "$s")"; done
   expect "[$label] web READY" "READY" "$(ATOM_WEB_URL="http://127.0.0.1:$PORT" "$CK/scripts/web-ready.sh" --wait 2>/dev/null | sed -E 's/^web-ready: (READY).*/\1/')"
   expect "[$label] worker-health.sh" "0" "$(in_svc atom_worker bash /project/scripts/worker-health.sh >/dev/null 2>&1; echo $?)"
   markers_present "$label"
+  # theme_build se vuelve a ejecutar en cada up (con `down`, además, es un contenedor nuevo): dist queda reconciliado.
+  expect_ne "[$label] theme_build se volvió a ejecutar en el up (reconcilia dist)" "$tb_before" "$(docker inspect -f '{{.Id}} {{.State.StartedAt}}' "$(svc_id theme_build)")"
+  expect "[$label] theme_dist no se recreó (derivado, pero sobrevive a stop/down)" "$THEME_VOL_BEFORE" "$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_theme_dist")"
+  verify_theme "$label"
 }
 PERCONA_VOL_BEFORE="$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_percona_data")"
+THEME_VOL_BEFORE="$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_theme_dist")"
 restart_cycle stop 1 stop
 restart_cycle down 0 down
 PERCONA_CID_BEFORE="$(svc_id percona)"
@@ -271,7 +309,7 @@ echo "\$ docker compose -p $PROJECT down -v   (con el override de imágenes E2E)
 expect "E2E: sin contenedores" "0" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: sin volúmenes" "0" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: sin red" "0" "$(docker network ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
-for v in percona_data elasticsearch_data uploads_data downloads_data; do
+for v in percona_data elasticsearch_data uploads_data downloads_data theme_dist; do
   expect "E2E: volumen ${PROJECT}_$v eliminado" "absent" "$(docker volume inspect "${PROJECT}_$v" >/dev/null 2>&1 && echo present || echo absent)"
 done
 expect "DEV normal intacta tras el RESET" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"
@@ -287,6 +325,7 @@ expect "[2] marcador downloads_data ausente" "absent" "$(in_svc atom test -e "/a
 expect "[2] marcador BD ausente" "" "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e "SHOW DATABASES LIKE \"e2e_marker_$0\""' "$RUN" 2>/dev/null)"
 expect_ne "[2] percona_data es un volumen nuevo (CreatedAt distinto)" "$PERCONA_VOL_BEFORE" "$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_percona_data")"
 expect_ne "[2] contenedor percona nuevo (ID distinto)" "$PERCONA_CID_BEFORE" "$(svc_id percona)"
+expect_ne "[2] theme_dist es un volumen nuevo, reconstruido por theme_build (CreatedAt distinto)" "$THEME_VOL_BEFORE" "$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_theme_dist")"
 
 say "8. La DEV normal, al final"
 expect "DEV normal intacta al terminar" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"
