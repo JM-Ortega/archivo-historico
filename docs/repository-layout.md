@@ -14,11 +14,11 @@ Entrada rápida: [README](../README.md). Operación DEV: [runbook](dev-runbook.m
 | `docs/` | existe | Documentación durable |
 | `migration/` | existe (solo `README.md`) | Pipeline y tooling de migración. Ver [migration/README.md](../migration/README.md) |
 | `plugins/arUnicaucaB5Plugin/` | existe | Theme institucional de AtoM (source, wrapper de build y tests del theme). Ver [theme-development.md](theme-development.md) |
-| `config/atom/` | **reservada** | Desired state de AtoM **gestionado por el proyecto** (aparece con reconcile) |
+| `config/atom/` | existe | Desired state de AtoM **gestionado por el proyecto** y su reconcile: `required-plugins.conf`, `reconcile-plugins.sh`, `tests/`. Ver [Reconcile de plugins](dev-runbook.md#reconcile-de-plugins-desired-state) |
 | `deploy/` | **reservada** | Foundation y automatización de despliegue |
 
 "Reservada" significa que la ruta es la canónica pero el directorio **no existe todavía**: se crea con el primer
-contenido real, no antes. No se crean carpetas vacías (`config/atom/` y `deploy/` siguen reservadas).
+contenido real, no antes. No se crean carpetas vacías (`deploy/` sigue reservada; `config/atom/` ya existe).
 
 ## Ownership
 
@@ -26,7 +26,7 @@ contenido real, no antes. No se crean carpetas vacías (`config/atom/` y `deploy
 | --- | --- |
 | Theme | `plugins/arUnicaucaB5Plugin/` |
 | Migration | `migration/` |
-| Config / reconcile | `config/atom/` y el tooling asociado cuando se materialice |
+| Config / reconcile | `config/atom/` (desired state + reconcile + sus tests) |
 | Deployment | `deploy/` |
 | Runtime / plataforma compartida | `compose.yaml`, `docker/`, `scripts/` transversales |
 | Upstream | ninguno: `upstream/atom` no se modifica desde este proyecto |
@@ -41,8 +41,9 @@ de una feature.
   `theme_dist`, Nginx) está en [theme-development.md](theme-development.md). Su tooling y sus tests viven dentro del plugin
   (`tools/`, `tests/`), no en `scripts/`.
 - **¿Dónde va migration?** En `migration/`. Contrato en [migration/README.md](../migration/README.md).
-- **¿Dónde irá reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Sin implementar, sin
-  seed y sin tocar la tabla `setting` hasta su WU.
+- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy solo declara **una**
+  propiedad: `arUnicaucaB5Plugin` habilitado. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
+  tests viven ahí (`reconcile-plugins.sh`, `tests/`), no en `scripts/`.
 - **¿Dónde irá deployment?** En `deploy/`. Fuera de esta foundation: producción, TLS, CI/CD, Ansible/Terraform, etc.
 - **¿Dónde van datos reales locales?** En `migration/local/`, ignorado por Git (ver abajo).
 - **¿Qué no se modifica?** `upstream/atom/`. Comprobación: `git -C upstream/atom status --porcelain` debe salir vacío.

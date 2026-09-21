@@ -135,6 +135,7 @@ cat >"$TMP/e2e-images.yaml" <<YAML
 services:
   db-probe: { image: $E2E_ATOM_IMAGE }
   bootstrap: { image: $E2E_ATOM_IMAGE }
+  reconcile: { image: $E2E_ATOM_IMAGE }
   theme_build: { image: $E2E_ATOM_IMAGE }
   atom: { image: $E2E_ATOM_IMAGE }
   atom_worker: { image: $E2E_ATOM_IMAGE }
@@ -148,7 +149,7 @@ expect "el proyecto efectivo es el E2E (-p gana al name: del compose)" "$PROJECT
   "$("${DC[@]}" config --format json | grep -oE '^  "name": "[^"]+"' | sed -E 's/.*: "//;s/"$//')"
 [[ "$PROJECT" != "$DEV_PROJECT" && "$PROJECT" == archivo-historico-e2e-* ]] || die "nombre de proyecto E2E no válido"
 expect "compose.dev.yaml ya no existe en el checkout" "no" "$([[ -e compose.dev.yaml ]] && echo si || echo no)"
-expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona theme_build" \
+expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$("${DC[@]}" config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "profile tools: añade solo db-probe" "db-probe" \
   "$(comm -13 <("${DC[@]}" config --services | sort) <("${DC[@]}" --profile tools config --services | sort) | tr '\n' ' ' | sed 's/ $//')"
@@ -201,6 +202,11 @@ verify_fresh_install() {
   expect "[$n] post-probe = DB_COMPATIBLE" "1" "$(grep -c 'bootstrap: post-probe: DB_COMPATIBLE' <<<"$blog" || true)"
   expect "[$n] bootstrap: instalación completa verificada" "1" "$(grep -c 'instalación completa verificada' <<<"$blog" || true)"
   expect "[$n] bootstrap exit 0" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$bid")"
+  # Reconcile: terminó bien y el plugin requerido quedó habilitado (lectura independiente del valor serializado en la BD).
+  expect "[$n] reconcile exit 0" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id reconcile)")"
+  expect "[$n] reconcile corre la imagen E2E propia" "$E2E_ATOM_IMAGE" "$(docker inspect -f '{{.Config.Image}}' "$(svc_id reconcile)")"
+  expect "[$n] arUnicaucaB5Plugin habilitado en la BD (reconcile, sin activación manual)" "1" \
+    "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N "$MYSQL_DATABASE" -e "SELECT i.value FROM setting s JOIN setting_i18n i ON i.id = s.id AND i.culture = s.source_culture WHERE s.name = \"plugins\""' 2>/dev/null | grep -c '"arUnicaucaB5Plugin"' || true)"
   expect "[$n] DB final (db-probe independiente)" "DB_COMPATIBLE" "$("${DC[@]}" run --rm -T --no-deps db-probe 2>/dev/null || true)"
   expect "[$n] instalación (installation-check independiente)" "INSTALL_COMPLETE" \
     "$("${DC[@]}" run --rm -T --no-deps --entrypoint php bootstrap /project/scripts/installation-check.php 2>/dev/null || true)"
@@ -263,7 +269,7 @@ expect "marcador downloads_data" "$MARK" "$(in_svc atom cat "/atom/src/downloads
 expect "marcador BD" "e2e_marker_$RUN" "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e "SHOW DATABASES LIKE \"e2e_marker_$0\""' "$RUN" 2>/dev/null)"
 E2E_BEFORE="$(project_resources "$PROJECT")"
 echo "recursos E2E antes del RESET:"; echo "$E2E_BEFORE" | sed 's/^/  | /'
-expect "E2E: 9 contenedores (bootstrap y theme_build incluidos)" "9" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
+expect "E2E: 10 contenedores (bootstrap, reconcile y theme_build incluidos)" "10" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: 5 volúmenes propios (theme_dist incluido)" "5" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: red propia" "${PROJECT}_default" "$(docker network ls --filter "$(label_of "$PROJECT")" --format '{{.Name}}')"
 expect "la DEV no cambió durante el primer arranque" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"
@@ -290,6 +296,8 @@ restart_cycle() { # <etiqueta> <installs esperados en el log del bootstrap> <com
   expect "[$label] bootstrap ve una BD compatible" "1" "$(grep -c 'BD compatible; no se instala' <<<"$blog_up" || true)"
   for s in percona elasticsearch memcached gearmand atom nginx atom_worker; do expect "[$label] $s healthy" "healthy" "$(health "$s")"; done
   expect "[$label] web READY" "READY" "$(ATOM_WEB_URL="http://127.0.0.1:$PORT" "$CK/scripts/web-ready.sh" --wait 2>/dev/null | sed -E 's/^web-ready: (READY).*/\1/')"
+  expect "[$label] reconcile terminó con 0 y no reescribió (ya habilitado)" "0 1" \
+    "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id reconcile)") $(docker logs --since "$since" "$(svc_id reconcile)" 2>&1 | grep -c 'ya habilitado; sin cambios' || true)"
   expect "[$label] worker-health.sh" "0" "$(in_svc atom_worker bash /project/scripts/worker-health.sh >/dev/null 2>&1; echo $?)"
   markers_present "$label"
   # theme_build se vuelve a ejecutar en cada up (con `down`, además, es un contenedor nuevo): dist queda reconciliado.

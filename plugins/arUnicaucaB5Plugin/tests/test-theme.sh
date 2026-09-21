@@ -9,8 +9,8 @@
 #
 # Opera sobre el proyecto Compose seleccionado por el entorno estándar (COMPOSE_FILE / COMPOSE_PROJECT_NAME /
 # ATOM_WEB_PORT); por defecto la DEV real. No destruye estado (nunca `down -v`). Cambios temporales que hace y revierte
-# (trap): ediciones de ficheros del plugin, un fichero de prueba en images/, y la activación TEMPORAL/MANUAL del theme en
-# la BD (`tools:atom-plugins add`) si no estaba activo; termina reconstruyendo el theme desde el source restaurado.
+# (trap): ediciones de ficheros del plugin, un fichero de prueba en images/, y la activación del theme en
+# la BD (`tools:atom-plugins add`) SOLO si no estaba activo (normalmente ya lo habilita `reconcile`); termina reconstruyendo el theme desde el source restaurado.
 # Requiere el runtime arriba (`docker compose up -d --wait`).
 set -euo pipefail
 
@@ -184,8 +184,8 @@ done
 expect "el body de scss/main.scss no es el source" "0" "$(curl -sS "$URL/plugins/$PLUGIN/scss/main.scss" | grep -c '@import' || true)"
 expect "Nginx no contiene scss/, templates/ ni webpack.entry.js del plugin" "images" "$(in_svc nginx ls "$PIN")"
 
-echo "== F. Activación TEMPORAL/MANUAL del theme + edición de PHP/templates sin reload =="
-# Activación manual (hasta el reconcile de WU-13): `tools:atom-plugins add`, revertida por el trap si la hizo esta prueba.
+echo "== F. Theme habilitado + edición de PHP/templates sin reload =="
+# Normalmente `reconcile` ya lo habilitó. Solo si no lo está (p. ej. reconcile no ejecutado), activación manual `tools:atom-plugins add`, revertida por el trap si la hizo esta prueba.
 if ! in_svc atom php symfony tools:atom-plugins list | grep -qx "$PLUGIN"; then
   in_svc atom php symfony tools:atom-plugins add "$PLUGIN" >/dev/null && ACTIVATED=1
 fi
@@ -202,7 +202,7 @@ poll_gone() { # <patrón> <segundos> [ruta] → gone|still (espera a que desapar
   echo still
 }
 # Dominion sigue habilitado en la BD: la precedencia la da la propia Configuration del skeleton (extiende Dominion y antepone
-# sus templates). Habilitar/deshabilitar themes en la BD es cuestión del reconcile (WU-13), no de esta prueba.
+# sus templates). Habilitar/deshabilitar themes en la BD es cuestión del reconcile (`config/atom/`), no de esta prueba.
 expect "el theme custom gana sobre arDominionB5Plugin (meta atom-theme)" "found" "$(poll_for 'name="atom-theme" content="arUnicaucaB5Plugin"' 10)"
 expect "la página referencia los bundles custom" "1" "$(page | grep -c "/dist/css/$PLUGIN\.bundle\." || true)"
 expect "el CSS referenciado por la página lo sirve Nginx" "200" "$(code "$URL$(page | grep -oE "/dist/css/$PLUGIN\.bundle\.[0-9a-f]+\.css" | head -n1)")"

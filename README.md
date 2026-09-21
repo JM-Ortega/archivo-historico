@@ -6,7 +6,7 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 - **Baseline AtoM:** v2.10.2, incluida como submódulo Git sin modificar en `upstream/atom`
   (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen se construye con el `Dockerfile` upstream.
 - **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
-  (instalación inicial segura), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
+  (instalación inicial segura), `reconcile` (habilita los plugins requeridos), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
 - **Theme institucional:** `plugins/arUnicaucaB5Plugin/` (plugin de AtoM propio, basado en el skeleton oficial `arThemeB5Plugin` y extensión de `arDominionB5Plugin`). Ciclo DEV
   (editar → build → refresh) en [docs/theme-development.md](docs/theme-development.md).
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
@@ -36,8 +36,8 @@ docker compose up -d --wait
 ```
 
 Abre <http://localhost:8080>. Un solo comando: Compose construye las imágenes que faltan (la primera vez tarda varios
-minutos), arranca la infraestructura, ejecuta `bootstrap` y `theme_build` (compila el theme) y levanta `atom`, `atom_worker` y
-`nginx`. `up` termina cuando todos los servicios están `healthy` y `bootstrap` y `theme_build` han terminado con éxito.
+minutos), arranca la infraestructura, ejecuta `bootstrap`, `reconcile` (habilita el plugin del theme) y `theme_build` (compila el theme) y levanta `atom`, `atom_worker` y
+`nginx`. `up` termina cuando todos los servicios están `healthy` y `bootstrap`, `reconcile` y `theme_build` han terminado con éxito.
 
 - **Administrador DEV:** `admin@example.com` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
   de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**)
@@ -64,6 +64,7 @@ docker compose stop             # parar conservando contenedores y datos
 | Ver logs | `docker compose logs -f` (o `logs -f atom`) |
 | Comprobar que la web es AtoM (READY) | `scripts/web-ready.sh --wait` |
 | Recompilar el theme tras editar su SCSS/JS | `docker compose run --rm theme_build` (ver [theme](docs/theme-development.md)) |
+| Reaplicar/verificar los plugins requeridos | `docker compose run --rm reconcile` (ver [runbook](docs/dev-runbook.md#reconcile-de-plugins-desired-state)) |
 | Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
 
 `stop` y `down` (sin `-v`) conservan la base de datos y los ficheros subidos; `up -d --wait` siempre vuelve a pasar por
@@ -99,7 +100,8 @@ El source del theme vive en `plugins/arUnicaucaB5Plugin/` (repo) y se monta en l
 ## Pruebas
 
 Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la del theme vive con él:
-`plugins/arUnicaucaB5Plugin/tests/test-theme.sh`). Los `test-db-probe`, `test-bootstrap`,
+`plugins/arUnicaucaB5Plugin/tests/test-theme.sh`; la del reconcile, con su desired state:
+`config/atom/tests/test-reconcile-plugins.sh`). Los `test-db-probe`, `test-bootstrap`,
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
 `scripts/test-fresh-e2e.sh` es la prueba de checkout limpio + RESET: crea su propio clon, proyecto Docker
 (`archivo-historico-e2e-<id>`), puerto e imágenes, y **no toca** la instancia DEV normal. Ver el runbook.

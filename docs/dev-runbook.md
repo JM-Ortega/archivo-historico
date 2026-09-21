@@ -18,10 +18,10 @@ docker compose up -d --wait
 scripts/web-ready.sh --wait
 ```
 
-Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `theme_build`, `atom`, `atom_worker`, `nginx`.
-Orden real: infraestructura sana → `bootstrap` (termina con 0) y, en paralelo e independiente de la BD, `theme_build` (termina
-con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap` o `theme_build` fallan, `up` falla y `atom`, `atom_worker` y `nginx`
-no arrancan (son gates). `theme_build` se ejecuta en cada `up` (~20 s); ver [theme-development.md](theme-development.md). En un checkout sin imágenes propias, ese mismo
+Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `reconcile`, `theme_build`, `atom`, `atom_worker`, `nginx`.
+Orden real: infraestructura sana → `bootstrap` (termina con 0) → `reconcile` (termina con 0) y, en paralelo e independiente de la BD,
+`theme_build` (termina con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap`, `reconcile` o `theme_build` fallan, `up` falla y
+`atom`, `atom_worker` y `nginx` no arrancan (son gates). `theme_build` se ejecuta en cada `up` (~20 s); ver [theme-development.md](theme-development.md). En un checkout sin imágenes propias, ese mismo
 `up -d --wait` las construye (no hace falta `docker compose build` antes).
 
 **Profiles:** ningún servicio del runtime lleva profile. `tools` es opt-in y solo contiene `db-probe`
@@ -56,6 +56,8 @@ siempre el fichero actual del host, sin rebuild.
   `docker compose run --rm theme_build`. Nunca rebuild de imagen. Ver [theme-development.md](theme-development.md).
 - `docker/nginx/nginx.conf`: Nginx solo lee su configuración al arrancar, así que hay que hacer que la relea:
   `docker compose restart nginx`.
+- `config/atom/reconcile-plugins.sh` y `config/atom/required-plugins.conf` (montados RO en `reconcile`): tampoco requieren rebuild; se
+  ejercen en el siguiente `up` o con `docker compose run --rm reconcile`.
 - `scripts/*` montados (`bootstrap.sh`, `db-probe.php`, `installation-check.php`, `worker-health.sh`): tampoco requieren
   rebuild. Para ejercer un cambio, vuelve a ejecutar el servicio o comando que usa ese script (p. ej.
   `docker compose run --rm bootstrap` o `run --rm db-probe`; `worker-health.sh` lo ejecuta el healthcheck de
@@ -71,6 +73,9 @@ docker compose ps -a
 
 # estado de la BD (db-probe): DB_COMPATIBLE | DB_FRESH | DB_UNKNOWN | DB_SCHEMA_MISMATCH | DB_UNREACHABLE
 docker compose run --rm db-probe; echo $?
+
+# plugins requeridos habilitados (reconcile; 0 = OK)
+docker compose run --rm reconcile; echo $?
 
 # instalación completa: INSTALL_COMPLETE | INSTALL_INCOMPLETE
 docker compose run --rm --no-deps --entrypoint php bootstrap /project/scripts/installation-check.php
@@ -92,6 +97,38 @@ Qué mirar en `logs bootstrap`: la línea `bootstrap: probe: <ESTADO> (exit N)` 
 instalación nueva aparece `BD FRESH: ejecutando tools:install (una sola vez)` seguido de `post-probe: DB_COMPATIBLE` e
 `instalación completa verificada`. Con una BD ya instalada solo verás `BD compatible; no se instala`.
 
+## Reconcile de plugins (desired state)
+
+`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea la **única** propiedad de AtoM que el proyecto gestiona hoy:
+`arUnicaucaB5Plugin` **debe estar habilitado**. Vive en `config/atom/`:
+
+| Fichero | Papel |
+| --- | --- |
+| `config/atom/required-plugins.conf` | Desired state: un plugin por línea (`#` comenta). Hoy solo `arUnicaucaB5Plugin` |
+| `config/atom/reconcile-plugins.sh` | El reconcile (corre dentro de la imagen AtoM; sin dependencias nuevas en el host) |
+| `config/atom/tests/test-reconcile-plugins.sh` | Prueba de integración (ver [Pruebas](../README.md#pruebas)) |
+
+Semántica: por cada plugin requerido → valida el formato del `.conf` → valida su **source mínimo** (existe `plugins/<nombre>/config/<nombre>Configuration.class.php`,
+declara la clase y es PHP válido) → observa `tools:atom-plugins list` → si **falta**, `tools:atom-plugins add` → **vuelve a observar** y exige que el
+plugin figure y que la lista sea exactamente la anterior + ese plugin. Es **selectivo** (no gestiona plugins ajenos), **aditivo**, **idempotente**
+(si ya está habilitado no escribe) y **no destructivo**: nunca deshabilita ni elimina nada; quitar una línea del `.conf` **no** deshabilita el plugin.
+No instala, no siembra, no compila assets ni limpia cachés. La CLI de AtoM guarda incluso un plugin inexistente y sale con 0, por eso el exit 0 no se
+toma como éxito.
+
+```bash
+docker compose run --rm reconcile; echo $?          # manual (diagnóstico); `up` ya lo ejecuta
+docker compose logs reconcile
+```
+
+Exit de `reconcile`: 0 éxito; 64 entrada inválida (`.conf` ausente, vacío o con una línea que no es un nombre de plugin); 65 source mínimo del
+plugin inválido (nada se escribe: todo el `.conf` se valida antes de escribir); 70 no se pudo observar la lista; 71 `tools:atom-plugins add` falló;
+72 postcondición no satisfecha tras añadir. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
+
+Límites (deliberados): supone un **único writer** durante el gate pre-start (sin locking); **no** se asume hot-reconcile sobre un AtoM ya iniciado:
+si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_worker` solo si su configuración cambió) y, si hiciera falta, reiniciando
+`atom`/`atom_worker`; un `run --rm reconcile` manual sobre un AtoM en marcha no garantiza que lo vea sin reiniciarlo. Los plugins ajenos (Dominion, los
+`sf*Plugin`, etc.) siguen gestionándose fuera de este reconcile.
+
 ## Estados problemáticos conocidos
 
 `bootstrap` nunca repara ni actualiza: ante cualquiera de estos estados hace STOP y `up` falla.
@@ -102,6 +139,8 @@ instalación nueva aparece `BD FRESH: ejecutando tools:install (una sola vez)` s
 | `DB_SCHEMA_MISMATCH` (21) | Es AtoM, pero con un schema distinto del esperado por v2.10.2 | No hay migración automática. Usa la versión de AtoM que corresponde a esa BD o, si los datos son desechables, [RESET DEV](#reset-dev-destructivo) |
 | `DB_UNREACHABLE` (30) | No se conectó a la BD tras los reintentos (30 × 2 s) | `ps -a` y `logs percona`. Recuerda que Percona solo aplica `MYSQL_*` al **inicializar** el volumen: cambiar la contraseña en el entorno después no cambia la de un volumen ya creado |
 | `DB_COMPATIBLE` + `INSTALL_INCOMPLETE` (43) | Schema correcto pero sin administrador: un `tools:install` interrumpido | STOP: **no se reinstala ni se repara automáticamente.** Si es una instalación DEV desechable: [RESET DEV](#reset-dev-destructivo). Si hay datos que conservar: no hagas RESET; investiga y recupera de forma explícita (p. ej. inspecciona la BD y restaura el administrador o la instalación a mano) |
+
+Los fallos del `reconcile` (exits 64/65/70/71/72) se describen en [Reconcile de plugins](#reconcile-de-plugins-desired-state).
 
 Otros exits de `bootstrap`: 40 `tools:install` falló; 41 el probe posterior no dio `DB_COMPATIBLE`; 42 Elasticsearch o
 Memcached no disponibles (solo al instalar); 64/70 configuración inválida o error inesperado. Empieza siempre por
@@ -210,5 +249,5 @@ requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). U
 
 ## Pendiente (fuera de este runbook)
 
-Producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, reconcile/activación automática del
-theme (WU-13) y el diseño institucional final: no están decididos y no se describen aquí.
+Producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, gestión de `setting` o de más plugins vía reconcile,
+hot-reconcile/concurrencia y el diseño institucional final: no están decididos y no se describen aquí.

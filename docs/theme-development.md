@@ -69,8 +69,8 @@ docker compose up -d --wait
 ```
 
 `up` ejecuta `theme_build` en cada arranque (unos 20 s): `npm run build` con `clean: true` deja `dist` reconciliado con el
-source actual. No se confía en el estado previo del volumen. Para ver el theme hay que activarlo a mano (ver
-[Activación del theme](#activación-del-theme-temporal--manual-hasta-wu-13)).
+source actual. No se confía en el estado previo del volumen. El theme queda **habilitado** por el `reconcile` del mismo `up` (ver
+[Activación del theme](#activación-del-theme-reconcile)).
 
 ## Antes de tocar una pantalla
 
@@ -298,22 +298,23 @@ TOUCH:
 ESCALATION:
 ```
 
-## Activación del theme: TEMPORAL / MANUAL hasta WU-13
+## Activación del theme (reconcile)
 
-El plugin **no** se activa solo: activarlo es estado de la BD (reconcile, fuera de esta WU). Para verlo en DEV:
+`arUnicaucaB5Plugin` está habilitado por el servicio `reconcile` (`docker compose up -d --wait` lo ejecuta antes de `atom`/`atom_worker`), a partir del
+desired state versionado `config/atom/required-plugins.conf`. La presencia del plugin en el filesystem no lo habilita: la activación es estado de la BD
+y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-plugins-desired-state). `theme_build` no toca la BD.
 
 ```bash
-docker compose exec atom php symfony tools:atom-plugins add arUnicaucaB5Plugin
+docker compose run --rm reconcile          # aplicar/verificar a mano
 docker compose exec atom php symfony tools:atom-plugins list
-# desactivar:
-docker compose exec atom php symfony tools:atom-plugins delete arUnicaucaB5Plugin
 ```
 
+Deshabilitar el theme a mano (`tools:atom-plugins delete arUnicaucaB5Plugin`) es un experimento local: el siguiente `up` (o `run reconcile`) lo vuelve a
+habilitar mientras siga en el `.conf`. El reconcile solo **añade**; nunca deshabilita ni gestiona otros plugins.
+
 La precedencia sobre `arDominionB5Plugin` viene de la Configuration del skeleton (extiende Dominion y antepone sus templates),
-así que el theme custom gana **aunque Dominion siga habilitado**; deshabilitar Dominion (`tools:atom-plugins delete
-arDominionB5Plugin`) también funciona (probado en aislado). Qué themes quedan habilitados es decisión del reconcile (WU-13).
-Verificación: el HTML contiene `<meta name="atom-theme" content="arUnicaucaB5Plugin">`. Ni `theme_build` ni el
-arranque tocan la BD. Esta activación manual desaparece cuando exista el desired state (`config/atom/`, WU-13).
+así que el theme custom gana **aunque Dominion siga habilitado** (Dominion no es propiedad del reconcile: sigue como esté en la BD; deshabilitarlo
+también funciona, probado en aislado). Verificación: el HTML contiene `<meta name="atom-theme" content="arUnicaucaB5Plugin">`.
 
 ## Troubleshooting mínimo
 
