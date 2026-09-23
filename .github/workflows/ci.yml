@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  minimal-checks:
+    name: Minimal checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Bash syntax check (bash -n)
+        run: |
+          set -euo pipefail
+          status=0
+          while IFS= read -r -d '' f; do
+            echo "::group::bash -n $f"
+            bash -n "$f" || status=1
+            echo "::endgroup::"
+          done < <(git ls-files -z -- '*.sh')
+          exit "$status"
+
+      - name: Compose validation
+        run: docker compose config
