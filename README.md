@@ -6,7 +6,7 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 - **Baseline AtoM:** v2.10.2, incluida como submódulo Git sin modificar en `upstream/atom`
   (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen se construye con el `Dockerfile` upstream.
 - **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
-  (instalación inicial segura), `reconcile` (habilita los plugins requeridos), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
+  (instalación inicial segura), `dev_secrets` (secreto CSRF local), `reconcile` (plugins requeridos y `check_for_updates = 0`), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
 - **Theme institucional:** `plugins/arUnicaucaB5Plugin/` (plugin de AtoM propio, basado en el skeleton oficial `arThemeB5Plugin` y extensión de `arDominionB5Plugin`). Ciclo DEV
   (editar → build → refresh) en [docs/theme-development.md](docs/theme-development.md).
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
@@ -85,13 +85,16 @@ Volúmenes Docker del proyecto `archivo-historico` (`docker volume ls`):
 | `archivo-historico_downloads_data` | informes y exportaciones | persistente por prudencia |
 | `archivo-historico_elasticsearch_data` | índices de búsqueda | derivado (reconstruible desde la BD) |
 | `archivo-historico_theme_dist` | bundles compilados del theme | derivado (lo reconstruye `theme_build`; sin backup) |
+| `archivo-historico_atom_secrets` | secreto CSRF local de DEV | secreto de entorno (`down -v` lo regenera; nunca en Git) |
 
 La configuración de AtoM se regenera en cada arranque y el código y los estáticos de AtoM vienen de la imagen: no son estado.
+Configuración crítica del proyecto (cultura `es`, timezone `America/Bogota`, secreto CSRF real y `check_for_updates = 0`):
+[runbook](docs/dev-runbook.md#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates). El timezone se cambia con `ATOM_TIMEZONE` (una sola variable para PHP y Symfony).
 El source del theme vive en `plugins/arUnicaucaB5Plugin/` (repo) y se monta en los contenedores.
 
 ## Qué NO hacer
 
-- **No ejecutes `down -v`** salvo que quieras borrar TODO el estado DEV a propósito. Es el RESET DEV: destructivo e
+- **No ejecutes `down -v`** salvo que quieras borrar TODO el estado DEV a propósito (también el secreto CSRF local: el siguiente `up` genera uno nuevo). Es el RESET DEV: destructivo e
   irreversible. Ver [RESET DEV](docs/dev-runbook.md#reset-dev-destructivo).
 - No uses `docker system prune` ni `docker volume prune`: pueden llevarse volúmenes de otros proyectos.
 - No modifiques `upstream/atom` (es el baseline exacto de AtoM). El theme se desarrolla en `plugins/arUnicaucaB5Plugin/`.
@@ -100,8 +103,8 @@ El source del theme vive en `plugins/arUnicaucaB5Plugin/` (repo) y se monta en l
 ## Pruebas
 
 Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la del theme vive con él:
-`plugins/arUnicaucaB5Plugin/tests/test-theme.sh`; la del reconcile, con su desired state:
-`config/atom/tests/test-reconcile-plugins.sh`). Los `test-db-probe`, `test-bootstrap`,
+`plugins/arUnicaucaB5Plugin/tests/test-theme.sh`; las del reconcile y de la configuración crítica, con su desired state:
+`config/atom/tests/test-reconcile-plugins.sh` y `config/atom/tests/test-critical-config.sh`, esta última sobre un proyecto Docker aislado). Los `test-db-probe`, `test-bootstrap`,
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
 `scripts/test-fresh-e2e.sh` es la prueba de checkout limpio + RESET: crea su propio clon, proyecto Docker
 (`archivo-historico-e2e-<id>`), puerto e imágenes, y **no toca** la instancia DEV normal. Ver el runbook.

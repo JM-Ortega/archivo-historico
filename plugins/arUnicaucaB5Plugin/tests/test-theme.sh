@@ -114,7 +114,7 @@ fact() { grep "^$1=" <<<"$FACTS" | cut -d= -f2- || true; }
 expect "el análisis de la configuración Compose produjo resultados" "12" "$(grep -c '=' <<<"$FACTS" || true)"
 expect "theme_build usa la misma imagen que atom" "$(fact image_atom)" "$(fact image_theme_build)"
 expect "theme_build: plugin RW + theme_dist RW en /atom/src/dist" "/atom/src/dist rw;$PIN rw" "$(fact theme_build_vols)"
-expect "atom: solo el plugin, RO (sin theme_dist)" "$PIN ro" "$(fact atom_binds)"
+expect "atom: solo el plugin y el entrypoint del proyecto, RO (sin theme_dist)" "$PIN ro;/project/scripts/runtime-config.sh ro" "$(fact atom_binds)"
 expect "atom_worker: plugin RO" "$PIN ro" "$(fact worker_plugin_binds)"
 expect "atom_worker no monta theme_dist" "0" "$(fact worker_dist_mounts)"
 expect "nginx: theme_dist RO + solo images/ del plugin RO" "/atom/src/dist ro;$PIN/images ro" "$(fact nginx_theme_vols)"

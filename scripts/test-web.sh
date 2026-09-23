@@ -125,8 +125,8 @@ expect "nginx: conf, uploads, downloads, theme_dist e images/ del theme (nunca e
 expect "nginx: ningún mount es RW" "" "$(docker inspect -f '{{range .Mounts}}{{if .RW}}{{.Destination}} {{end}}{{end}}' "$NID")"
 expect "nginx: sin bind sobre /atom/src" "" \
   "$(docker inspect -f '{{range .Mounts}}{{if and (eq .Type "bind") (eq .Destination "/atom/src")}}x{{end}}{{end}}' "$NID")"
-expect "atom: el único bind es el plugin del theme (RO)" "/atom/src/plugins/arUnicaucaB5Plugin false" \
-  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}}{{end}}{{end}}' "$(svc_id atom)")"
+expect "atom: los únicos binds son el plugin del theme y el entrypoint del proyecto (RO)" "/atom/src/plugins/arUnicaucaB5Plugin false;/project/scripts/runtime-config.sh false;" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}};{{end}}{{end}}' "$(svc_id atom)" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
 W_UP=0; W_DOWN=0
 in_svc nginx sh -c "echo x > /atom/src/uploads/nginx-write-$RUN" 2>/dev/null || W_UP=$?
 in_svc nginx sh -c "echo x > /atom/src/downloads/nginx-write-$RUN" 2>/dev/null || W_DOWN=$?

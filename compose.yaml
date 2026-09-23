@@ -26,6 +26,22 @@ x-atom-connection-env: &atom-connection-env
   ATOM_MEMCACHED_HOST: ${ATOM_MEMCACHED_HOST:-memcached:11211}
   ATOM_GEARMAND_HOST: gearmand:4730
 
+# Configuración runtime crítica de AtoM (bootstrap, reconcile, atom y atom_worker). El entrypoint del proyecto
+# (config/atom/runtime-config.sh) la vuelca en el settings.yml efímero del contenedor ANTES de que corra cualquier comando
+# (incluido `tools:install`) y delega en el entrypoint upstream.
+#   - ATOM_PHP_DATE_TIMEZONE es UNA sola intención ambiental (`ATOM_TIMEZONE`, DEV: America/Bogota): el entrypoint upstream la
+#     vuelca en php.ini (`date.timezone`) y el del proyecto en `default_timezone` de Symfony (que, si divergiera, ganaría dentro de la app).
+#   - El secreto CSRF llega como FICHERO (ATOM_CSRF_SECRET_FILE), nunca como valor de entorno: no aparece en `docker inspect`.
+#     En DEV lo genera una vez `dev_secrets` en el volumen `atom_secrets`; un despliegue real aporta su propio fichero.
+#   - default_culture (es) es PROJECT-MANAGED: constante en runtime-config.sh, no configurable por entorno.
+x-atom-runtime-env: &atom-runtime-env
+  ATOM_PHP_DATE_TIMEZONE: ${ATOM_TIMEZONE:-America/Bogota}
+  ATOM_CSRF_SECRET_FILE: /run/atom-secrets/csrf_secret
+
+# Binds/volúmenes de solo lectura del entrypoint del proyecto y del secreto (se reutilizan como elementos de `volumes`).
+x-atom-runtime-script: &atom-runtime-script ./config/atom/runtime-config.sh:/project/scripts/runtime-config.sh:ro
+x-atom-secrets-volume: &atom-secrets-volume atom_secrets:/run/atom-secrets:ro
+
 # Imagen AtoM del proyecto (build upstream sin modificar). La comparten db-probe, bootstrap, atom, atom_worker y
 # theme_build: una sola imagen y un solo build. Cada servicio la referencia con `<<: *atom-image`.
 x-atom-image: &atom-image
@@ -142,17 +158,32 @@ services:
       percona:
         condition: service_healthy
 
+  # Secretos locales de DEV (one-shot; queda en Exited (0)). SOLO DEV: garantiza el secreto CSRF en el volumen `atom_secrets`.
+  # Lo genera UNA vez (256 bits de /dev/urandom) y no lo toca mientras exista: estable en stop/down/recreate/`up`; solo un RESET DEV
+  # (`docker compose down -v`) lo elimina y el siguiente `up` genera uno nuevo. No lo imprime ni lo pasa por entorno.
+  # Es el ÚNICO servicio con el volumen en escritura; los consumidores lo montan RO. Sin puertos ni acceso a la BD.
+  #
+  #   docker compose run --rm dev_secrets; echo $?
+  dev_secrets:
+    <<: *atom-image
+    entrypoint: ["bash", "/project/scripts/dev-secrets.sh"]
+    volumes:
+      - ./config/atom/dev-secrets.sh:/project/scripts/dev-secrets.sh:ro
+      - atom_secrets:/run/atom-secrets
+
   # Bootstrap de AtoM (probe → tools:install si la BD está FRESH → installation-check). Forma parte del ciclo
   # normal: `up` lo ejecuta antes de `atom` y `atom_worker` (gate) y queda en estado Exited (0).
   # Ejecución manual (diagnóstico): `docker compose run --rm bootstrap; echo $?`
   #
-  # Conserva el entrypoint upstream (genera la configuración runtime desde el entorno) y monta RO
-  # solo los scripts del proyecto. No levanta web ni worker.
+  # Entrypoint del proyecto (config/atom/runtime-config.sh: aplica cultura, timezone y secreto CSRF al settings.yml ANTES de
+  # `tools:install`; delega en el upstream, que genera el resto de la configuración runtime desde el entorno) y monta RO solo
+  # los scripts del proyecto y el secreto. Depende de `dev_secrets`. No levanta web ni worker.
   bootstrap:
     <<: *atom-image
+    entrypoint: ["bash", "/project/scripts/runtime-config.sh"]
     command: ["bash", "/project/scripts/bootstrap.sh"]
     environment:
-      <<: *atom-connection-env
+      <<: [*atom-connection-env, *atom-runtime-env]
       ATOM_SEARCH_INDEX: ${ATOM_SEARCH_INDEX:-atom}
       # Credenciales de admin locales de DEV (no sensibles).
       ATOM_ADMIN_EMAIL: ${ATOM_ADMIN_EMAIL:-admin@example.com}
@@ -164,10 +195,14 @@ services:
       BOOTSTRAP_WAIT_ATTEMPTS: ${BOOTSTRAP_WAIT_ATTEMPTS:-30}
       BOOTSTRAP_WAIT_INTERVAL: ${BOOTSTRAP_WAIT_INTERVAL:-2}
     volumes:
+      - *atom-runtime-script
+      - *atom-secrets-volume
       - ./scripts/bootstrap.sh:/project/scripts/bootstrap.sh:ro
       - ./scripts/db-probe.php:/project/scripts/db-probe.php:ro
       - ./scripts/installation-check.php:/project/scripts/installation-check.php:ro
     depends_on:
+      dev_secrets:
+        condition: service_completed_successfully
       percona:
         condition: service_healthy
       elasticsearch:
@@ -175,10 +210,13 @@ services:
       memcached:
         condition: service_healthy
 
-  # Reconcile de AtoM (one-shot; queda en Exited (0), como `bootstrap` y `theme_build`). Alinea SOLO el estado
-  # PROJECT-MANAGED de plugins: garantiza que cada plugin de config/atom/required-plugins.conf (hoy arUnicaucaB5Plugin) esté
-  # habilitado en la BD. Selectivo, aditivo, idempotente y no destructivo: solo añade el plugin requerido si falta, no gestiona
-  # ni quita plugins ajenos, y verifica la postcondición releyendo el estado. No instala, no siembra ni compila assets.
+  # Reconcile de AtoM (one-shot; queda en Exited (0), como `bootstrap` y `theme_build`). Alinea SOLO estado PROJECT-MANAGED, en
+  # dos pasos selectivos (config/atom/reconcile.sh):
+  #   1. plugins: cada plugin de config/atom/required-plugins.conf (hoy arUnicaucaB5Plugin) habilitado en la BD. Aditivo: solo añade
+  #      el plugin requerido si falta, no gestiona ni quita plugins ajenos, y verifica la postcondición releyendo el estado.
+  #   2. check_for_updates = 0 (la única fila de `setting` que gestiona el proyecto): escribe solo si difiere, invalida SOLO la caché
+  #      de settings (`settings:i18n:*`, nunca flush_all: destruiría las sesiones) y exige la postcondición (BD y caché).
+  # Idempotente y no destructivo. No instala, no siembra ni compila assets.
   #
   #   docker compose run --rm reconcile; echo $?
   #
@@ -187,16 +225,22 @@ services:
   # hot-reconcile: un `up` que cambie el estado recrea `atom`/`atom_worker` (su dependencia cambió), pero `run` manual sobre un
   # AtoM en marcha no garantiza que lo vea sin reiniciarlo.
   #
-  # Conserva el entrypoint upstream (configuración runtime desde el entorno) y monta RO solo lo necesario: el plugin (para validar
-  # su source y para que la CLI de AtoM lo cargue), el script y el desired state. Escribe únicamente en la BD, vía tools:atom-plugins.
+  # Entrypoint del proyecto (runtime-config.sh: cultura, timezone y secreto CSRF; delega en el upstream) y monta RO solo lo
+  # necesario: el plugin (para validar su source y para que la CLI de AtoM lo cargue), los scripts y el desired state.
+  # Escribe únicamente en la BD (vía tools:atom-plugins y QubitSetting) y en la caché de settings de Memcached.
   reconcile:
     <<: *atom-image
-    command: ["bash", "/project/scripts/reconcile-plugins.sh"]
+    entrypoint: ["bash", "/project/scripts/runtime-config.sh"]
+    command: ["bash", "/project/scripts/reconcile.sh"]
     environment:
-      <<: *atom-connection-env
+      <<: [*atom-connection-env, *atom-runtime-env]
     volumes:
+      - *atom-runtime-script
+      - *atom-secrets-volume
       - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin:ro
+      - ./config/atom/reconcile.sh:/project/scripts/reconcile.sh:ro
       - ./config/atom/reconcile-plugins.sh:/project/scripts/reconcile-plugins.sh:ro
+      - ./config/atom/reconcile-check-for-updates.php:/project/scripts/reconcile-check-for-updates.php:ro
       - ./config/atom/required-plugins.conf:/project/config/atom/required-plugins.conf:ro
     depends_on:
       bootstrap:
@@ -228,8 +272,9 @@ services:
   # en cualquier otro estado hace STOP). El bootstrap es idempotente: una BD DB_COMPATIBLE + INSTALL_COMPLETE
   # nunca se reinstala.
   #
-  # Conserva el CMD y el entrypoint upstream (regeneran la configuración runtime desde el entorno en cada
-  # arranque); el código de AtoM viene de la imagen, sin bind del checkout. Solo uploads/ y downloads/ se persisten.
+  # Entrypoint del proyecto sobre el upstream (regeneran la configuración runtime desde el entorno en cada arranque; el
+  # settings.yml se deriva de defaults + entorno + secreto, nunca se persiste); el código de AtoM viene de la imagen, sin bind
+  # del checkout. Solo uploads/ y downloads/ se persisten. El secreto CSRF se monta RO desde `atom_secrets`.
   #
   # Theme: el plugin del proyecto se monta RO, sobre el directorio del plugin (nunca /atom/src completo): los template
   # overrides que edites en el host se ven sin rebuild de imagen. Depende de `theme_build` (genera su
@@ -240,10 +285,16 @@ services:
   # El puerto web sigue publicado solo en 127.0.0.1 (ver `nginx`). No altera NODE_ENV (el build sigue en production).
   atom:
     <<: *atom-image
+    # Entrypoint del proyecto (aplica cultura/timezone/secreto y delega en el upstream); el CMD de la imagen se pierde al
+    # redefinir el entrypoint, por eso `fpm` se declara aquí.
+    entrypoint: ["bash", "/project/scripts/runtime-config.sh"]
+    command: ["fpm"]
     environment:
-      <<: *atom-connection-env
+      <<: [*atom-connection-env, *atom-runtime-env]
       ATOM_DEVELOPMENT_MODE: "true"
     volumes:
+      - *atom-runtime-script
+      - *atom-secrets-volume
       - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin:ro
       # Estado autoritativo: objetos digitales (no reconstruibles).
       - uploads_data:/atom/src/uploads
@@ -277,7 +328,7 @@ services:
   # Gate: igual que `atom`, depende de `bootstrap` con service_completed_successfully; nunca ejecuta
   # jobs:worker contra una BD sin instalar/incompatible. No duplica el probe ni el installation-check.
   #
-  # `command: worker` es el atajo del entrypoint upstream (regenera la configuración runtime desde el
+  # `command: worker` es el atajo del entrypoint upstream (tras el del proyecto: regenera la configuración runtime desde el
   # entorno, espera 10 s y hace exec de `php symfony jobs:worker`). Persistencia: solo uploads/ y downloads/
   # (RW, mismos volúmenes que `atom`, porque los jobs de exportación/importación los escriben); el código
   # viene de la imagen. Sin puerto ni bind del checkout (salvo el plugin del theme, RO, y el script de health).
@@ -289,9 +340,12 @@ services:
     # 10 s); agotado, queda unhealthy/exited. Un reinicio automático NO ejecuta el bootstrap ni sustituye su gate: ante
     # un restore/reemplazo/reset de la BD el worker debe recrearse con `up` (que vuelve a pasar por el bootstrap).
     restart: on-failure:5
+    entrypoint: ["bash", "/project/scripts/runtime-config.sh"]
     environment:
-      <<: *atom-connection-env
+      <<: [*atom-connection-env, *atom-runtime-env]
     volumes:
+      - *atom-runtime-script
+      - *atom-secrets-volume
       - uploads_data:/atom/src/uploads
       - downloads_data:/atom/src/downloads
       # Mismo plugin RO que `atom`: paridad del source de la aplicación (no significa que todo job lo requiera).
@@ -359,6 +413,9 @@ services:
 
 volumes:
   percona_data:
+  # Secreto CSRF local de DEV (lo escribe solo `dev_secrets`; el resto lo monta RO). ESTADO DE ENTORNO, no del proyecto: no va a Git ni a
+  # la imagen. Sobrevive a stop/down/up; `down -v` (RESET DEV) lo elimina y el siguiente `up` genera uno nuevo. Ver docs/dev-runbook.md.
+  atom_secrets:
   elasticsearch_data:
   # atom y atom_worker (RW); nginx (RO).
   uploads_data:

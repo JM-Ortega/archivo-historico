@@ -72,12 +72,12 @@ expect "healthcheck del worker" "healthy" "$(docker inspect -f '{{.State.Health.
 
 echo "== B. Gate de bootstrap (contrato estructural en compose.yaml; el gate negativo de G lo demuestra) =="
 expect "el bootstrap terminó con éxito" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id bootstrap)")"
-expect "en el worker solo está el script del healthcheck" "worker-health.sh" "$(in_svc atom_worker ls /project/scripts)"
+expect "en el worker solo están el script del healthcheck y el entrypoint del proyecto" "runtime-config.sh worker-health.sh" "$(in_svc atom_worker ls /project/scripts | tr '\n' ' ' | sed 's/ $//')"
 
 echo "== C. Baseline y comando =="
 expect "misma imagen que atom" "$(docker inspect -f '{{.Image}}' "$ATOM_ID")" "$(docker inspect -f '{{.Image}}' "$WID")"
 expect "imagen archivo-historico/atom:2.10.2" "archivo-historico/atom:2.10.2" "$(docker inspect -f '{{.Config.Image}}' "$WID")"
-expect "entrypoint upstream conservado" '["docker/entrypoint.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$WID")"
+expect "entrypoint del proyecto (runtime-config.sh) que delega en el upstream" '["bash","/project/scripts/runtime-config.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$WID")"
 expect "command: worker (atajo upstream)" '["worker"]' "$(docker inspect -f '{{json .Config.Cmd}}' "$WID")"
 expect "comando real: php symfony jobs:worker (PID 1)" "php /atom/src/docker/../symfony jobs:worker" \
   "$(in_svc atom_worker sh -c "tr '\\0' ' ' </proc/1/cmdline | sed 's/ \$//'")"
@@ -86,11 +86,11 @@ expect "restart policy: máximo 5 reintentos" "5" "$(docker inspect -f '{{.HostC
 expect "sin puertos publicados" "" "$(docker port "$WID")"
 
 echo "== D. Filesystem =="
-expect "mounts = uploads RW, downloads RW, script de health RO y plugin del theme RO" \
-  "bind /atom/src/plugins/arUnicaucaB5Plugin false;bind /project/scripts/worker-health.sh false;volume $DOWN true;volume $UP true;" \
+expect "mounts = uploads RW, downloads RW, secreto CSRF RO, script de health y entrypoint del proyecto RO y plugin del theme RO" \
+  "bind /atom/src/plugins/arUnicaucaB5Plugin false;bind /project/scripts/runtime-config.sh false;bind /project/scripts/worker-health.sh false;volume $DOWN true;volume $UP true;volume /run/atom-secrets false;" \
   "$(docker inspect -f '{{range .Mounts}}{{.Type}} {{.Destination}} {{.RW}};{{end}}' "$WID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
-expect "sin bind de /atom/src ni del checkout (solo el script de health y el plugin del theme)" "/atom/src/plugins/arUnicaucaB5Plugin" \
-  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{if ne .Destination "/project/scripts/worker-health.sh"}}{{.Destination}}{{end}}{{end}}{{end}}' "$WID")"
+expect "sin bind de /atom/src ni del checkout (solo los scripts del proyecto y el plugin del theme)" "/atom/src/plugins/arUnicaucaB5Plugin" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{if and (ne .Destination "/project/scripts/worker-health.sh") (ne .Destination "/project/scripts/runtime-config.sh")}}{{.Destination}}{{end}}{{end}}{{end}}' "$WID")"
 in_svc atom_worker sh -c "echo uploads-$RUN > $UP/$MARK && echo downloads-$RUN > $DOWN/$MARK"
 expect "worker escribe uploads y atom lo ve (mismo volumen)" "uploads-$RUN" "$(in_svc atom cat "$UP/$MARK")"
 expect "worker escribe downloads y atom lo ve (mismo volumen)" "downloads-$RUN" "$(in_svc atom cat "$DOWN/$MARK")"

@@ -101,9 +101,9 @@ expect "reconcile depende del bootstrap (completed_successfully)" "service_compl
 expect "reconcile NO depende de theme_build (gates independientes)" "bootstrap" "$(py "print(' '.join(sorted(d['reconcile']['depends_on'])))")"
 expect "atom depende del reconcile (completed_successfully)" "service_completed_successfully" "$(py "print(d['atom']['depends_on']['reconcile']['condition'])")"
 expect "atom_worker depende del reconcile (completed_successfully)" "service_completed_successfully" "$(py "print(d['atom_worker']['depends_on']['reconcile']['condition'])")"
-expect "reconcile: solo binds RO (plugin, script, desired state), sin puertos" "ro ro ro none" \
+expect "reconcile: solo binds/volúmenes RO (entrypoint, secreto, plugin, scripts, desired state), sin puertos" "ro ro ro ro ro ro ro none" \
   "$(py "r=d['reconcile']; print(' '.join(v.get('read_only') and 'ro' or 'RW' for v in r['volumes']), 'none' if 'ports' not in r else 'PORTS')")"
-expect "reconcile conserva el entrypoint upstream (no lo redefine)" "null" "$(py "print(json.dumps(d['reconcile'].get('entrypoint')))")"
+expect "reconcile usa el entrypoint del proyecto (que delega en el upstream)" '["bash", "/project/scripts/runtime-config.sh"]' "$(py "print(json.dumps(d['reconcile'].get('entrypoint')))")"
 
 echo "== A. Plugin requerido ausente → habilitado (y postcondición releída) =="
 reconcile
@@ -219,7 +219,7 @@ expect "G. up -d --wait completa con éxito" "0" "$HAPPY_RC"
 expect "G. reconcile terminó con 0" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$("${COMPOSE[@]}" ps -aq reconcile)")"
 expect_ne "G. reconcile se volvió a ejecutar en este up" "$RECON_STARTED" "$(docker inspect -f '{{.State.StartedAt}}' "$("${COMPOSE[@]}" ps -aq reconcile)")"
 expect "G. el theme está habilitado en la BD real" "1" "$(plugins_sql atom | grep -cx "$THEME" || true)"
-expect "G. el contenedor reconcile usa el entrypoint upstream" '["docker/entrypoint.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$("${COMPOSE[@]}" ps -aq reconcile)")"
+expect "G. el contenedor reconcile usa el entrypoint del proyecto" '["bash","/project/scripts/runtime-config.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$("${COMPOSE[@]}" ps -aq reconcile)")"
 for s in atom atom_worker nginx; do expect "G. $s healthy" "healthy" "$(docker inspect -f '{{.State.Health.Status}}' "$("${COMPOSE[@]}" ps -aq "$s")")"; done
 expect "G. web READY" "READY" "$(scripts/web-ready.sh --wait 2>/dev/null | sed -E 's/^web-ready: (READY).*/\1/')"
 

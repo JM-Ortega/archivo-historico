@@ -18,8 +18,8 @@ docker compose up -d --wait
 scripts/web-ready.sh --wait
 ```
 
-Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `bootstrap`, `reconcile`, `theme_build`, `atom`, `atom_worker`, `nginx`.
-Orden real: infraestructura sana → `bootstrap` (termina con 0) → `reconcile` (termina con 0) y, en paralelo e independiente de la BD,
+Servicios por defecto: `percona`, `elasticsearch`, `memcached`, `gearmand`, `dev_secrets`, `bootstrap`, `reconcile`, `theme_build`, `atom`, `atom_worker`, `nginx`.
+Orden real: infraestructura sana y `dev_secrets` (termina con 0) → `bootstrap` (termina con 0) → `reconcile` (termina con 0) y, en paralelo e independiente de la BD,
 `theme_build` (termina con 0) → `atom` y `atom_worker` → `nginx`. Si `bootstrap`, `reconcile` o `theme_build` fallan, `up` falla y
 `atom`, `atom_worker` y `nginx` no arrancan (son gates). `theme_build` se ejecuta en cada `up` (~20 s); ver [theme-development.md](theme-development.md). En un checkout sin imágenes propias, ese mismo
 `up -d --wait` las construye (no hace falta `docker compose build` antes).
@@ -58,6 +58,9 @@ siempre el fichero actual del host, sin rebuild.
   `docker compose restart nginx`.
 - `config/atom/reconcile-plugins.sh` y `config/atom/required-plugins.conf` (montados RO en `reconcile`): tampoco requieren rebuild; se
   ejercen en el siguiente `up` o con `docker compose run --rm reconcile`.
+- `config/atom/runtime-config.sh` (entrypoint del proyecto, montado RO en `bootstrap`/`reconcile`/`atom`/`atom_worker`), `config/atom/dev-secrets.sh` y
+  `config/atom/reconcile*.{sh,php}`: tampoco requieren rebuild; se ejercen al recrear el servicio (ver
+  [Configuración crítica](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)).
 - `scripts/*` montados (`bootstrap.sh`, `db-probe.php`, `installation-check.php`, `worker-health.sh`): tampoco requieren
   rebuild. Para ejercer un cambio, vuelve a ejecutar el servicio o comando que usa ese script (p. ej.
   `docker compose run --rm bootstrap` o `run --rm db-probe`; `worker-health.sh` lo ejecuta el healthcheck de
@@ -97,16 +100,69 @@ Qué mirar en `logs bootstrap`: la línea `bootstrap: probe: <ESTADO> (exit N)` 
 instalación nueva aparece `BD FRESH: ejecutando tools:install (una sola vez)` seguido de `post-probe: DB_COMPATIBLE` e
 `instalación completa verificada`. Con una BD ya instalada solo verás `BD compatible; no se instala`.
 
+## Configuración crítica de AtoM: cultura, timezone, secreto CSRF y updates
+
+Cuatro propiedades, cada una con su dueño. Ninguna convierte `settings.yml` ni la tabla `setting` en estado autoritativo: lo autoritativo es
+*defaults del proyecto + entorno + secreto*, y los ficheros runtime se **derivan** en cada arranque.
+
+| Propiedad | Ownership | Dónde se declara | Cómo se aplica |
+| --- | --- | --- | --- |
+| `default_culture = es` | PROJECT-MANAGED | constante `PROJECT_DEFAULT_CULTURE` de `config/atom/runtime-config.sh` | entrypoint, ANTES de cualquier comando (incl. `tools:install`) |
+| timezone (DEV: `America/Bogota`) | ENVIRONMENT-MANAGED | variable de host `ATOM_TIMEZONE` (default DEV en `compose.yaml`) → `ATOM_PHP_DATE_TIMEZONE` en los contenedores | entrypoint: `php.ini` (upstream) **y** `default_timezone` de Symfony (proyecto), de la misma variable |
+| `csrf_secret` | ENVIRONMENT-MANAGED SECRET | **fichero** `ATOM_CSRF_SECRET_FILE` (`/run/atom-secrets/csrf_secret`); en DEV lo genera `dev_secrets` | entrypoint: se vuelca en el `settings.yml` efímero del contenedor |
+| `check_for_updates = 0` | PROJECT-MANAGED (tabla `setting`) | `config/atom/reconcile-check-for-updates.php` | `reconcile` (pre-start), con verificación de postcondición |
+
+**Entrypoint del proyecto** (`config/atom/runtime-config.sh`, en `bootstrap`, `reconcile`, `atom` y `atom_worker`; lo demás lo sigue haciendo el entrypoint upstream, al que
+delega con `exec`): escribe exactamente tres claves (`default_culture`, `default_timezone`, `csrf_secret`) en `settings.yml` **y** en su `settings.yml.tmpl`. El `.tmpl` es la copia del
+contenedor (la imagen y el submódulo no cambian): `tools:install` **borra** `settings.yml` y lo regenera desde el `.tmpl`, así que un `settings.yml` correcto no bastaría y la
+instalación correría con `en`/Vancouver/`change_me`. Ambos ficheros viven en la capa escribible del contenedor y se regeneran en cada arranque; nunca se persisten. Falla (exit 64) sin
+tocar nada si el timezone no es válido o falta/es inválido el fichero de secreto, y (exit 65) si el template upstream dejó de tener la forma esperada.
+
+**Cultura.** Solo cambia el comportamiento *futuro*: la interfaz por defecto y la `source_culture` de lo que se cree sin cultura explícita (los settings del sitio y el actor del
+administrador que crea `tools:install`, por ejemplo). No migra nada: los registros existentes conservan su `source_culture` y las fixtures de AtoM con cultura explícita `en` siguen en `en`.
+No toca `i18n_languages`, ni reindexa. Una BD DEV anterior a esta configuración sigue funcionando con lo que ya tenía.
+
+**Timezone.** Una sola intención. Cambiarla (`ATOM_TIMEZONE=America/Lima docker compose up -d --wait`) recrea los contenedores AtoM y afecta a ambos consumidores a la vez; si `php.ini` y
+Symfony divergieran, dentro de la aplicación gana Symfony. La mayoría de las fechas de AtoM son `DATETIME` sin zona: **cambiar el timezone de un sistema con datos no reinterpreta lo ya guardado.**
+Percona, Nginx y los logs siguen en UTC (aceptable; no hace falta ajustarlos).
+
+**Secreto CSRF.**
+- **DEV:** `dev_secrets` (one-shot, `config/atom/dev-secrets.sh`) genera 256 bits de `/dev/urandom` **una vez** en el volumen `atom_secrets`, con modo 0600, y no lo vuelve a tocar mientras el volumen
+  exista: sobrevive a `stop`, `down`, `up` y a recrear `atom`/`atom_worker`. Los cuatro contextos AtoM montan el volumen **solo lectura**. Un fichero existente pero inválido es STOP (no se sustituye).
+- **RESET DEV** (`docker compose down -v`) elimina el volumen: el siguiente `up` genera un secreto **nuevo** junto con la instalación nueva. Cambiar el secreto no migra datos ni cierra sesiones, solo invalida
+  formularios ya abiertos.
+- **No** está en Git, ni en la imagen, ni en el entorno de ningún contenedor (no aparece en `docker inspect`), ni en logs. Para comprobarlo sin verlo: `docker compose exec atom sha256sum /run/atom-secrets/csrf_secret | cut -c1-16` da una huella comparable.
+- **Aportar un secreto externo** (otro entorno/despliegue): dejar de usar `dev_secrets`, montar un fichero propio (>= 32 caracteres de `[A-Za-z0-9_-]`, una línea) en los contenedores AtoM y apuntar `ATOM_CSRF_SECRET_FILE`
+  a él. Con varias instancias web, todas deben compartir el mismo valor. Producción, gestión y rotación de secretos **no** están definidas aquí.
+
+**`check_for_updates = 0`.** Con el default upstream (1), un administrador dispara un POST síncrono a `accesstomemory.org` (URL admin, versión, título y descripción del sitio; sin usuarios ni corpus) y, si el
+servidor no responde, el render puede bloquearse. Lo aplica el segundo paso del `reconcile`, solo si la BD difiere, y **siempre invalida solo `settings:i18n:*`** con `QubitCache` (como las acciones administrativas
+de AtoM): `tools:settings set` cambia la BD pero **no** invalida la caché, y las requests seguirían viendo `1` hasta ~24 h. No usa `flush_all` (destruiría las sesiones). Postcondición: BD en `0`, valor efectivo recalculado en `0`,
+ninguna entrada de caché con otro valor. Solo esa fila: los demás settings no se gestionan.
+
+Verificación de la configuración (sin imprimir el secreto):
+
+```bash
+docker compose exec -T atom sh -c 'grep -E "^ +default_(culture|timezone):" /atom/src/apps/qubit/config/settings.yml; grep -c change_me /atom/src/apps/qubit/config/settings.yml; php -r "echo ini_get(\"date.timezone\"), PHP_EOL;"'
+docker compose logs reconcile | grep check_for_updates
+```
+
+Prueba de integración (proyecto aislado, no toca la DEV; ~4 min): `config/atom/tests/test-critical-config.sh`.
+
 ## Reconcile de plugins (desired state)
 
-`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea la **única** propiedad de AtoM que el proyecto gestiona hoy:
-`arUnicaucaB5Plugin` **debe estar habilitado**. Vive en `config/atom/`:
+`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en dos pasos que corren en orden
+(`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado** y (2) `check_for_updates = 0` (ver
+[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)). No es un reconciliador genérico. Vive en `config/atom/`:
 
 | Fichero | Papel |
 | --- | --- |
 | `config/atom/required-plugins.conf` | Desired state: un plugin por línea (`#` comenta). Hoy solo `arUnicaucaB5Plugin` |
-| `config/atom/reconcile-plugins.sh` | El reconcile (corre dentro de la imagen AtoM; sin dependencias nuevas en el host) |
-| `config/atom/tests/test-reconcile-plugins.sh` | Prueba de integración (ver [Pruebas](../README.md#pruebas)) |
+| `config/atom/reconcile.sh` | Orquesta los pasos del reconcile (plugins → `check_for_updates`) |
+| `config/atom/reconcile-plugins.sh` | Paso 1: plugins (corre dentro de la imagen AtoM; sin dependencias nuevas en el host) |
+| `config/atom/reconcile-check-for-updates.php` | Paso 2: `check_for_updates = 0` (vía `php symfony tools:run`) |
+| `config/atom/runtime-config.sh`, `config/atom/dev-secrets.sh` | Entrypoint del proyecto y proveedor del secreto DEV (ver arriba) |
+| `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
 
 Semántica: por cada plugin requerido → valida el formato del `.conf` → valida su **source mínimo** (existe `plugins/<nombre>/config/<nombre>Configuration.class.php`,
 declara la clase y es PHP válido) → observa `tools:atom-plugins list` → si **falta**, `tools:atom-plugins add` → **vuelve a observar** y exige que el
@@ -120,9 +176,10 @@ docker compose run --rm reconcile; echo $?          # manual (diagnóstico); `up
 docker compose logs reconcile
 ```
 
-Exit de `reconcile`: 0 éxito; 64 entrada inválida (`.conf` ausente, vacío o con una línea que no es un nombre de plugin); 65 source mínimo del
+Exit de `reconcile` (plugins): 0 éxito; 64 entrada inválida (`.conf` ausente, vacío o con una línea que no es un nombre de plugin); 65 source mínimo del
 plugin inválido (nada se escribe: todo el `.conf` se valida antes de escribir); 70 no se pudo observar la lista; 71 `tools:atom-plugins add` falló;
-72 postcondición no satisfecha tras añadir. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
+72 postcondición no satisfecha tras añadir. Paso `check_for_updates`: 73 no se pudo observar; 74 la escritura falló; 75 no se pudo invalidar la caché;
+76 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
 
 Límites (deliberados): supone un **único writer** durante el gate pre-start (sin locking); **no** se asume hot-reconcile sobre un AtoM ya iniciado:
 si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_worker` solo si su configuración cambió) y, si hiciera falta, reiniciando
@@ -140,7 +197,7 @@ si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_w
 | `DB_UNREACHABLE` (30) | No se conectó a la BD tras los reintentos (30 × 2 s) | `ps -a` y `logs percona`. Recuerda que Percona solo aplica `MYSQL_*` al **inicializar** el volumen: cambiar la contraseña en el entorno después no cambia la de un volumen ya creado |
 | `DB_COMPATIBLE` + `INSTALL_INCOMPLETE` (43) | Schema correcto pero sin administrador: un `tools:install` interrumpido | STOP: **no se reinstala ni se repara automáticamente.** Si es una instalación DEV desechable: [RESET DEV](#reset-dev-destructivo). Si hay datos que conservar: no hagas RESET; investiga y recupera de forma explícita (p. ej. inspecciona la BD y restaura el administrador o la instalación a mano) |
 
-Los fallos del `reconcile` (exits 64/65/70/71/72) se describen en [Reconcile de plugins](#reconcile-de-plugins-desired-state).
+Los fallos del `reconcile` (exits 64/65/70/71/72 y 73-76) se describen en [Reconcile de plugins](#reconcile-de-plugins-desired-state).
 
 Otros exits de `bootstrap`: 40 `tools:install` falló; 41 el probe posterior no dio `DB_COMPATIBLE`; 42 Elasticsearch o
 Memcached no disponibles (solo al instalar); 64/70 configuración inválida o error inesperado. Empieza siempre por
@@ -174,7 +231,7 @@ docker compose config --format json | grep -m1 '"name"'
 ```
 
 Elimina exactamente: contenedores del proyecto, su red y `percona_data`, `elasticsearch_data`, `uploads_data`,
-`downloads_data` y `theme_dist` (derivado: el siguiente `up` lo reconstruye con `theme_build`). No elimina imágenes, el checkout ni otros proyectos Docker. Después, el siguiente `up -d --wait` es una
+`downloads_data`, `atom_secrets` (el secreto CSRF local: el siguiente `up` genera **uno nuevo**) y `theme_dist` (derivado: el siguiente `up` lo reconstruye con `theme_build`). No elimina imágenes, el checkout ni otros proyectos Docker. Después, el siguiente `up -d --wait` es una
 instalación completamente nueva (`DB_FRESH` → `tools:install` una vez → READY). RESET no es una reparación parcial: es la
 destrucción explícita de todo el estado.
 
@@ -243,11 +300,12 @@ requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). U
 | `downloads_data` | conservadoramente persistente | Mezcla de reconstruible (informes, EAD/XML) y no reconstruible; se conserva |
 | `elasticsearch_data` | derivado / conveniencia | Reconstruible desde la BD; no forma parte del conjunto mínimo de recuperación |
 | `theme_dist` | derivado / reconstruible | Bundles del theme (`/atom/src/dist` en nginx, RO). Lo escribe solo `theme_build`; **sin backup** |
-| `config` de AtoM | regenerable | El entrypoint la genera desde el entorno en cada arranque |
+| `atom_secrets` | secreto de entorno (DEV) | Secreto CSRF local. Sin backup: no es dato; `down -v` lo regenera. Nunca en Git ni en la imagen |
+| `config` de AtoM (incl. `settings.yml`) | regenerable | Los entrypoints la generan desde defaults + entorno + secreto en cada arranque; no se persiste |
 | `dist` upstream y estáticos de AtoM | derivado | Vienen de la imagen; en DEV `theme_dist` sombrea `dist` en nginx |
 | Memcached, Gearmand | efímero | Sin volumen a propósito |
 
 ## Pendiente (fuera de este runbook)
 
-Producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, gestión de `setting` o de más plugins vía reconcile,
+Producción, gestión/rotación de secretos de producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, gestión de otros `setting` o de más plugins vía reconcile,
 hot-reconcile/concurrencia y el diseño institucional final: no están decididos y no se describen aquí.
