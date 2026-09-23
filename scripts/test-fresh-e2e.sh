@@ -227,16 +227,23 @@ verify_fresh_install() {
   expect_ne "[$n] Gearmand lista funciones <md5>-<ability> registradas" "0" "$(awk '{ for (i = 4; i <= NF; i++) if ($i ~ /^[0-9a-f]{32}-/) c++ } END { print c + 0 }' <<<"$gm")"
 }
 
+# yes|no. Se captura el cuerpo antes de buscar: con `pipefail`, `curl | grep -q` falla (SIGPIPE de curl) en cuanto grep cierra la tubería.
+logged_in() { # <jar> <url>
+  local body
+  body="$(curl -sS -c "$1" -b "$1" "$2/")"
+  if grep -q 'user/logout' <<<"$body"; then echo yes; else echo no; fi
+}
+
 login_smoke() { # <n>
   local n="$1" jar="$TMP/jar-$1" url="http://127.0.0.1:$PORT" token
   curl -sS -c "$jar" -b "$jar" -o "$TMP/login-$n.html" "$url/user/login"
   token="$(csrf "$TMP/login-$n.html")"
   expect_ne "[$n] el formulario de login trae token CSRF" "" "$token"
-  expect "[$n] anónimo antes del login" "no" "$(curl -sS -c "$jar" -b "$jar" "$url/" | grep -q 'user/logout' && echo yes || echo no)"
+  expect "[$n] anónimo antes del login" "no" "$(logged_in "$jar" "$url")"
   expect "[$n] POST credenciales DEV redirige (302)" "302" "$(curl -sS -o /dev/null -w '%{http_code}' -c "$jar" -b "$jar" \
     --data-urlencode "_csrf_token=$token" --data-urlencode "email=$ADMIN_EMAIL" --data-urlencode "password=$ADMIN_PASSWORD" \
     --data-urlencode next= "$url/index.php/user/login")"
-  expect "[$n] petición posterior autenticada" "yes" "$(curl -sS -c "$jar" -b "$jar" "$url/" | grep -q 'user/logout' && echo yes || echo no)"
+  expect "[$n] petición posterior autenticada" "yes" "$(logged_in "$jar" "$url")"
 }
 
 say "3. Primer arranque en UN solo comando: up -d --wait (sin build previo)"
