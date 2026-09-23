@@ -38,7 +38,10 @@ login() { # <jar> <email> <password> <csrf> → HTTP code
     --data-urlencode "email=$2" --data-urlencode "password=$3" --data-urlencode next= "$URL/index.php/user/login"
 }
 logged_in() { # <jar> → yes|no (enlace de logout presente en la portada)
-  if curl -sS -c "$1" -b "$1" "$URL/" | grep -q 'user/logout'; then echo yes; else echo no; fi
+  # Se captura el cuerpo antes de buscar: con `pipefail`, `curl | grep -q` falla (SIGPIPE de curl) en cuanto grep cierra la tubería.
+  local body
+  body="$(curl -sS -c "$1" -b "$1" "$URL/")"
+  if grep -q 'user/logout' <<<"$body"; then echo yes; else echo no; fi
 }
 
 cleanup() {
