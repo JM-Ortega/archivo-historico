@@ -30,7 +30,7 @@ ha validado** en Windows nativo (el ciclo del theme tampoco: no requiere Node/np
 ## Primera vez
 
 ```bash
-git clone --recurse-submodules <URL-DEL-REPO> archivo-historico
+git clone --recurse-submodules https://github.com/JM-Ortega/archivo-historico.git archivo-historico
 cd archivo-historico
 docker compose up -d --wait
 ```
