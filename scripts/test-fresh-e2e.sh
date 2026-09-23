@@ -160,7 +160,7 @@ expect "compose.dev.yaml ya no existe en el checkout" "no" "$([[ -e compose.dev.
 expect "runtime completo por defecto (sin profiles; atom_upstream es build-only, replicas 0)" \
   "atom atom_upstream atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$("${DC[@]}" config --services | sort | tr '\n' ' ' | sed 's/ $//')"
-expect "profile tools: añade solo db-probe" "db-probe" \
+expect "profile tools: añade db-probe y theme_watch" "db-probe theme_watch" \
   "$(comm -13 <("${DC[@]}" config --services | sort) <("${DC[@]}" --profile tools config --services | sort) | tr '\n' ' ' | sed 's/ $//')"
 expect "puerto E2E distinto del de la DEV (8080)" "yes" "$([[ "$PORT" != 8080 ]] && echo yes || echo no)"
 expect "puerto E2E libre" "free" "$(port_in_use "$PORT" && echo busy || echo free)"
