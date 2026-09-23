@@ -149,7 +149,7 @@ expect "el proyecto efectivo es el E2E (-p gana al name: del compose)" "$PROJECT
   "$("${DC[@]}" config --format json | grep -oE '^  "name": "[^"]+"' | sed -E 's/.*: "//;s/"$//')"
 [[ "$PROJECT" != "$DEV_PROJECT" && "$PROJECT" == archivo-historico-e2e-* ]] || die "nombre de proyecto E2E no válido"
 expect "compose.dev.yaml ya no existe en el checkout" "no" "$([[ -e compose.dev.yaml ]] && echo si || echo no)"
-expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona reconcile theme_build" \
+expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$("${DC[@]}" config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "profile tools: añade solo db-probe" "db-probe" \
   "$(comm -13 <("${DC[@]}" config --services | sort) <("${DC[@]}" --profile tools config --services | sort) | tr '\n' ' ' | sed 's/ $//')"
@@ -167,7 +167,7 @@ for n in "${planned[@]}"; do
   [[ "$n" == "$PROJECT" || "$n" == "${PROJECT}_"* ]] || { echo "FAIL  nombre planificado fuera del proyecto E2E: $n"; collisions=$((collisions + 1)); }
   grep -qxF -- "$n" <<<"$dev_names" && { echo "FAIL  el nombre $n existe en la DEV"; collisions=$((collisions + 1)); }
 done
-((${#planned[@]} == 7)) || { echo "FAIL  se esperaban 7 nombres planificados (proyecto, red, 5 volúmenes), hay ${#planned[@]}"; collisions=$((collisions + 1)); }
+((${#planned[@]} == 8)) || { echo "FAIL  se esperaban 8 nombres planificados (proyecto, red, 6 volúmenes), hay ${#planned[@]}"; collisions=$((collisions + 1)); }
 ((collisions == 0)) || die "el aislamiento del proyecto E2E no está garantizado"
 echo "PASS  nombres E2E planificados sin colisión con la DEV: ${planned[*]}"
 OWNED=1
@@ -207,6 +207,13 @@ verify_fresh_install() {
   expect "[$n] reconcile corre la imagen E2E propia" "$E2E_ATOM_IMAGE" "$(docker inspect -f '{{.Config.Image}}' "$(svc_id reconcile)")"
   expect "[$n] arUnicaucaB5Plugin habilitado en la BD (reconcile, sin activación manual)" "1" \
     "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N "$MYSQL_DATABASE" -e "SELECT i.value FROM setting s JOIN setting_i18n i ON i.id = s.id AND i.culture = s.source_culture WHERE s.name = \"plugins\""' 2>/dev/null | grep -c '"arUnicaucaB5Plugin"' || true)"
+  # Configuración crítica: el settings.yml de atom lleva cultura es, timezone America/Bogota y ningún change_me; tools:install ya
+  # corrió con cultura es (settings creados sin culture explícita); check_for_updates = 0. El secreto nunca se imprime.
+  expect "[$n] dev_secrets exit 0" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$(svc_id dev_secrets)")"
+  expect "[$n] atom: default_culture=es, default_timezone=America/Bogota, sin change_me" "es America/Bogota 0" \
+    "$(in_svc atom sh -c 'f=/atom/src/apps/qubit/config/settings.yml; echo "$(sed -n "s/^ *default_culture: *//p" $f) $(sed -n "s/^ *default_timezone: *//p" $f) $(grep -c change_me $f)"')"
+  expect "[$n] tools:install corrió con culture es (siteTitle → source_culture es) y check_for_updates = 0" "es 0" \
+    "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N "$MYSQL_DATABASE" -e "SELECT CONCAT((SELECT source_culture FROM setting WHERE name = \"siteTitle\"), \" \", (SELECT i.value FROM setting s JOIN setting_i18n i ON i.id = s.id AND i.culture = s.source_culture WHERE s.name = \"check_for_updates\"))"' 2>/dev/null)"
   expect "[$n] DB final (db-probe independiente)" "DB_COMPATIBLE" "$("${DC[@]}" run --rm -T --no-deps db-probe 2>/dev/null || true)"
   expect "[$n] instalación (installation-check independiente)" "INSTALL_COMPLETE" \
     "$("${DC[@]}" run --rm -T --no-deps --entrypoint php bootstrap /project/scripts/installation-check.php 2>/dev/null || true)"
@@ -276,8 +283,8 @@ expect "marcador downloads_data" "$MARK" "$(in_svc atom cat "/atom/src/downloads
 expect "marcador BD" "e2e_marker_$RUN" "$(in_svc percona sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -N -e "SHOW DATABASES LIKE \"e2e_marker_$0\""' "$RUN" 2>/dev/null)"
 E2E_BEFORE="$(project_resources "$PROJECT")"
 echo "recursos E2E antes del RESET:"; echo "$E2E_BEFORE" | sed 's/^/  | /'
-expect "E2E: 10 contenedores (bootstrap, reconcile y theme_build incluidos)" "10" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
-expect "E2E: 5 volúmenes propios (theme_dist incluido)" "5" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
+expect "E2E: 11 contenedores (dev_secrets, bootstrap, reconcile y theme_build incluidos)" "11" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
+expect "E2E: 6 volúmenes propios (theme_dist y atom_secrets incluidos)" "6" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: red propia" "${PROJECT}_default" "$(docker network ls --filter "$(label_of "$PROJECT")" --format '{{.Name}}')"
 expect "la DEV no cambió durante el primer arranque" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"
 
@@ -294,7 +301,7 @@ restart_cycle() { # <etiqueta> <installs esperados en el log del bootstrap> <com
   local tb_before; tb_before="$(docker inspect -f '{{.Id}} {{.State.StartedAt}}' "$(svc_id theme_build)")"
   "${DC[@]}" "$@" >/dev/null 2>&1 || die "$label falló"
   local since; since="$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)"
-  expect "[$label] volúmenes conservados" "5" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
+  expect "[$label] volúmenes conservados" "6" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
   "${DC[@]}" up -d --wait --wait-timeout 900 >"$TMP/up-$label.log" 2>&1 || { tail -n 40 "$TMP/up-$label.log" >&2; die "up tras $label falló"; }
   local blog blog_up; blog="$(docker logs "$(svc_id bootstrap)" 2>&1)"; blog_up="$(docker logs --since "$since" "$(svc_id bootstrap)" 2>&1)"
   expect "[$label] percona_data no se recreó" "$PERCONA_VOL_BEFORE" "$(docker volume inspect -f '{{.CreatedAt}}' "${PROJECT}_percona_data")"
@@ -324,7 +331,7 @@ echo "\$ docker compose -p $PROJECT down -v   (con el override de imágenes E2E)
 expect "E2E: sin contenedores" "0" "$(docker ps -aq --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: sin volúmenes" "0" "$(docker volume ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
 expect "E2E: sin red" "0" "$(docker network ls -q --filter "$(label_of "$PROJECT")" | wc -l)"
-for v in percona_data elasticsearch_data uploads_data downloads_data theme_dist; do
+for v in percona_data elasticsearch_data uploads_data downloads_data theme_dist atom_secrets; do
   expect "E2E: volumen ${PROJECT}_$v eliminado" "absent" "$(docker volume inspect "${PROJECT}_$v" >/dev/null 2>&1 && echo present || echo absent)"
 done
 expect "DEV normal intacta tras el RESET" "$DEV_BEFORE" "$(project_resources "$DEV_PROJECT")"

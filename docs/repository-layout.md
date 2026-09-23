@@ -14,7 +14,7 @@ Entrada rápida: [README](../README.md). Operación DEV: [runbook](dev-runbook.m
 | `docs/` | existe | Documentación durable |
 | `migration/` | existe (solo `README.md`) | Pipeline y tooling de migración. Ver [migration/README.md](../migration/README.md) |
 | `plugins/arUnicaucaB5Plugin/` | existe | Theme institucional de AtoM (source, wrapper de build y tests del theme). Ver [theme-development.md](theme-development.md) |
-| `config/atom/` | existe | Desired state de AtoM **gestionado por el proyecto** y su reconcile: `required-plugins.conf`, `reconcile-plugins.sh`, `tests/`. Ver [Reconcile de plugins](dev-runbook.md#reconcile-de-plugins-desired-state) |
+| `config/atom/` | existe | Configuración de AtoM **gestionada por el proyecto**: entrypoint runtime (`runtime-config.sh`: cultura, timezone, secreto), proveedor del secreto DEV (`dev-secrets.sh`), desired state y reconcile (`required-plugins.conf`, `reconcile*.{sh,php}`) y `tests/`. Ver [Configuración crítica](dev-runbook.md#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates) y [Reconcile](dev-runbook.md#reconcile-de-plugins-desired-state) |
 | `deploy/` | **reservada** | Foundation y automatización de despliegue |
 
 "Reservada" significa que la ruta es la canónica pero el directorio **no existe todavía**: se crea con el primer
@@ -41,9 +41,9 @@ de una feature.
   `theme_dist`, Nginx) está en [theme-development.md](theme-development.md). Su tooling y sus tests viven dentro del plugin
   (`tools/`, `tests/`), no en `scripts/`.
 - **¿Dónde va migration?** En `migration/`. Contrato en [migration/README.md](../migration/README.md).
-- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy solo declara **una**
-  propiedad: `arUnicaucaB5Plugin` habilitado. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
-  tests viven ahí (`reconcile-plugins.sh`, `tests/`), no en `scripts/`.
+- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara un
+  par de propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado y `check_for_updates = 0`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
+  tests viven ahí (`reconcile*.{sh,php}`, `runtime-config.sh`, `tests/`), no en `scripts/`.
 - **¿Dónde irá deployment?** En `deploy/`. Fuera de esta foundation: producción, TLS, CI/CD, Ansible/Terraform, etc.
 - **¿Dónde van datos reales locales?** En `migration/local/`, ignorado por Git (ver abajo).
 - **¿Qué no se modifica?** `upstream/atom/`. Comprobación: `git -C upstream/atom status --porcelain` debe salir vacío.
@@ -69,6 +69,7 @@ credenciales ni temporales locales.
 - La protección es **por boundary, no por extensión**: `*.pdf`, `*.docx` y `*.xlsx` **no** se ignoran globalmente,
   porque puede haber documentos legítimos versionados en otros contextos (p. ej. fixtures aprobados).
 - `.env`, `.env.*` (salvo `.env.example`) y `*.key` están ignorados.
+- El secreto CSRF local de DEV vive en un volumen Docker (`atom_secrets`), nunca en el checkout.
 
 ## Host y portabilidad
 

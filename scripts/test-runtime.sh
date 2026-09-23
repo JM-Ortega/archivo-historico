@@ -49,7 +49,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== H. El runtime completo forma parte del arranque por defecto =="
-expect "sin profiles: runtime completo (bootstrap, reconcile, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap elasticsearch gearmand memcached nginx percona reconcile theme_build" \
+expect "sin profiles: runtime completo (bootstrap, reconcile, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$(docker compose config --services | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "el runtime no depende de ningún profile" "0" "$(docker compose config --format json | grep -c '"profiles"' || true)"
 expect "infra-only sigue siendo posible: seleccionar servicios no arrastra el runtime (dry-run)" \
@@ -61,7 +61,7 @@ atom_up
 CID="$(atom_id)"
 expect "atom en ejecución" "running" "$(docker inspect -f '{{.State.Status}}' "$CID")"
 expect "PHP-FPM operativo (healthcheck)" "healthy" "$(docker inspect -f '{{.State.Health.Status}}' "$CID")"
-expect "entrypoint upstream conservado" '["docker/entrypoint.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$CID")"
+expect "entrypoint del proyecto (runtime-config.sh) que delega en el upstream" '["bash","/project/scripts/runtime-config.sh"]' "$(docker inspect -f '{{json .Config.Entrypoint}}' "$CID")"
 expect "el bootstrap terminó con éxito" "0" "$(docker inspect -f '{{.State.ExitCode}}' "$("${COMPOSE[@]}" ps -aq bootstrap)")"
 expect "configuración runtime generada (config.php, propel.ini, search.yml, php-fpm)" "ok" \
   "$(in_atom sh -c 'cd /atom/src && test -s config/config.php && test -s config/propel.ini && test -s config/search.yml && test -s /usr/local/etc/php-fpm.d/atom.conf && echo ok')"
@@ -69,11 +69,13 @@ expect "ningún puerto publicado al host" "" "$(docker port "$CID")"
 
 echo "== B. Sin bind del checkout (salvo el plugin del theme, RO) =="
 PLUGIN_DST=/atom/src/plugins/arUnicaucaB5Plugin
-expect "mounts = uploads y downloads (volúmenes) + el plugin del theme" \
-  "bind $PLUGIN_DST;volume $DOWN;volume $UP;" \
+expect "mounts = uploads y downloads (volúmenes) + secreto CSRF (volumen RO) + el plugin del theme y el entrypoint del proyecto (binds)" \
+  "bind $PLUGIN_DST;bind /project/scripts/runtime-config.sh;volume $DOWN;volume $UP;volume /run/atom-secrets;" \
   "$(docker inspect -f '{{range .Mounts}}{{.Type}} {{.Destination}};{{end}}' "$CID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
-expect "el único bind es el plugin del theme, en solo lectura (el resto de /atom/src viene de la imagen)" "$PLUGIN_DST false" \
-  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}}{{end}}{{end}}' "$CID")"
+expect "los únicos binds son el plugin del theme y el entrypoint del proyecto, ambos en solo lectura (el resto de /atom/src viene de la imagen)" \
+  "$PLUGIN_DST false;/project/scripts/runtime-config.sh false;" \
+  "$(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Destination}} {{.RW}};{{end}}{{end}}' "$CID" | tr ';' '\n' | sort | tr '\n' ';' | sed 's/^;//')"
+expect "secreto CSRF: volumen montado en solo lectura" "false" "$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/run/atom-secrets"}}{{.RW}}{{end}}{{end}}' "$CID")"
 
 echo "== C/D/I. Escritura y ownership funcional =="
 in_atom sh -c "echo uploads-$RUN > $UP/$MARK && echo downloads-$RUN > $DOWN/$MARK"
