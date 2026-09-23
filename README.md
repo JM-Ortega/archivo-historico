@@ -40,7 +40,9 @@ minutos), arranca la infraestructura, ejecuta `bootstrap`, `reconcile` (habilita
 `nginx`. `up` termina cuando todos los servicios están `healthy` y `bootstrap`, `reconcile` y `theme_build` han terminado con éxito.
 
 - **Administrador DEV:** `admin@example.com` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
-  de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**)
+  de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**).
+  Para overrides habituales (puerto, admin, timezone, título), copia [`.env.example`](.env.example) a `.env` y
+  descomenta/ajusta únicamente las variables que necesites.
 - En el primer arranque la base de datos está vacía: `bootstrap` ejecuta `tools:install` **una sola vez**. Arranques
   posteriores no reinstalan nada.
 - Solo `nginx` publica un puerto (`127.0.0.1:8080`; otro con `ATOM_WEB_PORT`). La BD, Elasticsearch, Gearmand,
@@ -109,3 +111,9 @@ Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
 `scripts/test-fresh-e2e.sh` es la prueba de checkout limpio + RESET: crea su propio clon, proyecto Docker
 (`archivo-historico-e2e-<id>`), puerto e imágenes, y **no toca** la instancia DEV normal. Ver el runbook.
+
+## Licencia
+
+El código propio de este proyecto se distribuye bajo [AGPL-3.0-or-later](LICENSE). AtoM (`upstream/atom`) es un
+proyecto externo incluido como submódulo Git sin modificar: conserva su propia licencia y notices, ver
+[upstream/atom/LICENSE](upstream/atom/LICENSE).
