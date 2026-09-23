@@ -240,7 +240,8 @@ sin build, sin recrear contenedores). URL: `/plugins/arUnicaucaB5Plugin/images/<
 ## Qué NO requiere rebuild de imagen
 
 Nada del trabajo cotidiano del theme: template overrides (refresh), SCSS/JS (`theme_build`), images (refresh). Solo hay que
-reconstruir imágenes (`up -d --build --wait`) si cambia `upstream/atom` o `docker/nginx/Dockerfile`.
+reconstruir imágenes (`up -d --build --wait`) si cambia `upstream/atom`, `docker/atom/Dockerfile` (capa de
+portabilidad) o `docker/nginx/Dockerfile`.
 
 ## Gaps de AtoM y escalación
 
