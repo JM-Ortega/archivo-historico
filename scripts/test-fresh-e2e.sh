@@ -145,7 +145,11 @@ services:
   atom_worker: { image: $E2E_ATOM_IMAGE }
   nginx: { image: $E2E_NGINX_IMAGE }
 YAML
-DC=(docker compose -f compose.yaml -f "$TMP/e2e-images.yaml" -p "$PROJECT")
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y contamina las comparaciones exactas de
+# `db-probe`/`installation-check` capturados más abajo ("DB_COMPATIBLE", "INSTALL_COMPLETE"). Reproducido
+# en WSL/Linux, no es un workaround de Git Bash/MSYS.
+DC=(docker compose --progress quiet -f compose.yaml -f "$TMP/e2e-images.yaml" -p "$PROJECT")
 cd "$CK"
 expect "las imágenes E2E aún no existen" "0" "$(docker image ls -q "$PROJECT/*" | wc -l)"
 expect "el compose fija el proyecto DEV normal" "name: $DEV_PROJECT" "$(grep '^name:' compose.yaml)"
