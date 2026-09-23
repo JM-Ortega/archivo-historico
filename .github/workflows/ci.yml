@@ -2,9 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
   push:
-    branches: [main]
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -31,3 +31,24 @@ jobs:
 
       - name: Compose validation
         run: docker compose config
+
+  main-source-policy:
+    name: Main source policy
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Verify PR into main originates from develop in this repository
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ -n "$HEAD_REF" ] && [ -n "$HEAD_REPO" ] && [ "$HEAD_REF" = "develop" ] && [ "$HEAD_REPO" = "$BASE_REPO" ]; then
+            echo "PR source is develop from ${BASE_REPO}: OK"
+            exit 0
+          fi
+          echo "::error::PRs into main must originate from branch 'develop' in ${BASE_REPO} (got branch '${HEAD_REF}' from repo '${HEAD_REPO}')"
+          exit 1
