@@ -10,7 +10,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose)
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y rompe `db-probe 2>/dev/null | head -n1`
+# de abajo (compose acaba con exit 255 al SIGPIPE de head, además de contaminar la línea capturada).
+# Reproducido en WSL/Linux, no es un workaround de Git Bash/MSYS.
+COMPOSE=(docker compose --progress quiet)
 PORT="${ATOM_WEB_PORT:-8080}"
 URL="${ATOM_WEB_URL:-http://localhost:$PORT}"
 ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}"

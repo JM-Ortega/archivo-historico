@@ -16,7 +16,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$ROOT"
-COMPOSE=(docker compose)
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y contamina FACTS de abajo, cuyo
+# `grep -c '='` (sin anclar) cuenta CUALQUIER "=" en la salida capturada, no solo las de las facts reales.
+# Reproducido en WSL/Linux, no es un workaround de Git Bash/MSYS.
+COMPOSE=(docker compose --progress quiet)
 PLUGIN=arUnicaucaB5Plugin
 PDIR="plugins/$PLUGIN"
 PIN=/atom/src/plugins/$PLUGIN
