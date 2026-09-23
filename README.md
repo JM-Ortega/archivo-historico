@@ -64,6 +64,7 @@ docker compose stop             # parar conservando contenedores y datos
 | Ver logs | `docker compose logs -f` (o `logs -f atom`) |
 | Comprobar que la web es AtoM (READY) | `scripts/web-ready.sh --wait` |
 | Recompilar el theme tras editar su SCSS/JS | `docker compose run --rm theme_build` (ver [theme](docs/theme-development.md)) |
+| Recompilar el theme automáticamente mientras edito (opt-in, DEV) | `docker compose run --rm theme_watch` (ver [theme](docs/theme-development.md#editar-scss--js)) |
 | Reaplicar/verificar los plugins requeridos | `docker compose run --rm reconcile` (ver [runbook](docs/dev-runbook.md#reconcile-de-plugins-desired-state)) |
 | Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
 

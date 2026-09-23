@@ -265,6 +265,26 @@ services:
       # Derivado y reconstruible (webpack `clean: true`): NO es estado, NO va a backup.
       - theme_dist:/atom/src/dist
 
+  # Watch DEV opt-in del theme institucional arUnicaucaB5Plugin (profile `tools`; no arranca con `up`).
+  #
+  #   docker compose run --rm theme_watch
+  #
+  # Interactivo/persistente, exclusivamente DEV/DX: complementa a `theme_build` (one-shot, determinista, el que usan
+  # startup/CI/recuperación), no lo sustituye. Misma imagen y mismo boundary de escritura que `theme_build` (plugin
+  # RW + theme_dist RW): el wrapper del propio theme (tools/watch.sh) ejecuta `webpack watch` (el comando subyacente
+  # a "npm run watch" en package.json, invocado directamente y sin pasar por npm: sin polling de filesystem) y
+  # mantiene corregido el ownership de templates/_layout_start.php mientras dura la sesión, incluida su recreación
+  # en cada rebuild. Sin puertos, sin dependencia del runtime AtoM ni de la BD. Foreground: Ctrl+C detiene watch y
+  # companion sin procesos huérfanos y sin afectar a `atom`/`nginx`.
+  theme_watch:
+    profiles: [tools]
+    <<: *atom-image
+    entrypoint: ["bash", "/atom/src/plugins/arUnicaucaB5Plugin/tools/watch.sh"]
+    volumes:
+      - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin
+      # Derivado y reconstruible (webpack `clean: true`): NO es estado, NO va a backup.
+      - theme_dist:/atom/src/dist
+
   # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; lo consume `nginx`).
   #
   # Gate: depende de `bootstrap` con service_completed_successfully, así que `atom` solo puede arrancar
