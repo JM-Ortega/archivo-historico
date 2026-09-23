@@ -45,6 +45,7 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 | --- | --- |
 | `plugins/arUnicaucaB5Plugin/` | **Source** del theme, versionado (`config/`, `templates/_layout_start_webpack.php`, `scss/main.scss`, `js/main.js`, `images/`, `webpack.entry.js`) |
 | `plugins/arUnicaucaB5Plugin/tools/build.sh` | Wrapper de build del theme (se ejecuta dentro de Docker) |
+| `plugins/arUnicaucaB5Plugin/tools/watch.sh` | Wrapper del watch DEV opt-in del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tests/test-theme.sh` | Prueba de integración del ciclo del theme |
 | `plugins/arUnicaucaB5Plugin/templates/_layout_start.php` | **Derivado** por Webpack; ignorado por Git; no se edita (edita `_layout_start_webpack.php`) |
 | Volumen `archivo-historico_theme_dist` (`/atom/src/dist`) | **Derivado y reconstruible**; sin backup; no está en el repo |
@@ -181,6 +182,14 @@ publicado únicamente en `127.0.0.1`. No cambia `NODE_ENV`.
 
 ## Editar SCSS / JS
 
+Hay dos caminos, complementarios y no intercambiables:
+
+- **`theme_build`** — one-shot, determinista. Es el camino que usan startup, pruebas, CI y recuperación.
+- **`theme_watch`** — interactivo, persistente, **opt-in**, exclusivamente DEV/DX. No sustituye a `theme_build` ni
+  cambia su contrato; es una herramienta de comodidad para sesiones de edición.
+
+### `theme_build` (one-shot, determinista)
+
 Tras editar `scss/**` o `js/**`, ejecuta el build explícito y refresca:
 
 ```bash
@@ -188,12 +197,40 @@ docker compose run --rm theme_build; echo $?
 ```
 
 Usa la misma imagen, el mismo bind del plugin y el mismo `theme_dist`; corrige el ownership de `_layout_start.php`; sale con
-código distinto de cero si el build o la comprobación de coherencia fallan. No hay `watch` (mejora futura, no requisito).
-Un cambio de SCSS/JS **no** se ve sin este build.
+código distinto de cero si el build o la comprobación de coherencia fallan. Un cambio de SCSS/JS **no** se ve sin este build
+(salvo que tengas `theme_watch` activo, ver debajo).
 
 Detalles del wrapper: ejecuta `npm run build` upstream desde `/atom/src`; al terminar (también si falla) corrige **solo** el
 ownership de `templates/_layout_start.php` con el UID:GID leído del directorio `templates/` del host (nada hardcodeado, sin
 sudo, sin chmod); tras un build correcto verifica que todo bundle `/dist/...` referenciado por ese partial existe en `dist/`.
+
+### `theme_watch` (interactivo, opt-in, solo DEV)
+
+Para no repetir `theme_build` a mano en cada edición durante una sesión de trabajo:
+
+```bash
+docker compose run --rm theme_watch
+```
+
+- Es **opt-in**: `docker compose up -d --wait` no lo arranca ni depende de él (profile `tools`, igual que `db-probe`).
+- Observa `scss/**` y `js/**` de **`arUnicaucaB5Plugin`** (el único plugin que `theme_watch` monta RW; es la
+  superficie soportada y probada) mediante `webpack watch` (invocado directamente, sin pasar por `npm run watch`,
+  para un manejo de señales fiable al detener la sesión; sin polling de filesystem) y recompila automáticamente al
+  detectar un cambio. En el entorno de referencia, un rebuild observado tarda del orden de **~15–20 s**; no es un
+  tiempo contractual exacto.
+- **No hay HMR**: tras cada rebuild, refresca el navegador a mano para ver el resultado.
+- Mismo boundary de escritura que `theme_build` (plugin RW + `theme_dist` RW), misma imagen; sin puertos; no depende
+  del runtime AtoM ni de la BD.
+- Ownership de `templates/_layout_start.php`: a diferencia de `theme_build` (corrección al salir, one-shot), Webpack
+  puede eliminar y recrear ese fichero en **cada** rebuild mientras la sesión está activa. `theme_watch` mantiene el
+  ownership correcto de forma continua durante toda la sesión (un companion ligero, sin UID/GID fijos, sin sudo, sin
+  chmod) y aplica una corrección final al terminar.
+- **Foreground e interactivo**: `Ctrl+C` detiene watch y companion sin dejar procesos ni contenedores huérfanos, y sin
+  afectar a `atom`/`atom_worker`/`nginx`. Puede volver a arrancarse sin RESET ni reinstalación.
+- No observa PHP, configuración ni templates (`_layout_start_webpack.php` incluido): eso sigue el contrato ya
+  caracterizado en [Editar templates / overrides PHP](#editar-templates--overrides-php).
+- Validado en **WSL2 + Docker Desktop** (el mismo entorno de referencia del resto de esta guía). Windows nativo
+  todavía no está validado para este flujo.
 
 ## Estáticos directos (`images/`)
 
