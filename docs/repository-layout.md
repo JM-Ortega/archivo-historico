@@ -97,6 +97,21 @@ Punto abierto (no resuelto aquí): los scripts `scripts/*.sh` actuales se ejecut
 
 ## Ramas
 
-Durante la foundation el trabajo sigue en `main` (nuevas WU sobre la baseline aceptada). El flujo colaborativo
-definitivo (ramas de integración y de trabajo, revisión, `CONTRIBUTING`) está **deliberadamente diferido** hasta que
-termine la foundation y se incorporen los demás desarrolladores.
+`main` es la rama estable: no recibe trabajo directo. `develop` es la rama de integración: recibe el trabajo en
+curso. Las ramas temporales (`feat/*`, `fix/*`, `refactor/*`) son de trabajo y se integran contra `develop`.
+
+Flujo normal:
+
+```
+feat/* | fix/* | refactor/*
+          ↓
+       develop
+          ↓ PR
+         main
+```
+
+- Push directo a `develop` está permitido; no exige PR. GitHub bloquea su borrado y el force-push.
+- La promoción `develop → main` se hace mediante PR, con merge method de merge commit. La PR debe originarse desde
+  `develop` en este mismo repositorio (política de origen verificada en CI).
+- `main` está protegido: borrado y force-push bloqueados, PR obligatoria, CI requerido (checks mínimos y política de
+  origen).
