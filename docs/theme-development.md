@@ -215,9 +215,9 @@ docker compose run --rm theme_watch
 - Es **opt-in**: `docker compose up -d --wait` no lo arranca ni depende de él (profile `tools`, igual que `db-probe`).
 - Observa `scss/**` y `js/**` de **`arUnicaucaB5Plugin`** (el único plugin que `theme_watch` monta RW; es la
   superficie soportada y probada) mediante `webpack watch` (invocado directamente, sin pasar por `npm run watch`,
-  para un manejo de señales fiable al detener la sesión; sin polling de filesystem) y recompila automáticamente al
-  detectar un cambio. En el entorno de referencia, un rebuild observado tarda del orden de **~15–20 s**; no es un
-  tiempo contractual exacto.
+  para un manejo de señales fiable al detener la sesión; por defecto con eventos nativos del filesystem, sin polling) y
+  recompila automáticamente al detectar un cambio. En el entorno de referencia, un rebuild observado tarda del orden
+  de **~15–20 s**; no es un tiempo contractual exacto.
 - **No hay HMR**: tras cada rebuild, refresca el navegador a mano para ver el resultado.
 - Mismo boundary de escritura que `theme_build` (plugin RW + `theme_dist` RW), misma imagen; sin puertos; no depende
   del runtime AtoM ni de la BD.
@@ -229,8 +229,25 @@ docker compose run --rm theme_watch
   afectar a `atom`/`atom_worker`/`nginx`. Puede volver a arrancarse sin RESET ni reinstalación.
 - No observa PHP, configuración ni templates (`_layout_start_webpack.php` incluido): eso sigue el contrato ya
   caracterizado en [Editar templates / overrides PHP](#editar-templates--overrides-php).
-- Validado en **WSL2 + Docker Desktop** (el mismo entorno de referencia del resto de esta guía). Windows nativo
-  todavía no está validado para este flujo.
+- Validado con eventos nativos en **WSL2 + Docker Desktop** (el mismo entorno de referencia del resto de esta guía):
+  ahí no hace falta polling.
+
+#### Fallback con polling (opt-in)
+
+Si el filesystem montado no entrega eventos al contenedor —el caso observado con un checkout en **Windows nativo** con
+Docker Desktop: los cambios llegan al contenedor, pero `theme_watch` arranca y **nunca recompila** al editar—, activa el
+polling de Watchpack (el watcher de Webpack) de forma explícita para esa sesión:
+
+```bash
+docker compose run --rm -e WATCHPACK_POLLING=2000 theme_watch
+```
+
+- Intervalo de polling de 2 s (el valor adoptado); un cambio detectado produce un rebuild normal, igual que con eventos.
+- Tiene un coste en reposo: en la medición realizada, aproximadamente un 4 % de un core (~3,8 %). Por eso **no** es el
+  default: sin `-e WATCHPACK_POLLING` el watch sigue usando eventos nativos.
+- Mismo contrato que el watch normal (boundary de escritura, ownership, `Ctrl+C`); solo cambia cómo se detectan
+  los cambios.
+- `theme_build` sigue siendo el camino one-shot para generar los artefactos del theme, sin sesión persistente.
 
 ## Estáticos directos (`images/`)
 
@@ -360,6 +377,7 @@ también funciona, probado en aislado). Verificación: el HTML contiene `<meta n
 | --- | --- |
 | Estilos o JS 404 (`/dist/...`) o la página sin estilos | El partial referencia un bundle que no está en `dist`. `docker compose run --rm theme_build` y refresca. Si Nginx no ve `theme_dist`: `docker compose up -d --wait` |
 | Cambio de SCSS/JS no visible | Falta el build (`theme_build`) o el navegador cacheó el HTML anterior (Ctrl+F5) |
+| `theme_watch` arranca pero no recompila al editar | El filesystem montado no entrega eventos (p. ej. checkout en Windows nativo): usa el [fallback con polling](#fallback-con-polling-opt-in) o `theme_build` |
 | Override de template no visible | Espera ~2 s (OPcache); confirma `docker compose exec atom php -i \| grep validate_timestamps` = On. Si el cambio es de `Configuration` u otro PHP que Symfony cachee: `docker compose exec atom php symfony cc` o `docker compose restart atom` |
 | `theme_build` falla | Léelo en su salida; corrige el SCSS/JS y repite. No es transaccional: un build fallido puede dejar `dist`/partial a medias hasta el siguiente build correcto |
 | `_layout_start.php` es de `root` en el host | Lo corrige el propio `theme_build` (aunque el build falle); si borraste el fichero, repite el build |

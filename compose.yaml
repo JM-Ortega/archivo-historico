@@ -291,10 +291,15 @@ services:
   # Interactivo/persistente, exclusivamente DEV/DX: complementa a `theme_build` (one-shot, determinista, el que usan
   # startup/CI/recuperación), no lo sustituye. Misma imagen y mismo boundary de escritura que `theme_build` (plugin
   # RW + theme_dist RW): el wrapper del propio theme (tools/watch.sh) ejecuta `webpack watch` (el comando subyacente
-  # a "npm run watch" en package.json, invocado directamente y sin pasar por npm: sin polling de filesystem) y
-  # mantiene corregido el ownership de templates/_layout_start.php mientras dura la sesión, incluida su recreación
-  # en cada rebuild. Sin puertos, sin dependencia del runtime AtoM ni de la BD. Foreground: Ctrl+C detiene watch y
-  # companion sin procesos huérfanos y sin afectar a `atom`/`nginx`.
+  # a "npm run watch" en package.json, invocado directamente y sin pasar por npm; por defecto con eventos nativos,
+  # sin polling de filesystem) y mantiene corregido el ownership de templates/_layout_start.php mientras dura la
+  # sesión, incluida su recreación en cada rebuild. Sin puertos, sin dependencia del runtime AtoM ni de la BD.
+  # Foreground: Ctrl+C detiene watch y companion sin procesos huérfanos y sin afectar a `atom`/`nginx`.
+  #
+  # Fallback opt-in si el bind mount no entrega eventos de filesystem (p. ej. checkout en Windows nativo): polling
+  # de Watchpack con intervalo de 2 s. Ver docs/theme-development.md.
+  #
+  #   docker compose run --rm -e WATCHPACK_POLLING=2000 theme_watch
   theme_watch:
     profiles: [tools]
     <<: *atom-image
