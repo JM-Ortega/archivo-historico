@@ -13,11 +13,13 @@
 #   - un proyecto Compose `archivo-historico-e2e-<id>` (`-p`, que tiene precedencia sobre el `name:` fijo del
 #     compose; sin él el checkout compartiría contenedores/volúmenes/red con la instancia DEV normal);
 #   - un puerto loopback libre (ATOM_WEB_PORT);
-#   - imágenes propias `archivo-historico-e2e-<id>/{atom,nginx}:2.10.2`: el compose fija los tags
-#     `archivo-historico/{atom,nginx}:2.10.2` con independencia del proyecto, y un build desde otro checkout los
-#     reasignaría a imágenes nuevas (la DEV seguiría corriendo las viejas, pero su tag cambiaría). Un override
-#     generado FUERA del checkout (que sigue siendo el commit exacto) renombra solo `image:`. Por eso este script
-#     mantiene la selección explícita `-f compose.yaml -f <override> -p <proyecto>` (un desarrollador normal no la necesita).
+#   - imágenes propias `archivo-historico-e2e-<id>/{atom-upstream,atom,nginx}:2.10.2`: el compose fija los tags
+#     `archivo-historico/{atom-upstream,atom,nginx}:2.10.2` con independencia del proyecto, y un build desde otro
+#     checkout los reasignaría a imágenes nuevas (la DEV seguiría corriendo las viejas, pero su tag cambiaría). Un
+#     override generado FUERA del checkout (que sigue siendo el commit exacto) renombra solo `image:`, incluida
+#     `atom_upstream` (build-only, capa de portabilidad: ver docker/atom/Dockerfile), aunque no llegue a arrancar
+#     ningún contenedor suyo. Por eso este script mantiene la selección explícita
+#     `-f compose.yaml -f <override> -p <proyecto>` (un desarrollador normal no la necesita).
 #
 # Contrato del primer arranque que se demuestra aquí: un checkout sin imágenes propias arranca con UN solo comando,
 # `docker compose up -d --wait` (Compose construye lo que falta), sin `docker compose build` previo.
@@ -39,7 +41,8 @@ PROJECT="archivo-historico-e2e-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' \
 RUN="${PROJECT##*-}"
 ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}"
 ADMIN_PASSWORD="${ATOM_ADMIN_PASSWORD:-admin_dev_12345}"
-DEV_IMAGES=(archivo-historico/atom:2.10.2 archivo-historico/nginx:2.10.2)
+DEV_IMAGES=(archivo-historico/atom-upstream:2.10.2 archivo-historico/atom:2.10.2 archivo-historico/nginx:2.10.2)
+E2E_ATOM_UPSTREAM_IMAGE="$PROJECT/atom-upstream:2.10.2"
 E2E_ATOM_IMAGE="$PROJECT/atom:2.10.2"
 E2E_NGINX_IMAGE="$PROJECT/nginx:2.10.2"
 fails=0
@@ -98,13 +101,13 @@ cleanup() {
   fi
   if [[ -n "${E2E_KEEP:-}" ]]; then
     echo "E2E_KEEP: conservado $TMP y el proyecto $PROJECT. Limpieza manual:"
-    echo "  (cd $CK && docker compose -f compose.yaml -f $TMP/e2e-images.yaml -p $PROJECT down -v) && docker rmi $E2E_ATOM_IMAGE $E2E_NGINX_IMAGE && rm -rf $TMP"
+    echo "  (cd $CK && docker compose -f compose.yaml -f $TMP/e2e-images.yaml -p $PROJECT down -v) && docker rmi $E2E_ATOM_UPSTREAM_IMAGE $E2E_ATOM_IMAGE $E2E_NGINX_IMAGE && rm -rf $TMP"
     exit "$rc"
   fi
   # Solo se elimina lo que este script posee: proyecto E2E (probado aislado) y su directorio temporal.
   if ((OWNED)) && [[ "$PROJECT" == archivo-historico-e2e-* && -d "$CK" ]]; then
     (cd "$CK" && "${DC[@]}" down -v >/dev/null 2>&1) || true
-    docker rmi "$E2E_ATOM_IMAGE" "$E2E_NGINX_IMAGE" >/dev/null 2>&1 || true
+    docker rmi "$E2E_ATOM_UPSTREAM_IMAGE" "$E2E_ATOM_IMAGE" "$E2E_NGINX_IMAGE" >/dev/null 2>&1 || true
   fi
   [[ -n "$TMP" && "$TMP" == */archivo-historico-e2e.* ]] && rm -rf "$TMP"
   exit "$rc"
@@ -133,6 +136,7 @@ PORT="$(pick_port)" || die "no hay puerto loopback libre"
 export ATOM_WEB_PORT="$PORT"
 cat >"$TMP/e2e-images.yaml" <<YAML
 services:
+  atom_upstream: { image: $E2E_ATOM_UPSTREAM_IMAGE }
   db-probe: { image: $E2E_ATOM_IMAGE }
   bootstrap: { image: $E2E_ATOM_IMAGE }
   reconcile: { image: $E2E_ATOM_IMAGE }
@@ -141,7 +145,11 @@ services:
   atom_worker: { image: $E2E_ATOM_IMAGE }
   nginx: { image: $E2E_NGINX_IMAGE }
 YAML
-DC=(docker compose -f compose.yaml -f "$TMP/e2e-images.yaml" -p "$PROJECT")
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y contamina las comparaciones exactas de
+# `db-probe`/`installation-check` capturados más abajo ("DB_COMPATIBLE", "INSTALL_COMPLETE"). Reproducido
+# en WSL/Linux, no es un workaround de Git Bash/MSYS.
+DC=(docker compose --progress quiet -f compose.yaml -f "$TMP/e2e-images.yaml" -p "$PROJECT")
 cd "$CK"
 expect "las imágenes E2E aún no existen" "0" "$(docker image ls -q "$PROJECT/*" | wc -l)"
 expect "el compose fija el proyecto DEV normal" "name: $DEV_PROJECT" "$(grep '^name:' compose.yaml)"
@@ -149,9 +157,10 @@ expect "el proyecto efectivo es el E2E (-p gana al name: del compose)" "$PROJECT
   "$("${DC[@]}" config --format json | grep -oE '^  "name": "[^"]+"' | sed -E 's/.*: "//;s/"$//')"
 [[ "$PROJECT" != "$DEV_PROJECT" && "$PROJECT" == archivo-historico-e2e-* ]] || die "nombre de proyecto E2E no válido"
 expect "compose.dev.yaml ya no existe en el checkout" "no" "$([[ -e compose.dev.yaml ]] && echo si || echo no)"
-expect "runtime completo por defecto (sin profiles)" "atom atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
+expect "runtime completo por defecto (sin profiles; atom_upstream es build-only, replicas 0)" \
+  "atom atom_upstream atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$("${DC[@]}" config --services | sort | tr '\n' ' ' | sed 's/ $//')"
-expect "profile tools: añade solo db-probe" "db-probe" \
+expect "profile tools: añade db-probe y theme_watch" "db-probe theme_watch" \
   "$(comm -13 <("${DC[@]}" config --services | sort) <("${DC[@]}" --profile tools config --services | sort) | tr '\n' ' ' | sed 's/ $//')"
 expect "puerto E2E distinto del de la DEV (8080)" "yes" "$([[ "$PORT" != 8080 ]] && echo yes || echo no)"
 expect "puerto E2E libre" "free" "$(port_in_use "$PORT" && echo busy || echo free)"
@@ -254,9 +263,10 @@ login_smoke() { # <n>
 }
 
 say "3. Primer arranque en UN solo comando: up -d --wait (sin build previo)"
-expect "sin imágenes propias antes del arranque" "0" "$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -cxF -e "$E2E_ATOM_IMAGE" -e "$E2E_NGINX_IMAGE" || true)"
+expect "sin imágenes propias antes del arranque" "0" "$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -cxF -e "$E2E_ATOM_UPSTREAM_IMAGE" -e "$E2E_ATOM_IMAGE" -e "$E2E_NGINX_IMAGE" || true)"
 "${DC[@]}" up -d --wait --wait-timeout 900 >"$TMP/up1.log" 2>&1 || { tail -n 40 "$TMP/up1.log" >&2; die "primer up falló"; }
-expect "Compose construyó las imágenes E2E propias (build automático)" "2" "$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -cxF -e "$E2E_ATOM_IMAGE" -e "$E2E_NGINX_IMAGE" || true)"
+expect "Compose construyó las imágenes E2E propias, incluida atom_upstream (build automático, build-only)" "3" \
+  "$(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -cxF -e "$E2E_ATOM_UPSTREAM_IMAGE" -e "$E2E_ATOM_IMAGE" -e "$E2E_NGINX_IMAGE" || true)"
 expect "el arranque no alteró los tags de imagen de la DEV" "$DEV_IMAGES_BEFORE" "$(image_ids)"
 verify_fresh_install 1
 login_smoke 1
