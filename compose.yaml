@@ -42,14 +42,33 @@ x-atom-runtime-env: &atom-runtime-env
 x-atom-runtime-script: &atom-runtime-script ./config/atom/runtime-config.sh:/project/scripts/runtime-config.sh:ro
 x-atom-secrets-volume: &atom-secrets-volume atom_secrets:/run/atom-secrets:ro
 
-# Imagen AtoM del proyecto (build upstream sin modificar). La comparten db-probe, bootstrap, atom, atom_worker y
-# theme_build: una sola imagen y un solo build. Cada servicio la referencia con `<<: *atom-image`.
+# Imagen AtoM final del proyecto: el Dockerfile upstream sin modificar (servicio `atom_upstream`, ver más abajo)
+# más una capa propia de portabilidad (docker/atom/Dockerfile) que SOLO corrige la representación EOL dentro de
+# la imagen (ver comentario de ese Dockerfile). La comparten db-probe, bootstrap, atom, atom_worker y theme_build:
+# una sola imagen y un solo build. Cada servicio la referencia con `<<: *atom-image`.
 x-atom-image: &atom-image
   image: archivo-historico/atom:2.10.2
   build:
-    context: upstream/atom
+    context: docker/atom
+    additional_contexts:
+      # La imagen ya construida de `atom_upstream` (build-only: ver ese servicio), como contexto con
+      # nombre `upstream` para el `FROM upstream` de docker/atom/Dockerfile.
+      upstream: service:atom_upstream
 
 services:
+  # Imagen AtoM upstream cruda (Dockerfile de upstream/atom, sin tocar), SOLO como fuente de build para la capa
+  # de portabilidad (`x-atom-image` de arriba, vía `additional_contexts: upstream: service:atom_upstream`). No es
+  # parte del runtime: `deploy.replicas: 0` impide que `docker compose up` la arranque o mantenga un contenedor
+  # (a diferencia de `profiles`, que además le impediría resolverse como contexto de build sin pasar `--profile`
+  # explícito en cada comando). `docker compose build`/`up -d --wait` normales ya la construyen como dependencia,
+  # sin flags ni pasos manuales adicionales.
+  atom_upstream:
+    image: archivo-historico/atom-upstream:2.10.2
+    build:
+      context: upstream/atom
+    deploy:
+      replicas: 0
+
   percona:
     image: percona/percona-server:8.4.11-11.1
     environment:
@@ -272,10 +291,15 @@ services:
   # Interactivo/persistente, exclusivamente DEV/DX: complementa a `theme_build` (one-shot, determinista, el que usan
   # startup/CI/recuperación), no lo sustituye. Misma imagen y mismo boundary de escritura que `theme_build` (plugin
   # RW + theme_dist RW): el wrapper del propio theme (tools/watch.sh) ejecuta `webpack watch` (el comando subyacente
-  # a "npm run watch" en package.json, invocado directamente y sin pasar por npm: sin polling de filesystem) y
-  # mantiene corregido el ownership de templates/_layout_start.php mientras dura la sesión, incluida su recreación
-  # en cada rebuild. Sin puertos, sin dependencia del runtime AtoM ni de la BD. Foreground: Ctrl+C detiene watch y
-  # companion sin procesos huérfanos y sin afectar a `atom`/`nginx`.
+  # a "npm run watch" en package.json, invocado directamente y sin pasar por npm; por defecto con eventos nativos,
+  # sin polling de filesystem) y mantiene corregido el ownership de templates/_layout_start.php mientras dura la
+  # sesión, incluida su recreación en cada rebuild. Sin puertos, sin dependencia del runtime AtoM ni de la BD.
+  # Foreground: Ctrl+C detiene watch y companion sin procesos huérfanos y sin afectar a `atom`/`nginx`.
+  #
+  # Fallback opt-in si el bind mount no entrega eventos de filesystem (p. ej. checkout en Windows nativo): polling
+  # de Watchpack con intervalo de 2 s. Ver docs/theme-development.md.
+  #
+  #   docker compose run --rm -e WATCHPACK_POLLING=2000 theme_watch
   theme_watch:
     profiles: [tools]
     <<: *atom-image

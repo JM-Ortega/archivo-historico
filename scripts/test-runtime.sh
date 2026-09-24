@@ -12,7 +12,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose)
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y rompe `db-probe 2>/dev/null | head -n1`
+# de abajo (compose acaba con exit 255 al SIGPIPE de head, además de contaminar la línea capturada).
+# Reproducido en WSL/Linux, no es un workaround de Git Bash/MSYS.
+COMPOSE=(docker compose --progress quiet)
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 MARK="integration-test-$RUN"
 UP=/atom/src/uploads
@@ -49,8 +53,11 @@ cleanup() {
 trap cleanup EXIT
 
 echo "== H. El runtime completo forma parte del arranque por defecto =="
-expect "sin profiles: runtime completo (bootstrap, reconcile, theme_build, atom, atom_worker, nginx incluidos)" "atom atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
+expect "sin profiles: runtime completo (bootstrap, reconcile, theme_build, atom, atom_worker, nginx incluidos; atom_upstream es build-only, replicas 0)" \
+  "atom atom_upstream atom_worker bootstrap dev_secrets elasticsearch gearmand memcached nginx percona reconcile theme_build" \
   "$(docker compose config --services | sort | tr '\n' ' ' | sed 's/ $//')"
+expect "atom_upstream declarado con replicas 0 (build-only: no arranca con up)" "1" \
+  "$(docker compose config --format json | grep -A8 '"atom_upstream"' | grep -c '"replicas": 0')"
 expect "el runtime no depende de ningún profile" "0" "$(docker compose config --format json | grep -c '"profiles"' || true)"
 expect "infra-only sigue siendo posible: seleccionar servicios no arrastra el runtime (dry-run)" \
   "elasticsearch gearmand memcached percona" \

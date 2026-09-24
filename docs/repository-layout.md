@@ -92,8 +92,17 @@ Punto abierto (no resuelto aquí): los scripts `scripts/*.sh` actuales se ejecut
 ### Fin de línea
 
 `.gitattributes` fija LF para lo que se ejecuta o se monta en contenedores Linux (`*.sh`, `*.php`, `*.cnf`, `*.conf`,
-`Dockerfile`, `*.yaml`/`*.yml`, y el source del theme: `*.js`, `*.scss`), de modo que el checkout no depende de `core.autocrlf` ni `core.eol` del usuario.
-`.editorconfig` fija solo codificación, EOL, salto final y espacios sobrantes; no impone estilos por lenguaje.
+`Dockerfile`, `*.yaml`/`*.yml`, y el source del theme: `*.js`, `*.scss`), de modo que el checkout de **este** repo no
+depende de `core.autocrlf` ni `core.eol` del usuario. `.editorconfig` fija solo codificación, EOL, salto final y
+espacios sobrantes; no impone estilos por lenguaje.
+
+`upstream/atom` es un submódulo externo, read-only, y no lleva esa política: en un checkout Windows con
+`core.autocrlf=true` su working tree llega a Docker en CRLF (afecta a cualquier script suyo invocado por shebang,
+no solo `docker/entrypoint.sh`). Como no se puede ni se debe tocar `upstream/atom` para corregir esto, la imagen
+AtoM del proyecto se construye en dos capas (`atom_upstream` + `docker/atom/Dockerfile`, ver
+[runbook](dev-runbook.md#reconstruir-imágenes)): la segunda normaliza a LF, dentro de la imagen, únicamente los
+ficheros de texto con shebang. `upstream/atom` en el host sigue intacto; la corrección vive solo en la
+representación de la imagen final.
 
 ## Ramas
 
