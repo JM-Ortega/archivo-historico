@@ -4,7 +4,10 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 (Access to Memory, de Artefactual Systems).
 
 - **Baseline AtoM:** v2.10.2, incluida como submódulo Git sin modificar en `upstream/atom`
-  (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen se construye con el `Dockerfile` upstream.
+  (commit `02a70b8a4b23a805256abd0a14cd0f93e311a581`). La imagen final se construye en dos capas: el `Dockerfile`
+  upstream sin tocar, más una capa propia de portabilidad (`docker/atom/Dockerfile`) que normaliza a LF, dentro de
+  la imagen, los scripts con shebang (necesario en checkouts Windows; ver
+  [repository-layout.md](docs/repository-layout.md#fin-de-línea)).
 - **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
   (instalación inicial segura), `dev_secrets` (secreto CSRF local), `reconcile` (plugins requeridos y `check_for_updates = 0`), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
 - **Theme institucional:** `plugins/arUnicaucaB5Plugin/` (plugin de AtoM propio, basado en el skeleton oficial `arThemeB5Plugin` y extensión de `arDominionB5Plugin`). Ciclo DEV
@@ -71,8 +74,8 @@ docker compose stop             # parar conservando contenedores y datos
 | Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
 
 `stop` y `down` (sin `-v`) conservan la base de datos y los ficheros subidos; `up -d --wait` siempre vuelve a pasar por
-el gate de `bootstrap`. `up` **no** reconstruye una imagen ya existente: tras cambiar `upstream/atom` o `docker/nginx`
-usa `docker compose up -d --build --wait` (ver [runbook](docs/dev-runbook.md#reconstruir-imágenes)).
+el gate de `bootstrap`. `up` **no** reconstruye una imagen ya existente: tras cambiar `upstream/atom`, `docker/atom`
+o `docker/nginx` usa `docker compose up -d --build --wait` (ver [runbook](docs/dev-runbook.md#reconstruir-imágenes)).
 
 `web-ready.sh` exige HTTP 200 **y** el marcador de AtoM (cookie `atom_culture`): un 200 de Nginx sin AtoM detrás
 no cuenta. Con otro puerto: `ATOM_WEB_PORT=<puerto> scripts/web-ready.sh --wait`.
@@ -109,6 +112,8 @@ Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la
 `plugins/arUnicaucaB5Plugin/tests/test-theme.sh`; las del reconcile y de la configuración crítica, con su desired state:
 `config/atom/tests/test-reconcile-plugins.sh` y `config/atom/tests/test-critical-config.sh`, esta última sobre un proyecto Docker aislado). Los `test-db-probe`, `test-bootstrap`,
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
+`scripts/test-image-portability.sh` compara la imagen `atom` final contra la imagen upstream cruda (`atom-upstream`,
+build-only) para probar la capa de portabilidad EOL, sin arrancar el runtime.
 `scripts/test-fresh-e2e.sh` es la prueba de checkout limpio + RESET: crea su propio clon, proyecto Docker
 (`archivo-historico-e2e-<id>`), puerto e imágenes, y **no toca** la instancia DEV normal. Ver el runbook.
 

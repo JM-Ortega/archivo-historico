@@ -6,7 +6,8 @@
 #
 # Usa el watch nativo del toolchain AtoM (Webpack watch, el mismo comando que expone "npm run watch" en
 # package.json) sobre el mismo boundary de escritura que `theme_build` (plugin RW + theme_dist RW): detección nativa
-# de cambios en SCSS/JS, sin polling de filesystem.
+# de cambios en SCSS/JS, sin polling de filesystem. Si el bind mount no entrega eventos, existe un fallback opt-in
+# de polling mediante WATCHPACK_POLLING (soporte propio de Watchpack): ver docs/theme-development.md.
 #
 # Ownership: igual que build.sh, el contenedor corre como root, así que templates/_layout_start.php nacería
 # root:root en el checkout del host. Usa la MISMA referencia de ownership que build.sh (stat del directorio

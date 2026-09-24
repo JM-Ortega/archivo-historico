@@ -10,7 +10,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-COMPOSE=(docker compose)
+# --progress quiet: `run` re-verifica el grafo de build (additional_contexts: atom_upstream) en cada
+# invocación; sin TTY ese trazo (aunque cacheado) sale por stdout y contamina check()/probe() de abajo,
+# que comparan el `db-probe`/`installation-check` capturado contra un valor exacto ("INSTALL_COMPLETE 0").
+# Reproducido en WSL/Linux, no es un workaround de Git Bash/MSYS.
+COMPOSE=(docker compose --progress quiet)
 ROOT_PW="${MYSQL_ROOT_PASSWORD:-my-secret-pw}"
 # Sin "_" en los nombres: en GRANT, "_" de un nombre de base es un comodín (y ES pide minúsculas).
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"

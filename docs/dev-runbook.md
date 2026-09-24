@@ -45,8 +45,26 @@ cambiado. Usa `--build` solo cuando cambió algo que entra en la imagen:
 docker compose up -d --build --wait
 ```
 
-- `upstream/atom` (p. ej. otro commit del submódulo): imagen `atom` (compartida por `bootstrap`, `theme_build`, `atom` y `atom_worker`).
+- `upstream/atom` (p. ej. otro commit del submódulo): imagen `atom-upstream` (build-only, ver abajo) y, en cadena,
+  imagen `atom` (compartida por `bootstrap`, `theme_build`, `atom` y `atom_worker`).
+- `docker/atom/Dockerfile` (capa de portabilidad propia sobre la imagen upstream): imagen `atom`, en cadena.
 - `docker/nginx/Dockerfile` o los estáticos de la imagen `atom` (la imagen `nginx` copia de ella su `dist`): imagen `nginx`.
+
+**La imagen `atom` no es directamente el Dockerfile de `upstream/atom`.** Es una construcción en dos capas:
+
+1. `atom_upstream`: build de `upstream/atom` sin tocar (mismo Dockerfile upstream). No forma parte del runtime
+   (`deploy.replicas: 0`: `docker compose up` normal nunca la arranca ni deja un contenedor); existe solo como
+   fuente de build para la imagen final.
+2. `atom` (`docker/atom/Dockerfile`): `FROM` esa imagen upstream (contexto adicional `upstream: service:atom_upstream`)
+   y normaliza a LF, dentro de la imagen, cualquier fichero de texto con shebang (`#!...`, detectado por contenido, no
+   por extensión). Necesario porque en un checkout Windows con `core.autocrlf=true` el working tree de
+   `upstream/atom` llega al build en CRLF (miles de ficheros; `upstream/atom` no lleva `.gitattributes` propio y no
+   es superficie de este proyecto), lo que rompe en runtime cualquier script invocado por su shebang. `upstream/atom`
+   en sí no se toca: la normalización ocurre solo dentro de la imagen derivada.
+
+`docker compose build`/`up -d --wait` construyen ambas capas automáticamente, sin flags ni pasos manuales (la
+resolución de `additional_contexts: service:atom_upstream` no requiere `--profile`). Ver
+[scripts/test-image-portability.sh](../scripts/test-image-portability.sh).
 
 **No** hace falta `--build` para el uso cotidiano ni para cambios en ficheros montados por bind: el contenedor ve
 siempre el fichero actual del host, sin rebuild.
