@@ -1,16 +1,90 @@
-/*
+$uc-primary: #000066;
+$uc-primary-light: #5056ac;
+$uc-primary-dark: #07184a;
 
-Customize variables:
+$uc-secondary: #9d0311;
+$uc-secondary-light: #db141c;
+$uc-secondary-dark: #690007;
 
-- Check the ../../arDominionB5Plugin/scss/_variables.scss file.
-- Check the B5 documentation (https://getbootstrap.com/docs/5.0/customize/sass/).
-- Import B5 functions, variables and mixins if needed.
+$uc-error: #ff6d0a;
 
-*/
+$primary: $uc-primary;
+$danger: $uc-error;
+// $uc-secondary no se asigna a $secondary: Dominion lo usa en superficies operativas (.actions, togglers, .atom-btn-*).
 
+// No usar $font-family-sans-serif: Dominion redefine --bs-font-sans-serif después de Bootstrap.
+$font-family-base: "Open Sans", sans-serif;
+$font-size-base: 0.875rem;
+
+$headings-font-family: "Titillium Web", sans-serif;
+
+$h1-font-size: 2rem;
+$h2-font-size: 1.375rem;
+$h3-font-size: 1.125rem;
+$h4-font-size: 1rem;
+$h5-font-size: 1rem;
+$h6-font-size: 0.875rem;
+
+$btn-font-size: 0.75rem;
+$btn-font-weight: 600;
+$btn-border-radius: 50rem;
+$btn-border-radius-sm: 50rem;
+$btn-border-radius-lg: 50rem;
+
+$input-border-radius: 0.25rem;
+$form-select-border-radius: 0.25rem;
+$alert-border-radius: 0.25rem;
+$card-border-radius: 0.75rem;
+
+// Las variables deben declararse antes de este import para propagarse: Dominion las define con !default.
 @import "../../arDominionB5Plugin/scss/main.scss";
 
-// Marcador de la foundation (WU-12B); reversible: borrar el fichero y esta línea.
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-700.woff2") format("woff2");
+}
+
+// Bootstrap solo expone un $headings-font-weight global; los pesos por nivel deben declararse después del import.
+h1,
+.h1,
+h2,
+.h2,
+h4,
+.h4 {
+  font-weight: 700;
+}
+
+h3,
+.h3,
+h5,
+.h5 {
+  font-weight: 600;
+}
+
+h6,
+.h6 {
+  font-weight: 400;
+}
+
 @import "foundation-marker";
 
 /*
