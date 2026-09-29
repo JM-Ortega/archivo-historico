@@ -124,7 +124,13 @@ run_install() {
     --site-title="${ATOM_SITE_TITLE:-AtoM}" --site-description="${ATOM_SITE_DESCRIPTION:-Access to Memory}" \
     --site-base-url="${ATOM_SITE_BASE_URL:-http://127.0.0.1}" \
     --admin-email="$ATOM_ADMIN_EMAIL" --admin-username="$ATOM_ADMIN_USERNAME" --admin-password="$ATOM_ADMIN_PASSWORD" \
-    2>&1 | sed -E '/^(Database|Admin) password /d'
+    2>&1 | sed -E '/^(Database|Admin) password /d' || return
+
+  # Defaults iniciales del header institucional (upstream: título oculto, descripción visible y fondo oscuro). Solo nacen aquí:
+  # después de la instalación los administra AtoM y ningún paso posterior los reescribe. La cultura por defecto del proyecto es `es`.
+  php symfony tools:settings set toggleTitle 1 --culture=es || return
+  php symfony tools:settings set toggleDescription 0 --culture=es || return
+  php symfony tools:settings set header_background_colour '#ffffff' --culture=es || return
 }
 
 install_flow() {

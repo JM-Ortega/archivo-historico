@@ -208,7 +208,8 @@ services:
       ATOM_ADMIN_EMAIL: ${ATOM_ADMIN_EMAIL:-admin@example.com}
       ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME:-admin}
       ATOM_ADMIN_PASSWORD: ${ATOM_ADMIN_PASSWORD:-admin_dev_12345}
-      ATOM_SITE_TITLE: ${ATOM_SITE_TITLE:-Archivo Histórico (DEV)}
+      ATOM_SITE_TITLE: ${ATOM_SITE_TITLE:-Archivo Histórico}
+      ATOM_SITE_DESCRIPTION: ${ATOM_SITE_DESCRIPTION:-Universidad del Cauca}
       # El límite por defecto de upstream (512M) se agota en tools:install (carga de fixtures/i18n).
       ATOM_PHP_MEMORY_LIMIT: ${ATOM_PHP_MEMORY_LIMIT:-2G}
       BOOTSTRAP_WAIT_ATTEMPTS: ${BOOTSTRAP_WAIT_ATTEMPTS:-30}

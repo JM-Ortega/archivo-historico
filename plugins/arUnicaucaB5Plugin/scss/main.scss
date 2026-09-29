@@ -85,6 +85,56 @@ h6,
   font-weight: 400;
 }
 
+#top-bar {
+  border-bottom: 3px solid $primary;
+
+  &:not(.navbar-dark) {
+    --bs-navbar-color: #{$primary};
+    --bs-navbar-hover-color: #{$uc-primary-light};
+    --bs-navbar-active-color: #{$uc-primary-dark};
+  }
+
+  &.navbar-dark {
+    --bs-navbar-hover-color: #{$uc-primary-light};
+
+    .uc-brand-logo--institutional {
+      padding: $spacer * 0.25 $spacer * 0.5;
+      border-radius: $border-radius;
+      background-color: $white;
+    }
+
+    .uc-brand-text {
+      border-left-color: $white;
+      color: $white;
+    }
+  }
+
+  .navbar-toggler:hover,
+  .navbar-toggler:focus {
+    color: $white;
+  }
+}
+
+.uc-brand-logo {
+  margin-right: $spacer * 0.75;
+}
+
+.uc-brand-text {
+  margin-right: $spacer;
+  padding-left: $spacer * 0.75;
+  border-left: $border-width solid $border-color;
+  color: $primary;
+}
+
+.uc-brand-title {
+  font-weight: 700;
+  font-size: $h3-font-size;
+}
+
+.uc-brand-description {
+  font-size: $small-font-size;
+}
+
 @import "foundation-marker";
 
 /*
