@@ -1,0 +1,21 @@
+$uc-heritage-photo: url("../images/archivo-acervo.jpeg");
+
+// Los offsets encuadran las zonas con mayor presencia de libros.
+$uc-heritage-offset-left: 0.6236;
+$uc-heritage-offset-right: 1.225;
+
+@include media-breakpoint-up(xxl) {
+  body {
+    background-image: $uc-heritage-photo, $uc-heritage-photo;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: auto 100vh;
+    background-position:
+      calc(-100vh * #{$uc-heritage-offset-left}) 0,
+      calc(100% + 100vh * #{$uc-heritage-offset-right}) 0;
+  }
+
+  #wrapper {
+    background-color: var(--bs-body-bg);
+  }
+}

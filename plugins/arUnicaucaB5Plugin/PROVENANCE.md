@@ -12,3 +12,10 @@
   elementos, aplicar efectos, usar el escudo sin el nombre «Universidad del Cauca», colocar elementos dentro del área de protección
   y usarlo sobre fondos similares. Un nombre de dependencia se compone al lado del logosímbolo en Open Sans Bold, separado por una
   línea.
+
+## images/archivo-acervo.jpeg
+
+- Fuente: https://www.unicauca.edu.co/vicerrectoria-academica/facultad-de-ciencias-humanas-y-sociales/archivo-historico
+- Archivo original: https://www.unicauca.edu.co/wp-content/uploads/2026/03/WhatsApp-Image-2026-03-17-at-9.21.05-AM-18.jpeg
+- SHA-256: `7d9f91d7451bd07178eaf87962100865f2477a8ba98fdb65836cecdf571bbd9a`
+- Fotografía publicada por la Universidad del Cauca y utilizada en este proyecto académico citando su fuente. Este asset no se relicencia bajo la licencia del código del repositorio.

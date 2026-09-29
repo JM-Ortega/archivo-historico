@@ -135,7 +135,7 @@ expect "la clase Configuration usa el nombre nuevo y extiende arDominionB5Plugin
 expect "la Configuration hereda la precedencia del skeleton: parent::initialize() y sin array_unshift propio" "1:0" \
   "$(grep -c 'parent::initialize()' "$PDIR/config/${PLUGIN}Configuration.class.php"):$(grep -c 'array_unshift' "$PDIR/config/${PLUGIN}Configuration.class.php" || true)"
 expect "el summary contiene 'theme' (AtoM lo lista como tema)" "1" "$(grep -cEi "summary = '.*theme" "$PDIR/config/${PLUGIN}Configuration.class.php")"
-expect "scss/ contiene EXACTAMENTE main.scss y _foundation-marker.scss (sin parciales copiados de Dominion)" "./_foundation-marker.scss ./main.scss" \
+expect "scss/ contiene EXACTAMENTE main.scss, _foundation-marker.scss y _heritage-shell.scss (sin parciales copiados de Dominion)" "./_foundation-marker.scss ./_heritage-shell.scss ./main.scss" \
   "$(cd "$PDIR/scss" && find . -type f | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "sin layout.php ni logos duplicados de Dominion" "0" \
   "$(ls "$PDIR/templates/layout.php" "$PDIR/images/logo.png" "$PDIR/images/default_atom_logo.png" 2>/dev/null | wc -l)"
