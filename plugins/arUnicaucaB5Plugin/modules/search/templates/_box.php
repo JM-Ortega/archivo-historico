@@ -1,91 +1,29 @@
 <form
   id="search-box"
-  class="d-flex flex-grow-1 my-2"
+  class="w-100 mw-100 m-0"
   role="search"
   action="<?php echo url_for(['module' => 'informationobject', 'action' => 'browse']); ?>">
-  <h2 class="visually-hidden"><?php echo __('Search'); ?></h2>
   <input type="hidden" name="topLod" value="0">
   <input type="hidden" name="sort" value="relevance">
-  <div class="input-group flex-nowrap">
-    <button
-      id="search-box-options"
-      class="btn btn-sm atom-btn-secondary dropdown-toggle"
-      type="button"
-      data-bs-toggle="dropdown"
-      data-bs-auto-close="outside"
-      aria-expanded="false">
-      <i class="fas fa-cog" aria-hidden="true"></i>
-      <span class="visually-hidden"><?php echo __('Search options'); ?></span>
-    </button>
-    <div class="dropdown-menu mt-2" aria-labelledby="search-box-options">
-      <?php if (sfConfig::get('app_multi_repository')) { ?>
-        <div class="px-3 py-2">
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="radio"
-              name="repos"
-              id="search-realm-global"
-              checked
-              value>
-            <label class="form-check-label" for="search-realm-global">
-              <?php echo __('Global search'); ?>
-            </label>
-          </div>
-          <?php if (isset($repository)) { ?>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="repos"
-                id="search-realm-repo"
-                value="<?php echo $repository->id; ?>">
-              <label class="form-check-label" for="search-realm-repo">
-                <?php echo __('Search <span>%1%</span>', ['%1%' => render_title($repository)]); ?>
-              </label>
-            </div>
-          <?php } ?>
-          <?php if (isset($altRepository)) { ?>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="repos"
-                id="search-realm-alt-repo"
-                value="<?php echo $altRepository->id; ?>">
-              <label class="form-check-label" for="search-realm-alt-repo">
-                <?php echo __('Search <span>%1%</span>', ['%1%' => render_title($altRepository)]); ?>
-              </label>
-            </div>
-          <?php } ?>
-        </div>
-        <div class="dropdown-divider"></div>
-      <?php } ?>
-      <a class="dropdown-item" href="<?php echo url_for([
-          'module' => 'informationobject',
-          'action' => 'browse',
-          'showAdvanced' => true,
-          'topLod' => false,
-      ]); ?>">
-        <?php echo __('Advanced search'); ?>
-      </a>
+  <div class="d-flex flex-column flex-sm-row gap-3">
+    <div class="position-relative flex-grow-1">
+      <i class="home-search-icon fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 pe-none" aria-hidden="true"></i>
+      <input
+        id="search-box-input"
+        class="home-search-input form-control py-3 ps-5 rounded-3 dropdown-toggle"
+        type="search"
+        name="query"
+        autocomplete="off"
+        value="<?php echo $sf_request->query; ?>"
+        placeholder="Ej. Simón Bolívar, Cabildo de Popayán..."
+        data-url="<?php echo url_for(['module' => 'search', 'action' => 'autocomplete']); ?>"
+        data-bs-toggle="dropdown"
+        aria-expanded="false">
+      <ul id="search-box-results" class="dropdown-menu w-100 mt-2" aria-labelledby="search-box-input"></ul>
     </div>
-    <input
-      id="search-box-input"
-      class="form-control form-control-sm dropdown-toggle"
-      type="search"
-      name="query"
-      autocomplete="off"
-      value="<?php echo $sf_request->query; ?>"
-      placeholder="<?php echo sfConfig::get('app_ui_label_globalSearch'); ?>"
-      data-url="<?php echo url_for(['module' => 'search', 'action' => 'autocomplete']); ?>"
-      data-bs-toggle="dropdown"
-      aria-label="<?php echo sfConfig::get('app_ui_label_globalSearch'); ?>"
-      aria-expanded="false">
-    <ul id="search-box-results" class="dropdown-menu mt-2" aria-labelledby="search-box-input"></ul>
-    <button class="btn btn-sm atom-btn-secondary" type="submit">
+    <button class="home-search-btn btn fw-bold rounded-3 d-inline-flex align-items-center justify-content-center gap-2" type="submit">
       <i class="fas fa-search" aria-hidden="true"></i>
-      <span class="visually-hidden"><?php echo __('Search in browse page'); ?></span>
+      Buscar
     </button>
   </div>
 </form>
