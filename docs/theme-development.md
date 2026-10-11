@@ -357,7 +357,7 @@ ESCALATION:
 
 `arUnicaucaB5Plugin` está habilitado por el servicio `reconcile` (`docker compose up -d --wait` lo ejecuta antes de `atom`/`atom_worker`), a partir del
 desired state versionado `config/atom/required-plugins.conf`. La presencia del plugin en el filesystem no lo habilita: la activación es estado de la BD
-y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-plugins-desired-state). `theme_build` no toca la BD.
+y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-atom-desired-state). `theme_build` no toca la BD.
 
 ```bash
 docker compose run --rm reconcile          # aplicar/verificar a mano
