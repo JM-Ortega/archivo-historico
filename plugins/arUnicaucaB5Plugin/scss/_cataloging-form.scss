@@ -1,0 +1,436 @@
+// Formulario de catalogación (sfIsadPlugin/editSuccess.php del plugin). Todo cuelga de .ah-cataloging-form: no cambia
+// variables de Bootstrap/Dominion ni estilos de otras pantallas. Colores, tipografía, espaciado, radios y foco salen de la
+// foundation TIC (_tokens.scss, _mixins.scss); neutros de Bootstrap/Dominion. Aquí solo vive lo propio del formulario:
+// layout, ficha cotidiana / campos adicionales, filas repetibles, etiquetas del autocomplete y responsive.
+
+.ah-cataloging-form {
+  // Superficie propia del bloque de catalogación sobre el fondo gris de AtoM (que no se toca): blanca, borde neutro discreto,
+  // sin sombra.
+  padding: $uc-space-5;
+  border: $border-width solid $border-color;
+  border-radius: $uc-radius;
+  background-color: $white;
+  @include uc-type("body");
+
+  @include media-breakpoint-down(md) {
+    padding: $uc-space-4;
+  }
+
+  // --- Títulos -----------------------------------------------------------------------------------------------------------
+
+  .ah-section-title {
+    margin-bottom: $uc-space-5;
+    color: $uc-primary;
+    @include uc-type("h2");
+
+    // Acento institucional (rojo de identidad, no de error).
+    &::after {
+      content: "";
+      display: block;
+      width: $uc-space-6;
+      height: 3px;
+      margin-top: $uc-space-2;
+      background-color: $uc-secondary-light;
+    }
+  }
+
+  // --- Labels, ayudas, controles -----------------------------------------------------------------------------------------
+
+  .form-label,
+  .ah-field-label {
+    margin-bottom: $uc-space-1;
+    color: $body-color;
+    @include uc-type("body-strong");
+  }
+
+  .form-text {
+    margin-top: $uc-space-1;
+    color: $text-muted;
+    @include uc-type("small");
+  }
+
+  .form-control,
+  .form-select {
+    border-color: $gray-400;
+    border-radius: $uc-radius;
+    font-size: $uc-font-size-body;
+
+    &:focus {
+      border-color: $uc-focus-border-color;
+      @include uc-focus-ring;
+    }
+  }
+
+  textarea.form-control {
+    resize: vertical;
+  }
+
+  .ah-row {
+    --bs-gutter-x: #{$uc-space-5};
+  }
+
+  .ah-field {
+    margin-bottom: $uc-space-4;
+  }
+
+  // --- Errores: color de error en borde e indicador; el texto se mantiene legible ---------------------------------------
+
+  .is-invalid,
+  .is-invalid:focus {
+    border-color: $uc-error;
+  }
+
+  .is-invalid:focus {
+    @include uc-focus-ring($uc-focus-ring-error);
+  }
+
+  .invalid-feedback {
+    display: block;
+    margin-top: $uc-space-1;
+    color: $body-color;
+    @include uc-type("small-semibold");
+
+    &::before {
+      @include uc-status-badge($uc-error);
+    }
+  }
+
+  // --- Autocomplete múltiple (Remitente, Destinatario, Lugar...): los elegidos como etiquetas -------------------------
+
+  .yui-ac > ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $uc-space-1;
+    margin: 0 0 $uc-space-2;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: inline-flex;
+      align-items: center;
+      gap: $uc-space-2;
+      max-width: 100%;
+      padding: 0.125rem $uc-space-2;
+      border: $border-width solid $gray-400;
+      border-radius: $uc-radius;
+      background-color: $uc-hover;
+      font-size: $uc-font-size-body;
+      list-style-image: none;
+
+      &::after {
+        content: "\00d7";
+        color: $gray-600;
+        font-size: 1rem;
+        line-height: 1;
+      }
+
+      &:hover {
+        border-color: $uc-primary-light;
+        list-style-image: none;
+
+        &::after {
+          color: $uc-primary;
+        }
+      }
+
+      // Nombre nuevo, todavía editable antes de guardar: se ve como texto de la etiqueta hasta que se enfoca.
+      input {
+        width: auto;
+        min-width: 12rem;
+        margin: 0;
+        padding: 0 $uc-space-1;
+        border-color: transparent;
+        background-color: transparent;
+        font-size: $uc-font-size-body;
+      }
+    }
+  }
+
+  // --- Filas repetibles (Fecha, Observaciones) ---------------------------------------------------------------------------
+
+  .ah-rows {
+    --bs-table-bg: transparent;
+
+    margin-bottom: 0;
+
+    th,
+    td {
+      padding: 0 $uc-space-2 $uc-space-2 0;
+      border: 0;
+      vertical-align: top;
+    }
+
+    th {
+      color: $text-muted;
+      @include uc-type("small-semibold");
+      white-space: nowrap;
+    }
+
+    tfoot td {
+      padding-bottom: 0;
+    }
+
+    .ah-rows-action {
+      width: 1%;
+      padding-right: 0;
+    }
+  }
+
+  .ah-dates {
+    .ah-dates-date {
+      width: 50%;
+    }
+
+    .ah-dates-normalized {
+      width: 25%;
+    }
+
+    // "Más opciones de fecha": secundaria y compacta, bajo la expresión de su propia fila.
+    .ah-date-more-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: $uc-space-1;
+      margin-top: $uc-space-1;
+      padding: 0;
+      border: 0;
+      border-radius: $uc-radius;
+      background: none;
+      color: $text-muted;
+      @include uc-type("small-semibold");
+
+      i {
+        transition: transform 0.2s ease-in-out;
+      }
+
+      &[aria-expanded="true"] i {
+        transform: rotate(180deg);
+      }
+
+      &:hover {
+        color: $uc-primary;
+      }
+
+      &:focus-visible {
+        @include uc-focus-ring;
+      }
+    }
+
+    .ah-date-more {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: $uc-space-2;
+      margin-top: $uc-space-2;
+
+      &[hidden] {
+        display: none;
+      }
+
+      .form-select {
+        width: auto;
+        min-width: 10rem;
+      }
+    }
+
+    .ah-date-more-label {
+      color: $text-muted;
+      @include uc-type("small-semibold");
+    }
+
+    // En pantallas estrechas cada fecha es un bloque: expresión a lo ancho; inicio y fin; tipo y quitar. Las cabeceras se
+    // ocultan y cada celda muestra su etiqueta (los controles siguen nombrados por aria-labelledby).
+    @include media-breakpoint-down(md) {
+      thead {
+        display: none;
+      }
+
+      tbody tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: $uc-space-2;
+        margin-bottom: $uc-space-3;
+      }
+
+      tbody td {
+        padding: 0;
+      }
+
+      tbody td:first-child {
+        grid-column: 1 / -1;
+      }
+
+      tbody td.ah-rows-action {
+        width: auto;
+        align-self: end;
+        justify-self: end;
+      }
+
+      td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: $uc-space-1;
+        color: $text-muted;
+        @include uc-type("small-semibold");
+      }
+
+      tfoot tr,
+      tfoot td {
+        display: block;
+      }
+    }
+  }
+
+  .ah-notes td:first-child {
+    width: 100%;
+  }
+
+  // --- Botones de la superficie --------------------------------------------------------------------------------------
+
+  .ah-btn-add,
+  .ah-btn-icon,
+  .ah-additional-toggle,
+  .actions .btn {
+    @include uc-type("button");
+  }
+
+  .ah-btn-add {
+    padding: $uc-space-1 0;
+    border: 0;
+    color: $uc-primary;
+
+    i {
+      margin-right: $uc-space-1;
+    }
+
+    &:hover {
+      color: $uc-primary-light;
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      @include uc-focus-ring;
+    }
+  }
+
+  .ah-btn-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: $border-width solid $gray-400;
+    border-radius: $uc-radius;
+    background-color: $white;
+    color: $gray-600;
+
+    &:hover {
+      background-color: $uc-hover;
+      color: $uc-primary;
+    }
+
+    &:focus-visible {
+      @include uc-focus-ring;
+    }
+  }
+
+  // --- Campos adicionales -------------------------------------------------------------------------------------------
+
+  .ah-additional {
+    margin-top: $uc-space-6;
+    padding-top: $uc-space-5;
+    border-top: $border-width solid $border-color;
+  }
+
+  .ah-additional-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: $uc-space-2;
+    padding: $uc-space-2 $uc-space-3;
+    border: $border-width solid $uc-primary;
+    border-radius: $uc-radius;
+    background-color: $white;
+    color: $uc-primary;
+
+    &:hover {
+      background-color: $uc-hover;
+    }
+
+    &:focus-visible {
+      @include uc-focus-ring;
+    }
+
+    .ah-additional-icon {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    &:not(.collapsed) .ah-additional-icon {
+      transform: rotate(180deg);
+    }
+
+    &.collapsed .ah-when-expanded,
+    &:not(.collapsed) .ah-when-collapsed {
+      display: none;
+    }
+  }
+
+  .ah-additional-summary {
+    margin: $uc-space-2 0 $uc-space-4;
+  }
+
+  .accordion {
+    --bs-accordion-active-color: #{$uc-primary};
+    --bs-accordion-active-bg: #{$uc-hover};
+    --bs-accordion-btn-focus-box-shadow: #{$uc-focus-ring};
+    --bs-accordion-border-radius: #{$uc-radius};
+    --bs-accordion-inner-border-radius: #{$uc-radius};
+  }
+
+  .accordion-button {
+    @include uc-type("h5");
+  }
+
+  // --- Acciones del formulario (Cancelar / Guardar / Crear) -----------------------------------------------------------
+
+  // La barra de acciones de AtoM (fondo $secondary de Dominion) se integra en la superficie: sin fondo, separada por un borde.
+  // `!important` solo para ganar a la utilidad `.mb-3` que trae el partial nativo.
+  .actions {
+    margin-top: $uc-space-5;
+    margin-bottom: 0 !important;
+    padding: $uc-space-5 0 0;
+    border-top: $border-width solid $border-color;
+    border-radius: 0;
+    background-color: transparent;
+
+    .btn {
+      padding: $uc-space-2 $uc-space-4;
+      border-radius: $uc-radius;
+    }
+
+    .atom-btn-outline-success {
+      border-color: $uc-primary;
+      background-color: $uc-primary;
+      color: $white;
+
+      &:hover {
+        border-color: $uc-primary-dark;
+        background-color: $uc-primary-dark;
+      }
+
+      &:focus-visible {
+        @include uc-focus-ring;
+      }
+    }
+
+    .atom-btn-outline-light {
+      border-color: $gray-400;
+      background-color: $white;
+      color: $body-color;
+
+      &:hover {
+        background-color: $uc-hover;
+      }
+
+      &:focus-visible {
+        @include uc-focus-ring;
+      }
+    }
+  }
+}
