@@ -167,20 +167,21 @@ docker compose logs reconcile | grep check_for_updates
 
 Prueba de integración (proyecto aislado, no toca la DEV; ~4 min): `config/atom/tests/test-critical-config.sh`.
 
-## Reconcile de plugins (desired state)
+## Reconcile de AtoM (desired state)
 
-`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en dos pasos que corren en orden
-(`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado** y (2) `check_for_updates = 0` (ver
-[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)). No es un reconciliador genérico. Vive en `config/atom/`:
+`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en tres pasos que corren en orden
+(`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado**, (2) `check_for_updates = 0` (ver
+[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)) y (3) los [términos propios del proyecto](#términos-project-managed-de-taxonomías) existen. No es un reconciliador genérico. Vive en `config/atom/`:
 
 | Fichero | Papel |
 | --- | --- |
 | `config/atom/required-plugins.conf` | Desired state: un plugin por línea (`#` comenta). Hoy solo `arUnicaucaB5Plugin` |
-| `config/atom/reconcile.sh` | Orquesta los pasos del reconcile (plugins → `check_for_updates`) |
+| `config/atom/reconcile.sh` | Orquesta los pasos del reconcile (plugins → `check_for_updates` → términos) |
 | `config/atom/reconcile-plugins.sh` | Paso 1: plugins (corre dentro de la imagen AtoM; sin dependencias nuevas en el host) |
 | `config/atom/reconcile-check-for-updates.php` | Paso 2: `check_for_updates = 0` (vía `php symfony tools:run`) |
+| `config/atom/reconcile-terms.php` | Paso 3: términos PROJECT-MANAGED de taxonomías (vía `php symfony tools:run`); el desired state está en el propio script |
 | `config/atom/runtime-config.sh`, `config/atom/dev-secrets.sh` | Entrypoint del proyecto y proveedor del secreto DEV (ver arriba) |
-| `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
+| `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-reconcile-terms.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
 
 Semántica: por cada plugin requerido → valida el formato del `.conf` → valida su **source mínimo** (existe `plugins/<nombre>/config/<nombre>Configuration.class.php`,
 declara la clase y es PHP válido) → observa `tools:atom-plugins list` → si **falta**, `tools:atom-plugins add` → **vuelve a observar** y exige que el
@@ -197,12 +198,40 @@ docker compose logs reconcile
 Exit de `reconcile` (plugins): 0 éxito; 64 entrada inválida (`.conf` ausente, vacío o con una línea que no es un nombre de plugin); 65 source mínimo del
 plugin inválido (nada se escribe: todo el `.conf` se valida antes de escribir); 70 no se pudo observar la lista; 71 `tools:atom-plugins add` falló;
 72 postcondición no satisfecha tras añadir. Paso `check_for_updates`: 73 no se pudo observar; 74 la escritura falló; 75 no se pudo invalidar la caché;
-76 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
+76 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Paso términos: 77 no se pudo observar; 78 no reconciliable (conflicto
+detectado antes de escribir); 79 la escritura falló; 80 postcondición no satisfecha. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
 
 Límites (deliberados): supone un **único writer** durante el gate pre-start (sin locking); **no** se asume hot-reconcile sobre un AtoM ya iniciado:
 si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_worker` solo si su configuración cambió) y, si hiciera falta, reiniciando
 `atom`/`atom_worker`; un `run --rm reconcile` manual sobre un AtoM en marcha no garantiza que lo vea sin reiniciarlo. Los plugins ajenos (Dominion, los
 `sf*Plugin`, etc.) siguen gestionándose fuera de este reconcile.
+
+### Términos PROJECT-MANAGED de taxonomías
+
+El proyecto es dueño de **sus** términos, no de las taxonomías: los términos estándar de AtoM y los que creen los usuarios (lugares, etc.) no se gestionan.
+
+| Taxonomía | `code` (identidad) | es | en |
+| --- | --- | --- | --- |
+| Nivel de descripción (34) | `archivo-historico:seccion` | Sección | Section |
+| Tipo de evento (40) | `archivo-historico:remitente` | Remitente | Remitente |
+| Tipo de evento (40) | `archivo-historico:destinatario` | Destinatario | Destinatario |
+
+El nombre `en` existe porque AtoM lo usa técnicamente (exportación), no como traducción: Remitente y Destinatario son categorías locales del
+Archivo, no equivalentes demostrados de *sender*/*recipient*, y conservan el nombre local.
+
+Se identifican por taxonomía + `code`, nunca por id ni por nombre; el código del proyecto que los necesite debe buscarlos igual. Semántica (paso 3,
+`config/atom/reconcile-terms.php`): todo se comprueba antes de escribir. Si falta y **no** hay homónimo, se crea (cultura fuente `es`, bajo la raíz). Si falta y
+existe un término ajeno con el mismo nombre en esa taxonomía (cualquier cultura; sin distinguir mayúsculas ni acentos) es **STOP (78)**: no se adopta ni
+se duplica. Si ya existe con su estado canónico (nombres es/en, bajo la raíz, cultura fuente `es`), no se escribe. Si existe pero alguien cambió sus nombres,
+su padre o su cultura fuente, o el `code` está repetido o en otra taxonomía, es **STOP (78)** antes de escribir: es estado propio alterado y no se autocorrige.
+Un homónimo ajeno aparecido después (con el nuestro correcto) solo se **avisa** en el log (`AVISO`): la identidad del nuestro sigue siendo inequívoca.
+Nunca borra. Si se borra uno, el siguiente reconcile lo recrea con otro id (no distingue "nunca creado" de "borrado"), pero **recrear no recupera lo perdido**:
+borrar el nivel deja en NULL el nivel de las descripciones que lo usaban, y borrar un tipo de evento **elimina en cascada todos sus eventos** (p. ej. todos los
+Remitente). Hoy el grupo `editor` de AtoM puede borrar términos; impedirlo es un requisito pendiente antes de entregar cuentas reales de catalogación.
+
+Ojo: el import CSV/EAD de AtoM resuelve el nivel de descripción **por nombre en la cultura del usuario** y, si no lo encuentra, crea un término nuevo; el export
+CSV usa siempre el nombre `en`. Un CSV exportado (`Section`) e importado en `es` crea un `Section` duplicado sin `code` (lo mismo pasa con los niveles estándar,
+p. ej. `Fonds`). El reconcile lo reportará como homónimo.
 
 ## Estados problemáticos conocidos
 
@@ -215,7 +244,7 @@ si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_w
 | `DB_UNREACHABLE` (30) | No se conectó a la BD tras los reintentos (30 × 2 s) | `ps -a` y `logs percona`. Recuerda que Percona solo aplica `MYSQL_*` al **inicializar** el volumen: cambiar la contraseña en el entorno después no cambia la de un volumen ya creado |
 | `DB_COMPATIBLE` + `INSTALL_INCOMPLETE` (43) | Schema correcto pero sin administrador: un `tools:install` interrumpido | STOP: **no se reinstala ni se repara automáticamente.** Si es una instalación DEV desechable: [RESET DEV](#reset-dev-destructivo). Si hay datos que conservar: no hagas RESET; investiga y recupera de forma explícita (p. ej. inspecciona la BD y restaura el administrador o la instalación a mano) |
 
-Los fallos del `reconcile` (exits 64/65/70/71/72 y 73-76) se describen en [Reconcile de plugins](#reconcile-de-plugins-desired-state).
+Los fallos del `reconcile` (exits 64/65/70/71/72, 73-76 y 77-80) se describen en [Reconcile de AtoM](#reconcile-de-atom-desired-state).
 
 Otros exits de `bootstrap`: 40 `tools:install` falló; 41 el probe posterior no dio `DB_COMPATIBLE`; 42 Elasticsearch o
 Memcached no disponibles (solo al instalar); 64/70 configuración inválida o error inesperado. Empieza siempre por
