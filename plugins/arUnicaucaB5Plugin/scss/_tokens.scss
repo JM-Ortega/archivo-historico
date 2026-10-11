@@ -1,0 +1,68 @@
+// Tokens del Sistema de Diseño de la División TIC para arUnicaucaB5Plugin.
+//
+// Solo variables Sass: este fichero no genera CSS ni cambia ninguna pantalla por sí mismo. Cada superficie los consume desde
+// sus propios selectores encapsulados. No se asignan a las variables de Bootstrap/Dominion ($primary, $font-family-base...):
+// eso cambiaría todo AtoM. Neutros (fondos, bordes, texto): los de Bootstrap/Dominion ($gray-*, $border-color, $body-color).
+
+// --- Paleta institucional ---------------------------------------------------------------------------------------------
+
+$uc-primary: #000066;
+$uc-primary-light: #5056ac;
+$uc-primary-dark: #07184a;
+
+$uc-secondary: #9d0311; // Rojo institucional: identidad, NUNCA error.
+$uc-secondary-light: #db141c;
+$uc-secondary-dark: #690007;
+
+// --- Colores funcionales ----------------------------------------------------------------------------------------------
+
+$uc-error: #ff6d0a;
+$uc-info: #1d72d3;
+$uc-security: #e0e0ff;
+$uc-accessibility: #249300;
+$uc-hover: #f6f6f6;
+
+// --- Tipografía -------------------------------------------------------------------------------------------------------
+// Familias: Titillium Web para títulos (registrada en _fonts.scss, pesos 400, 600 y 700), Open Sans para todo lo demás
+// (registrada por arDominionB5Plugin).
+
+$uc-font-heading: "Titillium Web", sans-serif;
+$uc-font-body: "Open Sans", sans-serif;
+
+$uc-font-size-body: 0.875rem; // 14px
+$uc-font-size-small: 0.75rem; // 12px
+
+// Escala TIC: estilo → (familia, tamaño, peso). Se aplica con el mixin uc-type().
+$uc-type-scale: (
+  "h1": ($uc-font-heading, 2rem, 700),
+  "h2": ($uc-font-heading, 1.375rem, 700),
+  "h3": ($uc-font-heading, 1.125rem, 600),
+  "h4": ($uc-font-heading, 1rem, 700),
+  "h5": ($uc-font-heading, 1rem, 600),
+  "h6": ($uc-font-heading, 0.875rem, 400),
+  "body-strong": ($uc-font-body, $uc-font-size-body, 700),
+  "body": ($uc-font-body, $uc-font-size-body, 400),
+  "body-semibold": ($uc-font-body, $uc-font-size-body, 600),
+  "small": ($uc-font-body, $uc-font-size-small, 400),
+  "small-semibold": ($uc-font-body, $uc-font-size-small, 600),
+  "button": ($uc-font-body, $uc-font-size-small, 600),
+);
+
+// --- Espaciado (4 · 8 · 12 · 16 · 24 · 32 px) ---------------------------------------------------------------------------
+
+$uc-space-1: 0.25rem;
+$uc-space-2: 0.5rem;
+$uc-space-3: 0.75rem;
+$uc-space-4: 1rem;
+$uc-space-5: 1.5rem;
+$uc-space-6: 2rem;
+
+// --- Radios -----------------------------------------------------------------------------------------------------------
+
+$uc-radius: 0.25rem; // Inputs, selects, autocomplete, botones de formulario.
+
+// --- Foco -------------------------------------------------------------------------------------------------------------
+
+$uc-focus-border-color: $uc-primary-light;
+$uc-focus-ring: 0 0 0 0.2rem rgba($uc-primary-light, 0.35);
+$uc-focus-ring-error: 0 0 0 0.2rem rgba($uc-error, 0.3);
