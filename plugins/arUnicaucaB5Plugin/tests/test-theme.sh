@@ -135,7 +135,8 @@ expect "la clase Configuration usa el nombre nuevo y extiende arDominionB5Plugin
 expect "la Configuration hereda la precedencia del skeleton: parent::initialize() y sin array_unshift propio" "1:0" \
   "$(grep -c 'parent::initialize()' "$PDIR/config/${PLUGIN}Configuration.class.php"):$(grep -c 'array_unshift' "$PDIR/config/${PLUGIN}Configuration.class.php" || true)"
 expect "el summary contiene 'theme' (AtoM lo lista como tema)" "1" "$(grep -cEi "summary = '.*theme" "$PDIR/config/${PLUGIN}Configuration.class.php")"
-expect "scss/ contiene EXACTAMENTE main.scss y _foundation-marker.scss (sin parciales copiados de Dominion)" "./_foundation-marker.scss ./main.scss" \
+expect "scss/ contiene EXACTAMENTE main.scss, _foundation-marker.scss, la foundation TIC (_tokens, _mixins, _fonts), el componente _help y _cataloging-form.scss (sin parciales copiados de Dominion)" \
+  "./_cataloging-form.scss ./_fonts.scss ./_foundation-marker.scss ./_help.scss ./_mixins.scss ./_tokens.scss ./main.scss" \
   "$(cd "$PDIR/scss" && find . -type f | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "sin layout.php ni logos duplicados de Dominion" "0" \
   "$(ls "$PDIR/templates/layout.php" "$PDIR/images/logo.png" "$PDIR/images/default_atom_logo.png" 2>/dev/null | wc -l)"
@@ -182,7 +183,9 @@ expect "Nginx sirve el JS custom (200)" "200" "$(code "$URL$(js_ref)")"
 expect "Nginx sirve images/image.png del plugin (200, idéntico al source)" "identical" \
   "$(curl -sS "$URL/plugins/$PLUGIN/images/image.png" | cmp -s - "$PDIR/images/image.png" && echo identical || echo different)"
 for f in scss/main.scss scss/_foundation-marker.scss webpack.entry.js js/main.js templates/_layout_start_webpack.php \
-         config/${PLUGIN}Configuration.class.php tools/build.sh tests/test-theme.sh; do
+         config/${PLUGIN}Configuration.class.php tools/build.sh tests/test-theme.sh tests/cataloging-form.php \
+         modules/sfIsadPlugin/templates/editSuccess.php modules/sfIsadPlugin/actions/editAction.class.php \
+         lib/arUnicaucaCatalogingRoleEvents.class.php; do
   expect_ne "HTTP no expone $f del plugin" "200" "$(code "$URL/plugins/$PLUGIN/$f")"
 done
 expect "el body de scss/main.scss no es el source" "0" "$(curl -sS "$URL/plugins/$PLUGIN/scss/main.scss" | grep -c '@import' || true)"

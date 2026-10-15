@@ -13,6 +13,18 @@ Customize variables:
 // Marcador de la foundation (WU-12B); reversible: borrar el fichero y esta línea.
 @import "foundation-marker";
 
+// Foundation TIC: tokens y mixins (solo Sass, no generan CSS) y registro de Titillium Web (solo @font-face). Ninguno de los
+// tres aplica estilos: cada superficie los consume desde sus propios selectores encapsulados.
+@import "tokens";
+@import "mixins";
+@import "fonts";
+
+// Componentes reutilizables (por clase; solo afectan a donde una vista los usa).
+@import "help"; // Ayuda contextual .uc-help (lib/helper/UcHelpHelper.php, js/help.js).
+
+// Superficies.
+@import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
+
 /*
 
 Extend:

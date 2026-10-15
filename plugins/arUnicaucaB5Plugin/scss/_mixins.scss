@@ -1,0 +1,38 @@
+// Mixins de la foundation TIC (ver _tokens.scss). Como los tokens, no generan CSS hasta que una superficie los incluye
+// dentro de sus propios selectores.
+
+// Estilo tipográfico de la escala TIC: uc-type("h2"), uc-type("body-strong"), uc-type("button")...
+@mixin uc-type($style) {
+  $spec: map-get($uc-type-scale, $style);
+  @if not $spec {
+    @error "uc-type: estilo desconocido '#{$style}'";
+  }
+
+  font-family: nth($spec, 1);
+  font-size: nth($spec, 2);
+  font-weight: nth($spec, 3);
+}
+
+// Anillo de foco visible. Por defecto para :focus-visible del propio elemento.
+@mixin uc-focus-ring($ring: $uc-focus-ring) {
+  outline: 0;
+  box-shadow: $ring;
+}
+
+// Indicador de estado delante de un mensaje (p. ej. error): círculo de color con un signo, para no depender solo del color
+// del texto. Se aplica a un pseudo-elemento: `&::before { @include uc-status-badge($uc-error); }`.
+@mixin uc-status-badge($color, $symbol: "!") {
+  content: $symbol;
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.375rem;
+  border-radius: 50%;
+  background-color: $color;
+  color: $white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1rem;
+  text-align: center;
+  vertical-align: text-bottom;
+}

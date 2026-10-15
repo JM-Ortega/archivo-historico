@@ -1,0 +1,26 @@
+// Registro de Titillium Web (self-hosted, ver fonts/titillium-web/README.md). Solo declara las caras: no aplica la familia a
+// ningún elemento (las superficies usan $uc-font-heading). Único lugar de @font-face del plugin: Open Sans ya la registra y
+// aplica arDominionB5Plugin (@fontsource/open-sans).
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Titillium Web";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/titillium-web/titillium-web-latin-700.woff2") format("woff2");
+}
