@@ -25,7 +25,7 @@
  * plugin que aporta el fichero, así que es una COPIA de la clase upstream, no una subclase: revisarla al actualizar AtoM.
  * Diferencias con upstream, todas marcadas "arUnicaucaB5Plugin":
  *   - campos `remitentes` y `destinatarios` (arUnicaucaCatalogingRoleEvents);
- *   - opciones agrupadas de levelOfDescription (arUnicaucaCatalogingLevels);
+ *   - opciones agrupadas de levelOfDescription y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit).
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
@@ -169,6 +169,8 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                 parent::addField($name);
 
                 $widget = $this->form->getWidget('levelOfDescription');
+                // Perfil por URL del término (solo agrupación/unidad), para la plantilla. Se calcula antes de agrupar las opciones.
+                $this->levelProfiles = arUnicaucaCatalogingLevels::profileMap($widget->getOption('choices'));
                 $widget->setOption('choices', arUnicaucaCatalogingLevels::group(
                     $widget->getOption('choices'),
                     $this->context->i18n->__('Niveles principales'),

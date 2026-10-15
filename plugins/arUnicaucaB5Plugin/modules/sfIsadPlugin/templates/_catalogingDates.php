@@ -6,7 +6,8 @@
  * (multiRow.js): toda fecha existente se reenvía, así que guardar no borra ninguna.
  *
  * Diferencias de presentación:
- *   - La fila muestra expresión, inicio y fin normalizados. El tipo de fecha (por defecto Creación, como en AtoM) va en
+ *   - La fila muestra siempre y agrupados la fecha o período registrado (expresión textual original), Desde y Hasta (fechas
+ *     estructuradas, opcionales, para la búsqueda cronológica). El tipo de fecha (por defecto Creación, como en AtoM) va en
  *     "Más opciones de fecha", una expansión propia de cada fila. Cerrada solo se oculta con `hidden`: el select sigue en el
  *     formulario y se envía siempre, así que el tipo de una fecha existente se conserva tal cual. Si el tipo no es Creación,
  *     la expansión se muestra abierta para que se vea. Comportamiento: js/cataloging-form.js.
@@ -57,7 +58,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
 
     ob_start(); ?>
     <tr<?php echo isset($row['eventId']) ? ' class="related_obj_'.$row['eventId'].'"' : ''; ?>>
-      <td data-label="<?php echo __('Expresión'); ?>">
+      <td data-label="<?php echo __('Fecha o período registrado'); ?>">
         <?php if (isset($row['idUrl'])) { ?>
           <input
             type="hidden"
@@ -95,7 +96,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
           ?>
         </div>
       </td>
-      <td data-label="<?php echo __('Inicio normalizado'); ?>">
+      <td data-label="<?php echo __('Desde'); ?>">
         <?php $form->setDefault('startDate', $row['startDate']); ?>
         <?php echo render_field($form->startDate, null, [
             'aria-labelledby' => 'ah-dates-label ah-dates-start-head',
@@ -103,7 +104,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
             'onlyInputs' => true,
         ]); ?>
       </td>
-      <td data-label="<?php echo __('Fin normalizado'); ?>">
+      <td data-label="<?php echo __('Hasta'); ?>">
         <?php $form->setDefault('endDate', $row['endDate']); ?>
         <?php echo render_field($form->endDate, null, [
             'aria-labelledby' => 'ah-dates-label ah-dates-end-head',
@@ -124,19 +125,19 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
 };
 ?>
 <div class="ah-field">
-  <h3 class="form-label ah-field-label"><span id="ah-dates-label"><?php echo __('Fecha'); ?></span><?php echo uc_help(
+  <h3 class="form-label ah-field-label"><span id="ah-dates-label"<?php echo isset($labelsByProfile) ? ' data-ah-labels="'.htmlspecialchars(json_encode($sf_data->getRaw('labelsByProfile'), JSON_UNESCAPED_UNICODE), ENT_QUOTES).'"' : ''; ?>><?php echo $label ?? __('Fecha'); ?></span><?php echo uc_help(
       'ah-dates-tip',
       __('Fecha'),
-      __('Escribe la fecha tal como está registrada. Las fechas normalizadas son opcionales y facilitan la búsqueda. Formato: AAAA, AAAA-MM o AAAA-MM-DD.')
+      __('Escribe la fecha o el período tal como está registrado. Desde y Hasta son opcionales: facilitan la búsqueda cronológica por período; complétalos solo cuando puedan determinarse con fiabilidad. Formato: AAAA, AAAA-MM o AAAA-MM-DD.')
   ); ?></h3>
 
   <div class="table-responsive">
     <table class="table mb-0 multi-row ah-rows ah-dates" aria-labelledby="ah-dates-label" data-default-type="<?php echo $creationUrl; ?>">
       <thead>
         <tr>
-          <th id="ah-dates-date-head" class="ah-dates-date"><?php echo __('Expresión'); ?></th>
-          <th id="ah-dates-start-head" class="ah-dates-normalized"><?php echo __('Inicio normalizado'); ?></th>
-          <th id="ah-dates-end-head" class="ah-dates-normalized"><?php echo __('Fin normalizado'); ?></th>
+          <th id="ah-dates-date-head" class="ah-dates-date"><?php echo __('Fecha o período registrado'); ?></th>
+          <th id="ah-dates-start-head" class="ah-dates-normalized"><?php echo __('Desde'); ?></th>
+          <th id="ah-dates-end-head" class="ah-dates-normalized"><?php echo __('Hasta'); ?></th>
           <th class="ah-rows-action"><span class="visually-hidden"><?php echo __('Quitar'); ?></span></th>
         </tr>
       </thead>

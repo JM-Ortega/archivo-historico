@@ -743,6 +743,158 @@
             $r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [$child]), $i18n($child, 'scope_and_content'),
         ]);
 
+        echo "== Ficha adaptable (CAT-03): perfiles, contexto y preservación ==\n";
+        $attr = static fn (string $html, string $name) => preg_match('/<div class="ah-cataloging-form"[^>]*?\s'.$name.'="([^"]*)"/s', $html, $m) ? html_entity_decode($m[1]) : null;
+        $nodes = static function (string $html, string $query) {
+            $d = new DOMDocument();
+            libxml_use_internal_errors(true);
+            $d->loadHTML('<?xml encoding="utf-8"?>'.$html);
+            libxml_clear_errors();
+
+            return [(new DOMXPath($d))->query($query), $d];
+        };
+        $controls = ['identifier', 'title', 'creators[]', 'remitentes[]', 'destinatarios[]', 'placeAccessPoints[]', 'scopeAndContent',
+            'extentAndMedium', 'levelOfDescription', 'editEvents[0][date]', 'isadNotes[0][content]', 'accessConditions', 'nameAccessPoints[]'];
+        $controlCount = static function (string $html, string $name) use ($nodes): int {
+            [$found] = $nodes($html, "//form[@id='editForm']//*[(self::input or self::select or self::textarea) and @name='{$name}']");
+
+            return $found->length;
+        };
+        $levelId = static fn (string $en) => (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ? AND t.code IS NULL',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, $en]
+        );
+        $levelUrl = static fn (int $id) => '/index.php/'.QubitTerm::getById($id)->slug;
+
+        // Alta limpia: estado inicial sin nivel, perfil general y camino explícito "sin nivel".
+        $fresh = $request('/index.php/informationobject/add')['body'];
+        $check('alta: estado inicial, perfil general', ['initial', 'general'], [$attr($fresh, 'data-ah-state'), $attr($fresh, 'data-ah-profile')]);
+        $check('alta: "Describir sin nivel" existe y es un botón (no envía)', 1, preg_match_all('/<button type="button"[^>]*data-ah-no-level/', $fresh));
+        $check('alta: ruta de nivel superior y descripción nueva', [true, true], [
+            false !== strpos($fresh, 'Nivel superior (sin descripción superior)'), false !== strpos($fresh, '[Nueva descripción]'),
+        ]);
+        $check('alta: la selección de nivel no es `required` (se puede guardar sin nivel)', 0, $nodes($fresh, "//select[@name='levelOfDescription' and @required]")[0]->length);
+        $check('alta: cada control lógico aparece una sola vez en el form', array_fill_keys($controls, 1), array_combine($controls, array_map(static fn ($c) => $controlCount($fresh, $c), $controls)));
+        $check('alta: ningún control de datos deshabilitado', 0, $nodes($fresh, "//form[@id='editForm']//*[(self::input or self::select or self::textarea) and @disabled]")[0]->length);
+        $check('alta: los campos secundarios siguen en el documento (no se omiten)', 6, $nodes($fresh, "//*[@data-ah-field]")[0]->length);
+
+        // Mapa nivel → perfil: por identidad del término, no por id numérico.
+        $map = json_decode((string) $attr($fresh, 'data-ah-level-profiles'), true);
+        $expectedMap = [];
+        foreach (['Fonds' => 'agrupacion', 'Series' => 'agrupacion', 'Subseries' => 'agrupacion', 'File' => 'unidad', 'Item' => 'unidad'] as $en => $perfil) {
+            $expectedMap[$levelUrl($levelId($en))] = $perfil;
+        }
+        $expectedMap[$levelUrl($seccionId)] = 'agrupacion';
+        ksort($expectedMap);
+        ksort($map);
+        $check('mapa de perfiles: Fondo/Sección/Serie/Subserie = agrupación; Unidad simple/compuesta = unidad; el resto general', $expectedMap, $map);
+        $check('mapa de perfiles: Part, Collection y otros niveles no especializados quedan generales', [false, false], [
+            isset($map[$levelUrl($levelId('Part'))]), isset($map[$levelUrl($levelId('Collection'))]),
+        ]);
+
+        // Edición con nivel existente: perfil correcto desde el inicio, sin estado inicial. $io es una Sección con datos.
+        $page = $request($editPath($io))['body'];
+        $check('edición de una Sección: perfil agrupación, sin estado inicial', ['ready', 'agrupacion'], [$attr($page, 'data-ah-state'), $attr($page, 'data-ah-profile')]);
+        $switch = static function (string $html, string $key) use ($nodes): ?array {
+            [$f] = $nodes($html, "//*[@data-ah-field='{$key}']");
+            if (0 === $f->length) {
+                return null;
+            }
+
+            return ['primary' => $f->item(0)->getAttribute('data-ah-primary'), 'keep' => $f->item(0)->hasAttribute('data-ah-keep')];
+        };
+        $check('edición: Remitente/Destinatario/Lugar con datos quedan marcados para seguir visibles; Título vacío no', [true, true, true, false], [
+            $switch($page, 'remitentes')['keep'], $switch($page, 'destinatarios')['keep'], $switch($page, 'placeAccessPoints')['keep'], $switch($page, 'title')['keep'],
+        ]);
+        $check('edición: Título y Productor son prioritarios en agrupación; Identificador y roles, en unidad', ['agrupacion', 'agrupacion', 'unidad', 'unidad'], [
+            $switch($page, 'title')['primary'], $switch($page, 'creators')['primary'], $switch($page, 'identifier')['primary'], $switch($page, 'remitentes')['primary'],
+        ]);
+        $check('edición: la ruta termina en la descripción editada, con su Signatura como texto seguro (título vacío)', true, 1 === preg_match('/<li aria-current="location">\[5640 \(Ind\. C II -24 mn\)\]/', $page));
+        $check('edición: cada control lógico aparece una sola vez', array_fill_keys($controls, 1), array_combine($controls, array_map(static fn ($c) => $controlCount($page, $c), $controls)));
+
+        // Cambio de nivel: Sección → File → sin nivel → Sección. Solo cambia el nivel; todo lo demás se conserva.
+        $before = $snapshot($io);
+        $originalData = static fn () => [
+            $one('SELECT identifier FROM information_object WHERE id = ?', [$io]), $roleActors($io, $remitenteId), $roleActors($io, $destinatarioId),
+            array_map('intval', $col('SELECT r.term_id FROM object_term_relation r JOIN term t ON t.id = r.term_id WHERE r.object_id = ? AND t.taxonomy_id = ? ORDER BY r.term_id', [$io, QubitTaxonomy::PLACE_ID])),
+        ];
+        $dataBefore = $originalData();
+        $fileUrl = $levelUrl($levelId('File'));
+        foreach ([[$fileUrl, $levelId('File')], ['', null], [$levelUrl($seccionId), $seccionId]] as [$value, $expectedLevel]) {
+            $ioColumns = static function () use ($q, $io): array {
+                $row = $q('SELECT * FROM information_object WHERE id = ?', [$io])[0];
+                unset($row['level_of_description_id']);
+
+                return $row;
+            };
+            $columnsBefore = $ioColumns();
+            $pairs = $serialize($request($editPath($io))['body']);
+            $payloadBefore = $pairs;
+            $pairs = $set($pairs, 'levelOfDescription', [$value]);
+            $r = $save($editPath($io), $pairs);
+            $check('cambio de nivel a '.('' === $value ? '"sin nivel"' : basename($value)).': se guarda', 302, $r['code']);
+            $check('cambio de nivel: el nivel guardado es el elegido', $expectedLevel, ($l = $one('SELECT level_of_description_id FROM information_object WHERE id = ?', [$io])) ? (int) $l : null);
+            $check('cambio de nivel: sólo cambia information_object (nivel); fechas, roles, notas, lugares y demás intactos', ['information_object'], array_values($diff($before, $snapshot($io))));
+            $check('cambio de nivel: en information_object ninguna columna distinta del nivel cambió (padre, identificador, estándar, repositorio, estados...)', $columnsBefore, $ioColumns());
+            // serialNumber y el token CSRF cambian en cada carga/guardado: no forman parte del contenido.
+            $content = static fn (array $p) => array_values(array_filter($p, static fn ($x) => !in_array($x[0], ['serialNumber', '_csrf_token'], true)));
+            $after = $serialize($request($editPath($io))['body']);
+            $check('cambio de nivel: el formulario reabierto reenvía lo mismo, salvo el nivel', $content($set($payloadBefore, 'levelOfDescription', [$value])), $content($set($after, 'levelOfDescription', [$value])));
+            $before = $snapshot($io);
+        }
+        $check('tras el ciclo de niveles, la descripción conserva Signatura, roles y lugares', $dataBefore, $originalData());
+
+        // Error de validación: el formulario vuelve con el nivel enviado, su perfil y todo lo enviado visible/con datos.
+        $pairs = $serialize($request($editPath($io))['body']);
+        $pairs = $set($pairs, 'levelOfDescription', [$fileUrl]);
+        $pairs = $set($pairs, 'remitentes[]', array_merge($get($pairs, 'remitentes[]'), [$invalid]));
+        $r = $save($editPath($io), $pairs);
+        $check('error: vuelve con el perfil del nivel enviado (unidad) y el error visible', [200, 'unidad', true], [
+            $r['code'], $attr($r['body'], 'data-ah-profile'), false !== strpos($r['body'], 'remitentes-errors'),
+        ]);
+        $check('error: nada se guardó', $levelUrl($seccionId), '/index.php/'.QubitTerm::getById((int) $one('SELECT level_of_description_id FROM information_object WHERE id = ?', [$io]))->slug);
+        $check('error: el Remitente con error queda marcado para seguir visible', true, $switch($r['body'], 'remitentes')['keep']);
+
+        // Alta con POST inválido y sin nivel: perfil general, no estado inicial.
+        $pairs = $serialize($request('/index.php/informationobject/add')['body']);
+        $pairs = $set($pairs, 'remitentes[]', [$invalid]);
+        $r = $save('/index.php/informationobject/add', $pairs);
+        $check('alta con error y sin nivel: perfil general, ficha visible (no estado inicial)', [200, 'ready', 'general'], [$r['code'], $attr($r['body'], 'data-ah-state'), $attr($r['body'], 'data-ah-profile')]);
+
+        // Contexto jerárquico: alta como hijo, edición del hijo y duplicado.
+        $page = $request('/index.php/informationobject/add?parent='.rawurlencode($parentSlug))['body'];
+        $check('alta como hijo: la ruta muestra el padre y la descripción nueva; estado inicial', [true, true, 'initial'], [
+            false !== strpos($page, "[PADRE-{$run}]"), false !== strpos($page, '[Nueva descripción]'), $attr($page, 'data-ah-state'),
+        ]);
+        $page = $request($editPath($child))['body'];
+        $check('edición del hijo: la ruta muestra padre y descripción editada', [true, true], [
+            false !== strpos($page, "[PADRE-{$run}]"), 1 === preg_match('/<li aria-current="location">\[HIJO-'.$run.'-B\]/', $page),
+        ]);
+        $page = $request('/index.php/informationobject/add?source='.$io)['body'];
+        $check('duplicado: perfil del original (Sección → agrupación), sin estado inicial', ['ready', 'agrupacion'], [$attr($page, 'data-ah-state'), $attr($page, 'data-ah-profile')]);
+        $check('duplicado: conserva el comportamiento nativo (sourceId y Signatura vacía)', [[(string) $io], ['']], [
+            $get($serialize($page), 'sourceId'), $get($serialize($page), 'identifier'),
+        ]);
+
+        // Otros estándares: su formulario nativo no se ve afectado (el override es solo de sfIsadPlugin).
+        foreach (['RAD', 'DACS'] as $std) {
+            $stdId = (int) $one(
+                'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name LIKE ?',
+                ['en', QubitTaxonomy::INFORMATION_OBJECT_TEMPLATE_ID, "{$std}%"]
+            );
+            $check("estándar {$std}: término de plantilla encontrado", true, $stdId > 0);
+            $o = new QubitInformationObject();
+            $o->parentId = QubitInformationObject::ROOT_ID;
+            $o->sourceCulture = 'es';
+            $o->identifier = "STD-{$std}-{$run}";
+            $o->setTitle("Estándar {$std} {$run}", ['culture' => 'es']);
+            $o->displayStandardId = $stdId;
+            $o->save();
+            $created['io'][] = $o->id;
+            $r = $request($editPath($o->id));
+            $check("estándar {$std}: su edición nativa responde 200 y no usa la ficha adaptable", [200, false], [$r['code'], false !== strpos($r['body'], 'ah-cataloging-form')]);
+        }
+
         echo "== Taxonomías ==\n";
         $check('niveles de descripción y tipos de evento sin cambios', $termsBefore, $termsFp());
     } catch (Throwable $e) {
