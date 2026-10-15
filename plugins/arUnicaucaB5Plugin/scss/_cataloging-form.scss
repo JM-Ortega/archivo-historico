@@ -434,3 +434,106 @@
     }
   }
 }
+
+// --- Ficha adaptable (CAT-03) ------------------------------------------------------------------------------------------
+// La ocultación es solo visual (display: none): los controles siguen dentro del <form> y se envían. Todo lo adaptable cuelga
+// de .ah-js, que pone js/cataloging-form.js al arrancar: sin JavaScript, o mientras el bundle no ha cargado, se ve el
+// formulario general completo.
+.ah-cataloging-form {
+  .ah-context {
+    margin-bottom: $uc-space-5;
+  }
+
+  .ah-location {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $uc-space-2;
+    margin-bottom: $uc-space-4;
+    color: $text-muted;
+    @include uc-type("small");
+  }
+
+  .ah-location-path {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $uc-space-1;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li + li::before {
+      content: "\203A";
+      margin-right: $uc-space-1;
+    }
+
+    li[aria-current] {
+      color: $body-color;
+      @include uc-type("small-semibold");
+    }
+  }
+
+  .ah-profile-name {
+    color: $text-muted;
+    font-weight: normal;
+  }
+
+  // Solo tiene sentido con la capa adaptable y mientras no se haya elegido nivel.
+  .ah-no-level,
+  .ah-reveal {
+    display: none;
+  }
+
+  .ah-reveal-title {
+    margin-bottom: $uc-space-1;
+    color: $text-muted;
+    @include uc-type("small-semibold");
+  }
+
+  .ah-reveal-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $uc-space-3;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    [hidden] {
+      display: none;
+    }
+  }
+
+  // Sin JavaScript (o si no cargó): formulario general completo, con las áreas adicionales abiertas.
+  &:not(.ah-js) {
+    .collapse,
+    .accordion-collapse {
+      display: block;
+    }
+
+    .ah-additional-toggle {
+      display: none;
+    }
+  }
+
+  &.ah-js {
+    .ah-reveal:not([hidden]) {
+      display: block;
+    }
+
+    &[data-ah-state="initial"] {
+      .ah-no-level {
+        display: block;
+      }
+
+      .ah-daily,
+      .ah-additional,
+      .ah-actions {
+        display: none;
+      }
+    }
+
+    &[data-ah-profile="agrupacion"] .ah-switch:not([data-ah-primary~="agrupacion"]):not([data-ah-keep]):not(.ah-used),
+    &[data-ah-profile="unidad"] .ah-switch:not([data-ah-primary~="unidad"]):not([data-ah-keep]):not(.ah-used) {
+      display: none;
+    }
+  }
+}

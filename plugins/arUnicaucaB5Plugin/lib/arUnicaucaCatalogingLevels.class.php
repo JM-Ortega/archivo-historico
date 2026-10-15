@@ -11,6 +11,10 @@
  */
 class arUnicaucaCatalogingLevels
 {
+    public const PROFILE_GROUPING = 'agrupacion';
+    public const PROFILE_UNIT = 'unidad';
+    public const PROFILE_GENERAL = 'general';
+
     private const ARCHIVE_LEVELS = [
         ['en' => 'Fonds'],
         ['code' => 'archivo-historico:seccion'],
@@ -58,6 +62,37 @@ class arUnicaucaCatalogingLevels
         }
 
         return $result;
+    }
+
+    /**
+     * Perfil de presentación de un nivel: Fondo, Sección, Serie y Subserie → agrupación; File e Item → unidad documental;
+     * cualquier otro nivel (o ninguno, o uno no reconocible) → general. Solo cambia qué campos se priorizan; no toca datos.
+     */
+    public static function profile(?QubitTerm $term): string
+    {
+        $position = null === $term ? null : self::position($term);
+        if (null === $position) {
+            return self::PROFILE_GENERAL;
+        }
+
+        return $position < 4 ? self::PROFILE_GROUPING : self::PROFILE_UNIT;
+    }
+
+    /**
+     * @param array $choices opciones nativas del widget de nivel: URL del término → QubitTerm (más la opción vacía)
+     *
+     * @return array URL del término → perfil, para los niveles que no son generales; el resto cae en general
+     */
+    public static function profileMap(array $choices): array
+    {
+        $map = [];
+        foreach ($choices as $value => $term) {
+            if ($term instanceof QubitTerm && self::PROFILE_GENERAL !== ($profile = self::profile($term))) {
+                $map[(string) $value] = $profile;
+            }
+        }
+
+        return $map;
     }
 
     private static function position(QubitTerm $term): ?int

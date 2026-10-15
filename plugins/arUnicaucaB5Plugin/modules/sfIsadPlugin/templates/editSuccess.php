@@ -8,6 +8,13 @@
  * Contrato de preservación: TODOS los controles nativos siguen dentro del mismo <form> y se envían siempre (la sección
  * adicional solo se colapsa con CSS, nunca se deshabilita ni se omite). DefaultEditAction::processForm procesa cada campo
  * del formulario, así que un control que faltara en el POST vaciaría su dato. Cada campo se renderiza una sola vez.
+ *
+ * Ficha adaptable (CAT-03): el nivel elegido (cabecera) fija un perfil —agrupación, unidad documental o general— que solo
+ * decide qué campos se destacan (`data-ah-primary`) y cómo se llaman (`data-ah-labels`). Cada control tiene una posición
+ * fija y nunca se mueve ni se deshabilita: un campo secundario se oculta únicamente con CSS (css/_cataloging-form.scss) y
+ * se sigue enviando. Es visible si el perfil lo prioriza, si trae datos o un error del servidor (`data-ah-keep`), si el
+ * usuario lo usó o lo reveló. La ocultación solo rige cuando js/cataloging-form.js marca la raíz con `.ah-js` al arrancar:
+ * sin JavaScript (o con el bundle caído) no hay ocultación ni estado inicial, y es el formulario general completo.
  */
 ?>
 <?php decorate_with('layout_2col.php'); ?>
@@ -34,7 +41,7 @@
 <?php
     // Campos nativos que viven en "campos adicionales": abren la sección si traen un error y cuentan como "con datos".
     $additionalFields = [
-        'title', 'creators', 'repository', 'archivalHistory', 'acquisition', 'appraisal', 'accruals', 'arrangement',
+        'repository', 'archivalHistory', 'acquisition', 'appraisal', 'accruals', 'arrangement',
         'accessConditions', 'reproductionConditions', 'language', 'script', 'languageNotes', 'physicalCharacteristics',
         'findingAids', 'locationOfOriginals', 'locationOfCopies', 'relatedUnitsOfDescription', 'relatedMaterialDescriptions',
         'subjectAccessPoints', 'genreAccessPoints', 'nameAccessPoints', 'descriptionIdentifier',
@@ -88,13 +95,53 @@
         return preg_replace('#</label>#', '</label>'.uc_help($id, $label, $help), $html, 1);
     };
     $actorHelp = __('Selecciona un nombre de la lista o escribe uno nuevo. Puedes agregar varios.');
+
+    // --- Ficha adaptable: estado y perfil --------------------------------------------------------------------------------
+    $isEdit = isset($sf_request->getAttribute('sf_route')->resource);
+    $isDuplicate = !$isEdit && isset($sf_request->source);
+    // Alta limpia: la ficha espera a que se elija un nivel (o "Describir sin nivel"). Edición, duplicado y POST inválido
+    // arrancan ya con el perfil de su nivel.
+    $initial = !$isEdit && !$isDuplicate && !$sf_request->isMethod('post');
+    $levelProfiles = $sf_data->getRaw('levelProfiles');
+    $levelValue = (string) $form->levelOfDescription->getValue();
+    $profile = $initial ? 'general' : ($levelProfiles[$levelValue] ?? 'general');
+    $profileTitles = ['agrupacion' => __('Agrupación documental'), 'unidad' => __('Unidad documental'), 'general' => __('Ficha general')];
+
+    $hasValue = static function ($field): bool {
+        $value = $field->getValue();
+
+        return is_array($value) ? 0 < count(array_filter($value, 'strlen')) : 0 < strlen((string) $value);
+    };
+    // Atributos de un campo conmutable: perfiles que lo priorizan + "con datos o error" decidido por el servidor.
+    $switchAttrs = static function (string $key, string $primary, $field) use ($hasValue): string {
+        $keep = $field->hasError() || $hasValue($field);
+
+        return ' data-ah-field="'.$key.'" data-ah-primary="'.$primary.'"'.($keep ? ' data-ah-keep="1"' : '');
+    };
+    // Etiqueta según el perfil actual (el JS las cambia con el nivel). General usa vocabulario neutral.
+    $labelFor = static fn (array $map): string => $map[$profile] ?? $map['general'];
+    $labelAttr = static fn (array $map): string => ' data-ah-labels="'.htmlspecialchars(json_encode($map, JSON_UNESCAPED_UNICODE), ENT_QUOTES).'"';
+    $labels = [
+        'identifier' => ['unidad' => __('Signatura'), 'agrupacion' => __('Identificador'), 'general' => __('Identificador')],
+        'scopeAndContent' => ['unidad' => __('Contenido'), 'agrupacion' => __('Alcance y contenido'), 'general' => __('Alcance y contenido')],
+        'extentAndMedium' => ['unidad' => __('Folios'), 'agrupacion' => __('Volumen y soporte'), 'general' => __('Volumen y soporte')],
+        'dates' => ['unidad' => __('Fecha'), 'agrupacion' => __('Fechas'), 'general' => __('Fechas')],
+    ];
+
+    // Ruta jerárquica (solo lectura).
+    $ancestors = arUnicaucaCatalogingContext::ancestors(
+        $isEdit || $isDuplicate ? null : $sf_data->getRaw('parent'),
+        $isEdit || $isDuplicate ? $sf_data->getRaw('resource') : null
+    );
+    // En un duplicado `resource` es el original: sus ancestros son los del duplicado y él mismo no entra en la ruta.
 ?>
 
-<div class="ah-cataloging-form">
-
+<div class="ah-cataloging-form" data-ah-profile="<?php echo $profile; ?>" data-ah-state="<?php echo $initial ? 'initial' : 'ready'; ?>"
+  data-ah-level-profiles="<?php echo htmlspecialchars(json_encode((object) $levelProfiles), ENT_QUOTES); ?>"
+  data-ah-profile-titles="<?php echo htmlspecialchars(json_encode($profileTitles, JSON_UNESCAPED_UNICODE), ENT_QUOTES); ?>">
   <?php echo $form->renderGlobalErrors(); ?>
 
-  <?php if (isset($sf_request->getAttribute('sf_route')->resource)) { ?>
+  <?php if ($isEdit) { ?>
     <?php echo $form->renderFormTag(url_for([$resource, 'module' => 'informationobject', 'action' => 'edit']), ['id' => 'editForm']); ?>
   <?php } else { ?>
     <?php echo $form->renderFormTag(url_for(['module' => 'informationobject', 'action' => 'add']), ['id' => 'editForm']); ?>
@@ -102,17 +149,30 @@
 
     <?php echo $form->renderHiddenFields(); ?>
 
-    <section class="ah-daily" aria-labelledby="ah-daily-heading">
-      <h2 id="ah-daily-heading" class="ah-section-title"><?php echo __('Ficha de catalogación'); ?></h2>
+    <header class="ah-context">
+      <h2 id="ah-context-heading" class="ah-section-title">
+        <?php echo $isEdit ? __('Descripción archivística') : __('Nueva descripción archivística'); ?>
+      </h2>
 
-      <div class="row ah-row">
-        <div class="col-md-7">
-          <?php echo $dailyField(
-              $form->identifier,
-              __('Signatura'),
-              __('Escribe la signatura completa. Ejemplo: 5640 (Ind. C II -24 mn).')
-          ); ?>
-        </div>
+      <nav class="ah-location" aria-label="<?php echo __('Ubicación en la jerarquía'); ?>">
+        <span class="ah-location-label"><?php echo __('Ubicación:'); ?></span>
+        <ol class="ah-location-path">
+          <?php if ([] === $ancestors) { ?>
+            <li><?php echo __('Nivel superior (sin descripción superior)'); ?></li>
+          <?php } ?>
+          <?php foreach ($ancestors as $item) { ?>
+            <li><?php echo esc_specialchars($item['label']); ?><?php if (null !== $item['level']) { ?> <span class="ah-location-level">(<?php echo esc_specialchars($item['level']); ?>)</span><?php } ?></li>
+          <?php } ?>
+          <?php if ($isEdit) { ?>
+            <?php $current = arUnicaucaCatalogingContext::current($sf_data->getRaw('resource')); ?>
+            <li aria-current="location"><?php echo esc_specialchars($current['label']); ?><?php if (null !== $current['level']) { ?> <span class="ah-location-level">(<?php echo esc_specialchars($current['level']); ?>)</span><?php } ?></li>
+          <?php } else { ?>
+            <li aria-current="location" class="ah-location-new"><?php echo __('[Nueva descripción]'); ?></li>
+          <?php } ?>
+        </ol>
+      </nav>
+
+      <div class="row ah-row ah-level-row">
         <div class="col-md-5">
           <?php echo $dailyField(
               $form->levelOfDescription,
@@ -120,10 +180,61 @@
               __('Unidad documental simple: una unidad formada por un solo documento. Unidad documental compuesta: una unidad formada por varios documentos relacionados. Fondo, sección, serie y subserie organizan jerárquicamente las descripciones.')
           ); ?>
         </div>
+        <div class="col-md-7 ah-no-level">
+          <button type="button" class="btn btn-link ah-no-level-button" data-ah-no-level>
+            <?php echo __('Describir sin nivel'); ?>
+          </button>
+        </div>
+      </div>
+
+      <p id="ah-profile-status" class="visually-hidden" role="status" aria-live="polite"></p>
+    </header>
+
+    <section class="ah-daily" aria-labelledby="ah-daily-heading">
+      <h2 id="ah-daily-heading" class="ah-section-title"><?php echo __('Ficha de catalogación'); ?>
+        <span class="ah-profile-name" data-ah-profile-name><?php echo $initial ? '' : '— '.$profileTitles[$profile]; ?></span>
+      </h2>
+
+      <div class="row ah-row">
+        <div class="col-md-7 ah-switch"<?php echo $switchAttrs('identifier', arUnicaucaCatalogingLevels::PROFILE_UNIT, $form->identifier); ?><?php echo $labelAttr($labels['identifier']); ?>>
+          <?php echo $dailyField(
+              $form->identifier,
+              $labelFor($labels['identifier']),
+              __('Escribe el identificador tal como figura en la descripción (por ejemplo, la signatura completa de una unidad documental: 5640 (Ind. C II -24 mn)). Déjalo vacío si no tiene.')
+          ); ?>
+        </div>
+      </div>
+
+      <div class="ah-switch"<?php echo $switchAttrs('title', arUnicaucaCatalogingLevels::PROFILE_GROUPING, $form->title); ?>>
+        <?php echo render_field($form->title
+            ->help(__('Opcional. Si se deja vacío, la descripción se guarda sin título.'))
+            ->label(__('Title')), $resource); ?>
+      </div>
+
+      <div class="ah-switch"<?php echo $switchAttrs('creators', arUnicaucaCatalogingLevels::PROFILE_GROUPING, $form->creators); ?>>
+        <?php
+            $creatorInputs = '<input class="list" type="hidden" value="'
+                .url_for(['module' => 'actor', 'action' => 'autocomplete', 'showOnlyActors' => 'true'])
+                .'">';
+            if (QubitAcl::check(QubitActor::getRoot(), 'create')) {
+                $creatorInputs .= '<input class="add" type="hidden" data-link-existing="true" value="'
+                    .url_for(['module' => 'actor', 'action' => 'add'])
+                    .' #authorizedFormOfName">';
+            }
+            echo render_field(
+                $form->creators
+                    ->label(__('Productor'))
+                    ->help(__(
+                        'Record the name of the organization(s) or the individual(s) responsible for the creation, accumulation and maintenance of the records in the unit of description. Search for an existing name in the authority records by typing the first few characters of the name. Alternatively, type a new name to create and link to a new authority record. (ISAD 3.2.1)'
+                    )),
+                null,
+                ['class' => 'form-autocomplete', 'extraInputs' => $creatorInputs]
+            );
+        ?>
       </div>
 
       <div class="row ah-row">
-        <div class="col-md-6">
+        <div class="col-md-6 ah-switch"<?php echo $switchAttrs('remitentes', arUnicaucaCatalogingLevels::PROFILE_UNIT, $form->remitentes); ?>>
           <?php echo $dailyField(
               $form->remitentes,
               __('Remitente'),
@@ -132,7 +243,7 @@
               ['class' => 'form-autocomplete', 'extraInputs' => $actorInputs]
           ); ?>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 ah-switch"<?php echo $switchAttrs('destinatarios', arUnicaucaCatalogingLevels::PROFILE_UNIT, $form->destinatarios); ?>>
           <?php echo $dailyField(
               $form->destinatarios,
               __('Destinatario'),
@@ -143,10 +254,12 @@
         </div>
       </div>
 
-      <?php echo $dailyField($form->scopeAndContent, __('Contenido'), null, $resource, ['rows' => 5]); ?>
+      <div<?php echo $labelAttr($labels['scopeAndContent']); ?>>
+        <?php echo $dailyField($form->scopeAndContent, $labelFor($labels['scopeAndContent']), null, $resource, ['rows' => 5]); ?>
+      </div>
 
       <div class="row ah-row">
-        <div class="col-md-8">
+        <div class="col-md-8 ah-switch"<?php echo $switchAttrs('placeAccessPoints', arUnicaucaCatalogingLevels::PROFILE_UNIT, $form->placeAccessPoints); ?>>
           <?php
               $taxonomy = QubitTaxonomy::getById(QubitTaxonomy::PLACE_ID);
               $taxonomyUrl = url_for([$taxonomy, 'module' => 'taxonomy']);
@@ -169,11 +282,14 @@
         </div>
       </div>
 
-      <?php echo get_partial('catalogingDates', $sf_data->getRaw('eventComponent')->getVarHolder()->getAll()); ?>
+      <?php echo get_partial('catalogingDates', $sf_data->getRaw('eventComponent')->getVarHolder()->getAll() + [
+          'label' => $labelFor($labels['dates']),
+          'labelsByProfile' => $labels['dates'],
+      ]); ?>
 
       <div class="row ah-row">
-        <div class="col-md-8">
-          <?php echo $dailyField($form->extentAndMedium, __('Folios'), null, $resource, ['rows' => 2]); ?>
+        <div class="col-md-8"<?php echo $labelAttr($labels['extentAndMedium']); ?>>
+          <?php echo $dailyField($form->extentAndMedium, $labelFor($labels['extentAndMedium']), null, $resource, ['rows' => 2]); ?>
         </div>
       </div>
 
@@ -182,6 +298,25 @@
           'addLabel' => __('Agregar otra observación'),
           'removeLabel' => __('Quitar esta observación'),
       ]); ?>
+
+      <?php // Campos secundarios del perfil actual: solo se ofrece revelar los que están ocultos (js/cataloging-form.js). ?>
+      <div class="ah-reveal" data-ah-reveal-area hidden>
+        <p class="ah-reveal-title" id="ah-reveal-title"><?php echo __('Otros campos de esta ficha'); ?></p>
+        <ul class="ah-reveal-list" aria-labelledby="ah-reveal-title">
+          <?php foreach ([
+              'title' => __('Mostrar Título'),
+              'creators' => __('Mostrar Productor'),
+              'remitentes' => __('Mostrar Remitente'),
+              'destinatarios' => __('Mostrar Destinatario'),
+              'identifier' => __('Mostrar Identificador'),
+              'placeAccessPoints' => __('Mostrar Lugar'),
+          ] as $key => $text) { ?>
+            <li data-ah-reveal-item="<?php echo $key; ?>" hidden>
+              <button type="button" class="btn btn-link" data-ah-reveal="<?php echo $key; ?>"><?php echo $text; ?></button>
+            </li>
+          <?php } ?>
+        </ul>
+      </div>
     </section>
 
     <section class="ah-additional" aria-labelledby="ah-additional-toggle">
@@ -198,7 +333,7 @@
         <span class="ah-when-expanded"><?php echo __('Ocultar campos adicionales'); ?></span>
       </button>
       <p class="form-text ah-additional-summary">
-        <?php echo __('Título, productor, condiciones de acceso, otros puntos de acceso y demás campos ISAD(G).'); ?>
+        <?php echo __('Condiciones de acceso, puntos de acceso, control de la descripción y demás campos ISAD(G).'); ?>
         <?php if (0 < $additionalFilled) { ?>
           <strong><?php echo 1 == $additionalFilled
               ? __('1 campo adicional tiene datos.')
@@ -233,10 +368,6 @@
                     ['mask' => $mask] + $sf_data->getRaw('alternativeIdentifiersComponent')->getVarHolder()->getAll()
                 ); ?>
 
-                <?php echo render_field($form->title
-                    ->help(__('Opcional. Si se deja vacío, la descripción se guarda sin título.'))
-                    ->label(__('Title')), $resource); ?>
-
                 <?php echo get_partial('catalogingChildLevels', ['help' => __('Identifier: Provide a specific local reference code, control number, or other unique identifier. Level of description: Record the level of this unit of description. Title: Provide either a formal title or a concise supplied title in accordance with the rules of multilevel description and national conventions.')]); ?>
               </div>
             </div>
@@ -249,26 +380,6 @@
             </h2>
             <div id="context-collapse" class="accordion-collapse collapse" aria-labelledby="context-heading">
               <div class="accordion-body">
-                <?php
-                    $extraInputs = '<input class="list" type="hidden" value="'
-                        .url_for(['module' => 'actor', 'action' => 'autocomplete', 'showOnlyActors' => 'true'])
-                        .'">';
-                    if (QubitAcl::check(QubitActor::getRoot(), 'create')) {
-                        $extraInputs .= '<input class="add" type="hidden" data-link-existing="true" value="'
-                            .url_for(['module' => 'actor', 'action' => 'add'])
-                            .' #authorizedFormOfName">';
-                    }
-                    echo render_field(
-                        $form->creators
-                            ->label(__('Name of creator(s)'))
-                            ->help(__(
-                                'Record the name of the organization(s) or the individual(s) responsible for the creation, accumulation and maintenance of the records in the unit of description. Search for an existing name in the authority records by typing the first few characters of the name. Alternatively, type a new name to create and link to a new authority record. (ISAD 3.2.1)'
-                            )),
-                        null,
-                        ['class' => 'form-autocomplete', 'extraInputs' => $extraInputs]
-                    );
-                ?>
-
                 <?php echo render_field(
                     $form->repository->help(__(
                         'Record the name of the organization which has custody of the archival material. Search for an existing name in the archival institution records by typing the first few characters of the name. Alternatively, type a new name to create and link to a new archival institution record.'
@@ -527,7 +638,9 @@
       </div>
     </section>
 
-    <?php echo get_partial('informationobject/editActions', ['resource' => (null !== $parent ? $parent : $resource)]); ?>
+    <div class="ah-actions">
+      <?php echo get_partial('informationobject/editActions', ['resource' => (null !== $parent ? $parent : $resource)]); ?>
+    </div>
 
   </form>
 
