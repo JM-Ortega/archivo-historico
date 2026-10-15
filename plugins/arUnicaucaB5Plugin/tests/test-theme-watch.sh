@@ -65,7 +65,7 @@ cleanup() {
   trap - EXIT INT TERM
   set +e
   stop_watch_container
-  for f in scss/_foundation-marker.scss js/main.js; do
+  for f in scss/_base.scss js/main.js; do
     [[ -f "$TMP/$(basename "$f").orig" ]] && cp "$TMP/$(basename "$f").orig" "$PDIR/$f"
   done
   if ((DIRTY)); then
@@ -149,7 +149,7 @@ expect "theme_watch no monta /atom/src completo" "0" "$(fact theme_watch_full_at
 expect "theme_watch NO aparece en el runtime default (sin --profile tools)" "0" "$("${COMPOSE[@]}" config --services | grep -cx theme_watch || true)"
 
 echo "== B. Watch funcional: arranque, SCSS, JS, repetición en la misma sesión =="
-backup scss/_foundation-marker.scss
+backup scss/_base.scss
 backup js/main.js
 start_watch
 RC=0; wait_for_compile_count 1 40 || RC=1
@@ -158,7 +158,7 @@ RC=0; wait_for_ownership_match "$PARTIAL" "$PDIR/templates" 5 || RC=1
 expect "ownership tras el primer compile converge a la referencia de build.sh (dir templates/, ≤5s)" "0" "$RC"
 
 OLD_CSS="$(css_ref)"
-printf '\nbody { --theme-watch-test: "%s"; }\n' "$RUN" >>"$PDIR/scss/_foundation-marker.scss"
+printf '\nbody { --theme-watch-test: "%s"; }\n' "$RUN" >>"$PDIR/scss/_base.scss"
 RC=0; wait_for_compile_count 2 40 || RC=1
 expect "SCSS: rebuild detectado tras editar" "0" "$RC"
 NEW_CSS="$(css_ref)"
@@ -201,7 +201,7 @@ start_watch
 RC=0; wait_for_compile_count 1 40 || RC=1
 expect "restart sin RESET: primer compile del nuevo proceso" "0" "$RC"
 OLD_CSS2="$(css_ref)"
-printf '\nbody { --theme-watch-test2: "%s"; }\n' "$RUN" >>"$PDIR/scss/_foundation-marker.scss"
+printf '\nbody { --theme-watch-test2: "%s"; }\n' "$RUN" >>"$PDIR/scss/_base.scss"
 RC=0; wait_for_compile_count 2 40 || RC=1
 expect "restart: rebuild vuelve a funcionar" "0" "$RC"
 NEW_CSS2="$(css_ref)"
@@ -227,7 +227,7 @@ expect "docker stop no agota el timeout de gracia (shutdown < 8s, no SIGKILL a l
 expect "sin contenedor de watch residual tras docker stop" "0" "$(docker ps -a --filter "name=$CNAME" --format '{{.Names}}' | wc -l)"
 
 echo "== F. theme_build sigue siendo independiente tras cerrar el experimento =="
-cp "$TMP/_foundation-marker.scss.orig" "$PDIR/scss/_foundation-marker.scss"
+cp "$TMP/_base.scss.orig" "$PDIR/scss/_base.scss"
 cp "$TMP/main.js.orig" "$PDIR/js/main.js"
 RC=0
 "${COMPOSE[@]}" run --rm -T theme_build >"$TMP/build-restore.log" 2>&1 || RC=$?

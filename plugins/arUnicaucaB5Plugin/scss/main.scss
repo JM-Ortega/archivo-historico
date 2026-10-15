@@ -1,35 +1,31 @@
 /*
 
-Customize variables:
+Theme del Archivo Histórico del Cauca: extiende arDominionB5Plugin sin modificarlo.
 
-- Check the ../../arDominionB5Plugin/scss/_variables.scss file.
-- Check the B5 documentation (https://getbootstrap.com/docs/5.0/customize/sass/).
-- Import B5 functions, variables and mixins if needed.
+Cascada:
+
+1. Tokens de la identidad (_tokens.scss, solo variables) y fundamentos tipográficos globales (_variables.scss: Lato, Merriweather
+   y escala de encabezados), ANTES de Dominion.
+2. Dominion completo (Bootstrap 5.3, Font Awesome, componentes y estilos nativos de AtoM): colores, superficies y shell nativos.
+3. Fuentes self-hosted, ajustes tipográficos sobre lo nativo (_base.scss) y componentes/vistas propios, que son los únicos que
+   aplican la identidad cromática del Archivo.
 
 */
 
+@import "tokens";
+@import "variables";
+
 @import "../../arDominionB5Plugin/scss/main.scss";
 
-// Marcador de la foundation (WU-12B); reversible: borrar el fichero y esta línea.
-@import "foundation-marker";
+// Font Awesome regular (iconos lineales), del mismo paquete que ya trae Dominion: sin dependencias nuevas.
+@import "@fortawesome/fontawesome-free/scss/regular";
 
-// Foundation TIC: tokens y mixins (solo Sass, no generan CSS) y registro de Titillium Web (solo @font-face). Ninguno de los
-// tres aplica estilos: cada superficie los consume desde sus propios selectores encapsulados.
-@import "tokens";
 @import "mixins";
 @import "fonts";
+@import "base";
 
 // Componentes reutilizables (por clase; solo afectan a donde una vista los usa).
 @import "help"; // Ayuda contextual .uc-help (lib/helper/UcHelpHelper.php, js/help.js).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
-
-/*
-
-Extend:
-
-- Add extra SCSS and CSS imports.
-- Add custom styles directly.
-
-*/

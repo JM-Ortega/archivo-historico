@@ -26,8 +26,19 @@
 
 <?php end_slot(); ?>
 
+<?php $isEdit = isset($sf_request->getAttribute('sf_route')->resource); ?>
+
+<?php // Cabecera: la acción (antetítulo) y, en edición, el recurso con su encabezado nativo; en un alta no hay recurso que
+      // nombrar, así que el título es la acción y no se muestra el "Sin título" de un registro que aún no existe. ?>
 <?php slot('title'); ?>
-  <?php echo get_component('informationobject', 'descriptionHeader', ['resource' => $resource, 'title' => (string) $isad]); ?>
+  <header class="ah-page-header">
+    <p class="ah-page-kicker"><?php echo $isEdit ? __('Editar descripción archivística') : __('Catalogación'); ?></p>
+    <?php if ($isEdit) { ?>
+      <?php echo get_component('informationobject', 'descriptionHeader', ['resource' => $resource, 'title' => (string) $isad]); ?>
+    <?php } else { ?>
+      <h1><?php echo __('Nueva descripción archivística'); ?></h1>
+    <?php } ?>
+  </header>
 
   <?php if (isset($sf_request->source)) { ?>
     <div class="alert alert-info" role="alert">
@@ -97,7 +108,6 @@
     $actorHelp = __('Selecciona un nombre de la lista o escribe uno nuevo. Puedes agregar varios.');
 
     // --- Ficha adaptable: estado y perfil --------------------------------------------------------------------------------
-    $isEdit = isset($sf_request->getAttribute('sf_route')->resource);
     $isDuplicate = !$isEdit && isset($sf_request->source);
     // Alta limpia: la ficha espera a que se elija un nivel (o "Describir sin nivel"). Edición, duplicado y POST inválido
     // arrancan ya con el perfil de su nivel.
@@ -150,10 +160,6 @@
     <?php echo $form->renderHiddenFields(); ?>
 
     <header class="ah-context">
-      <h2 id="ah-context-heading" class="ah-section-title">
-        <?php echo $isEdit ? __('Descripción archivística') : __('Nueva descripción archivística'); ?>
-      </h2>
-
       <nav class="ah-location" aria-label="<?php echo __('Ubicación en la jerarquía'); ?>">
         <span class="ah-location-label"><?php echo __('Ubicación:'); ?></span>
         <ol class="ah-location-path">
@@ -173,14 +179,15 @@
       </nav>
 
       <div class="row ah-row ah-level-row">
-        <div class="col-md-5">
+        <div class="col-lg-6">
           <?php echo $dailyField(
               $form->levelOfDescription,
               __('Nivel de descripción'),
               __('Unidad documental simple: una unidad formada por un solo documento. Unidad documental compuesta: una unidad formada por varios documentos relacionados. Fondo, sección, serie y subserie organizan jerárquicamente las descripciones.')
           ); ?>
         </div>
-        <div class="col-md-7 ah-no-level">
+        <div class="col-lg-6 ah-no-level">
+          <p class="ah-no-level-hint"><?php echo __('El nivel decide qué campos muestra la ficha.'); ?></p>
           <button type="button" class="btn btn-link ah-no-level-button" data-ah-no-level>
             <?php echo __('Describir sin nivel'); ?>
           </button>
@@ -312,7 +319,7 @@
               'placeAccessPoints' => __('Mostrar Lugar'),
           ] as $key => $text) { ?>
             <li data-ah-reveal-item="<?php echo $key; ?>" hidden>
-              <button type="button" class="btn btn-link" data-ah-reveal="<?php echo $key; ?>"><?php echo $text; ?></button>
+              <button type="button" class="btn ah-reveal-button" data-ah-reveal="<?php echo $key; ?>"><i class="fas fa-plus" aria-hidden="true"></i><?php echo $text; ?></button>
             </li>
           <?php } ?>
         </ul>
