@@ -1,44 +1,53 @@
 // Ayuda contextual (toggletip) del theme: lib/helper/UcHelpHelper.php + js/help.js. Componente por clase: solo afecta a
-// los elementos .uc-help que una vista renderiza a propósito. Icono en el color informativo TIC; burbuja oscura.
+// los elementos .uc-help que una vista renderiza a propósito. Icono lineal en el azul de acción; burbuja en azul profundo.
 
 .uc-help {
   position: relative;
   display: inline-block;
-  margin-left: $uc-space-1;
+  margin-left: $ah-space-1;
   vertical-align: baseline;
 }
 
 .uc-help-toggle {
-  padding: 0 $uc-space-1;
+  // Objetivo táctil de 24 px alrededor del icono, sin desplazar la etiqueta.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  margin: -0.25rem 0;
+  padding: 0;
   border: 0;
-  border-radius: $uc-radius;
+  border-radius: 50%;
   background: none;
-  color: $uc-info;
+  color: $ah-blue-action;
+  font-weight: 400;
   line-height: 1;
 
   &:hover {
-    color: $uc-primary-light;
+    color: $ah-blue;
   }
 
   &:focus-visible {
-    @include uc-focus-ring;
+    @include ah-focus-ring;
   }
 }
 
 .uc-help-bubble {
   position: absolute;
-  top: calc(100% + #{$uc-space-1});
+  top: calc(100% + #{$ah-space-1});
   left: 0;
   z-index: $zindex-popover;
   display: none;
   width: max-content;
-  max-width: min(18rem, calc(100vw - #{$uc-space-6}));
-  padding: $uc-space-2 $uc-space-3;
-  border-radius: $uc-radius;
-  background-color: $uc-primary-dark;
+  max-width: min(20rem, calc(100vw - #{$ah-space-6}));
+  padding: $ah-space-2 $ah-space-3;
+  border-radius: $ah-radius-control;
+  background-color: $ah-blue-deep;
+  box-shadow: $ah-shadow-overlay;
   color: $white;
-  @include uc-type("small");
-  line-height: 1.4;
+  @include ah-type("small");
+  line-height: 1.45;
   white-space: normal;
 
   // Puente transparente sobre el hueco entre icono y burbuja: el puntero puede pasar a la burbuja sin cerrarla.
@@ -48,7 +57,7 @@
     right: 0;
     bottom: 100%;
     left: 0;
-    height: $uc-space-1;
+    height: $ah-space-1;
   }
 
   .uc-help.is-open & {

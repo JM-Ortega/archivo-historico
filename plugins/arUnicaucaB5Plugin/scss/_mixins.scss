@@ -1,11 +1,10 @@
-// Mixins de la foundation TIC (ver _tokens.scss). Como los tokens, no generan CSS hasta que una superficie los incluye
-// dentro de sus propios selectores.
+// Mixins de la identidad (ver _tokens.scss). No generan CSS hasta que un selector los incluye.
 
-// Estilo tipográfico de la escala TIC: uc-type("h2"), uc-type("body-strong"), uc-type("button")...
-@mixin uc-type($style) {
-  $spec: map-get($uc-type-scale, $style);
+// Estilo tipográfico de la escala de componentes: ah-type("section-title"), ah-type("label"), ah-type("button")...
+@mixin ah-type($style) {
+  $spec: map-get($ah-type-scale, $style);
   @if not $spec {
-    @error "uc-type: estilo desconocido '#{$style}'";
+    @error "ah-type: estilo desconocido '#{$style}'";
   }
 
   font-family: nth($spec, 1);
@@ -14,16 +13,17 @@
 }
 
 // Anillo de foco visible. Por defecto para :focus-visible del propio elemento.
-@mixin uc-focus-ring($ring: $uc-focus-ring) {
+@mixin ah-focus-ring($ring: $ah-focus-ring) {
   outline: 0;
   box-shadow: $ring;
 }
 
 // Indicador de estado delante de un mensaje (p. ej. error): círculo de color con un signo, para no depender solo del color
-// del texto. Se aplica a un pseudo-elemento: `&::before { @include uc-status-badge($uc-error); }`.
-@mixin uc-status-badge($color, $symbol: "!") {
+// del texto. Se aplica a un pseudo-elemento: `&::before { @include ah-status-badge($ah-error); }`.
+@mixin ah-status-badge($color, $symbol: "!") {
   content: $symbol;
   display: inline-block;
+  flex: none;
   width: 1rem;
   height: 1rem;
   margin-right: 0.375rem;
@@ -35,4 +35,23 @@
   line-height: 1rem;
   text-align: center;
   vertical-align: text-bottom;
+}
+
+// Superficie documental ("papel"): panel claro con una veladura muy tenue hacia el azul en el borde superior.
+@mixin ah-paper {
+  border: $border-width solid $ah-line;
+  border-radius: $ah-radius-panel;
+  background-color: $ah-panel;
+  background-image: linear-gradient(180deg, rgba($ah-surface-soft, 0.45), rgba($ah-panel, 0) 6rem);
+  box-shadow: $ah-shadow-panel;
+}
+
+// Trazo breve del acento editorial (rojo de identidad, no de error), p. ej. sobre o bajo un título.
+@mixin ah-accent-rule($width: 2.5rem) {
+  content: "";
+  display: block;
+  width: $width;
+  height: 3px;
+  border-radius: 2px;
+  background-color: $ah-accent;
 }

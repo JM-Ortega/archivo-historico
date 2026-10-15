@@ -1,26 +1,38 @@
-// Registro de Titillium Web (self-hosted, ver fonts/titillium-web/README.md). Solo declara las caras: no aplica la familia a
-// ningún elemento (las superficies usan $uc-font-heading). Único lugar de @font-face del plugin: Open Sans ya la registra y
-// aplica arDominionB5Plugin (@fontsource/open-sans).
+// Registro de las familias de la identidad (self-hosted: procedencia, licencia y SHA-256 en fonts/README.md). Solo declara las
+// caras; las aplican _variables.scss (Bootstrap) y _base.scss. Webpack emite los ficheros a dist/: sin peticiones a terceros.
+//
+// Open Sans: sus @font-face siguen en el bundle porque los declara el _typography.scss nativo de Dominion (no se modifica),
+// pero ninguna regla la usa ya, así que el navegador no descarga sus ficheros.
+
 @font-face {
-  font-family: "Titillium Web";
+  font-family: "Lato";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../fonts/titillium-web/titillium-web-latin-400.woff2") format("woff2");
+  src: url("../fonts/lato/lato-latin-400.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Titillium Web";
-  font-style: normal;
-  font-weight: 600;
+  font-family: "Lato";
+  font-style: italic;
+  font-weight: 400;
   font-display: swap;
-  src: url("../fonts/titillium-web/titillium-web-latin-600.woff2") format("woff2");
+  src: url("../fonts/lato/lato-latin-400-italic.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: "Titillium Web";
+  font-family: "Lato";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("../fonts/titillium-web/titillium-web-latin-700.woff2") format("woff2");
+  src: url("../fonts/lato/lato-latin-700.woff2") format("woff2");
+}
+
+// Merriweather v33 es variable: un único fichero cubre los pesos 400–700.
+@font-face {
+  font-family: "Merriweather";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("../fonts/merriweather/merriweather-latin-variable.woff2") format("woff2");
 }

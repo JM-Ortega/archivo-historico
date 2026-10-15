@@ -1,64 +1,104 @@
-// Formulario de catalogación (sfIsadPlugin/editSuccess.php del plugin). Todo cuelga de .ah-cataloging-form: no cambia
-// variables de Bootstrap/Dominion ni estilos de otras pantallas. Colores, tipografía, espaciado, radios y foco salen de la
-// foundation TIC (_tokens.scss, _mixins.scss); neutros de Bootstrap/Dominion. Aquí solo vive lo propio del formulario:
-// layout, ficha cotidiana / campos adicionales, filas repetibles, etiquetas del autocomplete y responsive.
+// Formulario de catalogación (sfIsadPlugin/editSuccess.php del plugin). La tipografía es la global del theme (_variables.scss,
+// _base.scss); la identidad cromática del Archivo (colores, superficies, bordes, radios, foco) se aplica SOLO aquí, a partir de
+// los tokens (_tokens.scss): el resto de AtoM conserva los estilos nativos de Dominion. Todo cuelga de .ah-page-header (slot del
+// título) o de .ah-cataloging-form.
+//
+// Sin overflow ni contextos de apilamiento nuevos en los contenedores de la ficha: las sugerencias del autocomplete y las
+// burbujas de ayuda se posicionan por encima sin recortarse.
+
+// --- Cabecera de la vista (slot del título) ----------------------------------------------------------------------------
+
+.ah-page-header {
+  margin-bottom: $ah-space-4;
+
+  h1 {
+    margin: 0;
+    color: $ah-blue-deep;
+    @include ah-type("page-title");
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+
+    @include media-breakpoint-down(md) {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+// Antetítulo: la acción (Catalogación / Editar descripción archivística), con el trazo breve del acento editorial.
+.ah-page-kicker {
+  display: flex;
+  align-items: center;
+  gap: $ah-space-2;
+  margin-bottom: $ah-space-1;
+  color: $ah-text-muted;
+  @include ah-type("kicker");
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  &::before {
+    @include ah-accent-rule(1.5rem);
+  }
+}
+
+// --- Superficie ----------------------------------------------------------------------------------------------------------
 
 .ah-cataloging-form {
-  // Superficie propia del bloque de catalogación sobre el fondo gris de AtoM (que no se toca): blanca, borde neutro discreto,
-  // sin sombra.
-  padding: $uc-space-5;
-  border: $border-width solid $border-color;
-  border-radius: $uc-radius;
-  background-color: $white;
-  @include uc-type("body");
+  margin-bottom: $ah-space-4;
+  padding: $ah-space-5;
+  @include ah-paper;
+  @include ah-type("body");
+  color: $ah-text;
+
+  // Las custom properties de Bootstrap que usan los componentes nativos dentro de la ficha (texto, bordes, textos secundarios y
+  // .text-muted, enlaces, encabezados) toman los tokens del Archivo; fuera de esta vista siguen siendo las de Dominion.
+  --bs-body-color: #{$ah-text};
+  --bs-secondary-color: #{$ah-text-muted};
+  --bs-border-color: #{$ah-line};
+  --bs-heading-color: #{$ah-blue-deep};
+  --bs-link-color-rgb: #{to-rgb($ah-blue-action)};
+  --bs-link-hover-color-rgb: #{to-rgb($ah-blue)};
 
   @include media-breakpoint-down(md) {
-    padding: $uc-space-4;
+    padding: $ah-space-4;
+  }
+
+  @include media-breakpoint-down(sm) {
+    padding: $ah-space-3;
   }
 
   // --- Títulos -----------------------------------------------------------------------------------------------------------
 
   .ah-section-title {
-    margin-bottom: $uc-space-5;
-    color: $uc-primary;
-    @include uc-type("h2");
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: $ah-space-2;
+    margin-bottom: $ah-space-4;
+    padding-bottom: $ah-space-2;
+    border-bottom: $border-width solid $ah-line;
+    color: $ah-blue-deep;
+    @include ah-type("section-title");
+  }
 
-    // Acento institucional (rojo de identidad, no de error).
-    &::after {
-      content: "";
-      display: block;
-      width: $uc-space-6;
-      height: 3px;
-      margin-top: $uc-space-2;
-      background-color: $uc-secondary-light;
-    }
+  .ah-profile-name {
+    color: $ah-text-muted;
+    @include ah-type("body");
   }
 
   // --- Labels, ayudas, controles -----------------------------------------------------------------------------------------
 
   .form-label,
   .ah-field-label {
-    margin-bottom: $uc-space-1;
-    color: $body-color;
-    @include uc-type("body-strong");
+    margin-bottom: $ah-space-1;
+    color: $ah-text;
+    @include ah-type("label");
+    line-height: 1.4;
   }
 
   .form-text {
-    margin-top: $uc-space-1;
-    color: $text-muted;
-    @include uc-type("small");
-  }
-
-  .form-control,
-  .form-select {
-    border-color: $gray-400;
-    border-radius: $uc-radius;
-    font-size: $uc-font-size-body;
-
-    &:focus {
-      border-color: $uc-focus-border-color;
-      @include uc-focus-ring;
-    }
+    margin-top: $ah-space-1;
+    color: $ah-text-muted;
+    @include ah-type("small");
   }
 
   textarea.form-control {
@@ -66,32 +106,180 @@
   }
 
   .ah-row {
-    --bs-gutter-x: #{$uc-space-5};
+    --bs-gutter-x: #{$ah-space-5};
   }
 
   .ah-field {
-    margin-bottom: $uc-space-4;
+    margin-bottom: $ah-space-4; // Mismo ritmo que el .mb-3 con el que render_field envuelve cada campo.
+  }
+
+  // Controles: borde con contraste de control (3,3:1) y foco en el azul de acción. Van antes de los errores, que los ganan.
+  .form-control,
+  .form-select {
+    border-color: $ah-line-control;
+    border-radius: $ah-radius-control;
+    color: $ah-text;
+
+    &::placeholder {
+      color: $ah-text-muted;
+    }
+
+    &:focus {
+      border-color: $ah-focus-color;
+      box-shadow: $ah-focus-ring;
+    }
+
+    &:disabled {
+      border-color: $ah-line;
+      background-color: $ah-disabled-bg;
+      color: $ah-disabled-text;
+    }
+  }
+
+  .form-check-input {
+    border-color: $ah-line-control;
+
+    &:checked {
+      border-color: $ah-blue;
+      background-color: $ah-blue;
+    }
+
+    &:focus {
+      border-color: $ah-focus-color;
+      box-shadow: $ah-focus-ring;
+    }
   }
 
   // --- Errores: color de error en borde e indicador; el texto se mantiene legible ---------------------------------------
 
   .is-invalid,
   .is-invalid:focus {
-    border-color: $uc-error;
+    border-color: $ah-error;
   }
 
   .is-invalid:focus {
-    @include uc-focus-ring($uc-focus-ring-error);
+    @include ah-focus-ring($ah-focus-ring-error);
   }
 
   .invalid-feedback {
-    display: block;
-    margin-top: $uc-space-1;
-    color: $body-color;
-    @include uc-type("small-semibold");
+    display: flex;
+    align-items: baseline;
+    margin-top: $ah-space-1;
+    color: $ah-error;
+    @include ah-type("small-strong");
 
     &::before {
-      @include uc-status-badge($uc-error);
+      @include ah-status-badge($ah-error);
+    }
+  }
+
+  // --- Banda de contexto: ubicación jerárquica y nivel ------------------------------------------------------------------
+
+  .ah-context {
+    margin-bottom: $ah-space-5;
+    padding: $ah-space-4;
+    border: $border-width solid $ah-line;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-surface-band;
+
+    @include media-breakpoint-down(sm) {
+      padding: $ah-space-3;
+    }
+  }
+
+  .ah-location {
+    margin-bottom: $ah-space-3;
+    padding-bottom: $ah-space-3;
+    border-bottom: $border-width solid $ah-line;
+    @include ah-type("small");
+  }
+
+  .ah-location-label {
+    display: block;
+    margin-bottom: $ah-space-1;
+    color: $ah-text-muted;
+    @include ah-type("kicker");
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  // Ruta en línea; el separador va al principio de cada tramo, así que al partirse la línea nunca queda solo.
+  .ah-location-path {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: $ah-space-2;
+    row-gap: 0.125rem;
+    margin: 0;
+    padding: 0;
+    color: $ah-text;
+    list-style: none;
+
+    li {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    li + li::before {
+      content: "\203A";
+      margin-right: $ah-space-2;
+      color: $ah-text-muted;
+      font-weight: 700;
+    }
+
+    li[aria-current] {
+      color: $ah-blue-deep;
+      font-weight: 700;
+    }
+
+    // En pantallas estrechas, un tramo por línea sobre un carril: la ruta se lee como jerarquía, sin fragmentos sueltos.
+    @include media-breakpoint-down(md) {
+      flex-direction: column;
+      row-gap: $ah-space-1;
+      padding-left: $ah-space-3;
+      border-left: 2px solid $ah-line-strong;
+    }
+  }
+
+  .ah-location-level {
+    color: $ah-text-muted;
+    font-weight: 400;
+  }
+
+  .ah-level-row {
+    align-items: flex-end;
+
+    .mb-3 {
+      margin-bottom: 0 !important;
+    }
+
+    .form-select {
+      background-color: $white;
+      font-weight: 700;
+    }
+  }
+
+  .ah-no-level-hint {
+    margin: 0;
+    color: $ah-text-muted;
+    @include ah-type("small");
+  }
+
+  .ah-no-level-button {
+    min-height: 2.25rem;
+    padding: 0;
+    border: 0;
+    color: $ah-blue-action;
+    @include ah-type("button");
+    text-align: left;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      color: $ah-blue;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
     }
   }
 
@@ -100,36 +288,39 @@
   .yui-ac > ul {
     display: flex;
     flex-wrap: wrap;
-    gap: $uc-space-1;
-    margin: 0 0 $uc-space-2;
+    gap: $ah-space-1;
+    margin: 0 0 $ah-space-2;
     padding: 0;
     list-style: none;
 
     li {
       display: inline-flex;
       align-items: center;
-      gap: $uc-space-2;
+      gap: $ah-space-2;
       max-width: 100%;
-      padding: 0.125rem $uc-space-2;
-      border: $border-width solid $gray-400;
-      border-radius: $uc-radius;
-      background-color: $uc-hover;
-      font-size: $uc-font-size-body;
+      min-height: 1.75rem;
+      padding: 0.125rem $ah-space-2;
+      border: $border-width solid $ah-line-strong;
+      border-radius: $ah-radius-control;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-deep;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
       list-style-image: none;
 
       &::after {
         content: "\00d7";
-        color: $gray-600;
+        color: $ah-text-muted;
         font-size: 1rem;
         line-height: 1;
       }
 
       &:hover {
-        border-color: $uc-primary-light;
+        border-color: $ah-blue-action;
         list-style-image: none;
 
         &::after {
-          color: $uc-primary;
+          color: $ah-error;
         }
       }
 
@@ -138,10 +329,34 @@
         width: auto;
         min-width: 12rem;
         margin: 0;
-        padding: 0 $uc-space-1;
+        padding: 0 $ah-space-1;
         border-color: transparent;
         background-color: transparent;
-        font-size: $uc-font-size-body;
+        font-size: $ah-font-size-small;
+      }
+    }
+  }
+
+  // Sugerencias del autocomplete nativo (YUI): Dominion solo resalta al pasar el ratón; con el teclado (flechas) YUI marca
+  // `.yui-ac-highlight`, que no tenía estilo. Aquí la sugerencia activa se ve igual con teclado y ratón. Solo color y borde: sin
+  // overflow ni cambios de posición o apilamiento.
+  .yui-ac-content {
+    border-color: $ah-line-strong;
+    border-radius: $ah-radius-control;
+    box-shadow: $ah-shadow-overlay;
+
+    ul li {
+      border-left: 3px solid transparent;
+      color: $ah-text;
+
+      &:hover {
+        background-color: $ah-surface-soft;
+      }
+
+      &.yui-ac-highlight {
+        border-left-color: $ah-accent;
+        background-color: $ah-blue;
+        color: $white;
       }
     }
   }
@@ -153,52 +368,103 @@
 
     margin-bottom: 0;
 
-    th,
-    td {
-      padding: 0 $uc-space-2 $uc-space-2 0;
+    > :not(caption) > * > * {
+      padding: 0;
       border: 0;
-      vertical-align: top;
+      background: none;
+      box-shadow: none;
     }
 
     th {
-      color: $text-muted;
-      @include uc-type("small-semibold");
+      color: $ah-text-muted;
+      @include ah-type("small-strong");
       white-space: nowrap;
     }
 
     tfoot td {
-      padding-bottom: 0;
-    }
-
-    .ah-rows-action {
-      width: 1%;
-      padding-right: 0;
+      padding-top: $ah-space-1;
     }
   }
 
+  .ah-notes {
+    td {
+      padding: 0 0 $ah-space-2;
+      vertical-align: top;
+    }
+
+    td:first-child {
+      width: 100%;
+      padding-right: $ah-space-2;
+    }
+  }
+
+  // Fechas: cada fila es una rejilla. Arriba la fecha o período registrado, Desde y Hasta (siempre juntos) y Quitar; debajo,
+  // "Más opciones de fecha". El DOM sigue ese mismo orden, así que la tabulación coincide con lo que se ve. Sin
+  // .table-responsive: su overflow recortaba el anillo de foco y la rejilla ya no necesita desplazamiento horizontal.
   .ah-dates {
-    .ah-dates-date {
-      width: 50%;
+    thead tr,
+    tbody tr {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) 2.375rem;
+      column-gap: $ah-space-2;
     }
 
-    .ah-dates-normalized {
-      width: 25%;
+    thead th {
+      padding-bottom: $ah-space-1;
     }
 
-    // "Más opciones de fecha": secundaria y compacta, bajo la expresión de su propia fila.
+    thead .ah-dates-more-cell {
+      display: none;
+    }
+
+    tbody tr {
+      grid-template-areas:
+        "date start end action"
+        "more more more more";
+      margin-bottom: $ah-space-3;
+    }
+
+    tbody td:nth-child(1) {
+      grid-area: date;
+    }
+
+    tbody td:nth-child(2) {
+      grid-area: start;
+    }
+
+    tbody td:nth-child(3) {
+      grid-area: end;
+    }
+
+    tbody .ah-rows-action {
+      grid-area: action;
+    }
+
+    tbody .ah-dates-more-cell {
+      grid-area: more;
+    }
+
+    tfoot tr,
+    tfoot td {
+      display: block;
+    }
+
+    // "Más opciones de fecha": secundaria y compacta, bajo la fila a la que pertenece.
     .ah-date-more-toggle {
       display: inline-flex;
       align-items: center;
-      gap: $uc-space-1;
-      margin-top: $uc-space-1;
-      padding: 0;
+      gap: $ah-space-1;
+      min-height: 2rem;
+      padding: 0 $ah-space-1;
+      margin-left: -$ah-space-1;
       border: 0;
-      border-radius: $uc-radius;
+      border-radius: $ah-radius-control;
       background: none;
-      color: $text-muted;
-      @include uc-type("small-semibold");
+      color: $ah-text-muted;
+      @include ah-type("small-strong");
 
       i {
+        font-size: 0.75rem;
         transition: transform 0.2s ease-in-out;
       }
 
@@ -207,11 +473,11 @@
       }
 
       &:hover {
-        color: $uc-primary;
+        color: $ah-blue;
       }
 
       &:focus-visible {
-        @include uc-focus-ring;
+        @include ah-focus-ring;
       }
     }
 
@@ -219,8 +485,8 @@
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: $uc-space-2;
-      margin-top: $uc-space-2;
+      gap: $ah-space-2;
+      margin-top: $ah-space-1;
 
       &[hidden] {
         display: none;
@@ -229,135 +495,184 @@
       .form-select {
         width: auto;
         min-width: 10rem;
+        max-width: 100%;
       }
     }
 
     .ah-date-more-label {
-      color: $text-muted;
-      @include uc-type("small-semibold");
+      color: $ah-text-muted;
+      @include ah-type("small-strong");
     }
 
-    // En pantallas estrechas cada fecha es un bloque: expresión a lo ancho; inicio y fin; tipo y quitar. Las cabeceras se
-    // ocultan y cada celda muestra su etiqueta (los controles siguen nombrados por aria-labelledby).
-    @include media-breakpoint-down(md) {
+    // Hasta lg la columna principal es estrecha (o es la pantalla entera): cada fecha es un bloque propio. Arriba la
+    // expresión y Quitar; debajo Desde y Hasta, uno junto al otro; al final las opciones. Las cabeceras se ocultan y cada
+    // celda muestra su etiqueta (los controles siguen nombrados por aria-labelledby).
+    @include media-breakpoint-down(lg) {
       thead {
         display: none;
       }
 
       tbody tr {
-        display: grid;
-        grid-template-columns: 1fr 1fr auto;
-        gap: $uc-space-2;
-        margin-bottom: $uc-space-3;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 2.375rem;
+        grid-template-areas:
+          "date date action"
+          "start end ."
+          "more more more";
+        row-gap: $ah-space-2;
+        padding: $ah-space-3;
+        border: $border-width solid $ah-line;
+        border-radius: $ah-radius-panel;
+        background-color: $white;
       }
 
-      tbody td {
-        padding: 0;
-      }
-
-      tbody td:first-child {
-        grid-column: 1 / -1;
-      }
-
-      tbody td.ah-rows-action {
-        width: auto;
+      tbody .ah-rows-action {
         align-self: end;
-        justify-self: end;
       }
 
       td[data-label]::before {
         content: attr(data-label);
         display: block;
-        margin-bottom: $uc-space-1;
-        color: $text-muted;
-        @include uc-type("small-semibold");
-      }
-
-      tfoot tr,
-      tfoot td {
-        display: block;
+        margin-bottom: $ah-space-1;
+        color: $ah-text-muted;
+        @include ah-type("small-strong");
       }
     }
-  }
-
-  .ah-notes td:first-child {
-    width: 100%;
   }
 
   // --- Botones de la superficie --------------------------------------------------------------------------------------
 
-  .ah-btn-add,
-  .ah-btn-icon,
-  .ah-additional-toggle,
-  .actions .btn {
-    @include uc-type("button");
-  }
-
   .ah-btn-add {
-    padding: $uc-space-1 0;
+    display: inline-flex;
+    align-items: center;
+    gap: $ah-space-2;
+    min-height: 2.25rem;
+    padding: 0 $ah-space-1;
+    margin-left: -$ah-space-1;
     border: 0;
-    color: $uc-primary;
+    color: $ah-blue-action;
+    @include ah-type("button");
 
     i {
-      margin-right: $uc-space-1;
+      font-size: 0.8125rem;
     }
 
     &:hover {
-      color: $uc-primary-light;
+      color: $ah-blue;
       text-decoration: underline;
+      text-underline-offset: 0.2em;
     }
 
     &:focus-visible {
-      @include uc-focus-ring;
+      @include ah-focus-ring;
     }
   }
 
   .ah-btn-icon {
-    width: 2.25rem;
-    height: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.375rem;
+    height: 2.375rem;
     padding: 0;
-    border: $border-width solid $gray-400;
-    border-radius: $uc-radius;
+    border: $border-width solid $ah-line-control;
+    border-radius: $ah-radius-control;
     background-color: $white;
-    color: $gray-600;
+    color: $ah-text-muted;
 
     &:hover {
-      background-color: $uc-hover;
-      color: $uc-primary;
+      border-color: $ah-error;
+      background-color: $white;
+      color: $ah-error;
     }
 
     &:focus-visible {
-      @include uc-focus-ring;
+      @include ah-focus-ring;
+    }
+  }
+
+  // --- Campos secundarios del perfil: se revelan dentro de la ficha ---------------------------------------------------
+
+  .ah-reveal-title {
+    margin-bottom: $ah-space-2;
+    color: $ah-text-muted;
+    @include ah-type("kicker");
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .ah-reveal-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $ah-space-2;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    [hidden] {
+      display: none;
+    }
+  }
+
+  .ah-reveal-button {
+    display: inline-flex;
+    align-items: center;
+    gap: $ah-space-2;
+    min-height: 2.25rem;
+    padding: $ah-space-1 $ah-space-3;
+    border: $border-width dashed $ah-line-control;
+    border-radius: $ah-radius-control;
+    background-color: $white;
+    color: $ah-blue;
+    @include ah-type("button");
+
+    i {
+      color: $ah-blue-action;
+      font-size: 0.75rem;
+    }
+
+    &:hover {
+      border-style: solid;
+      border-color: $ah-blue-action;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-deep;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
     }
   }
 
   // --- Campos adicionales -------------------------------------------------------------------------------------------
 
   .ah-additional {
-    margin-top: $uc-space-6;
-    padding-top: $uc-space-5;
-    border-top: $border-width solid $border-color;
+    margin-top: $ah-space-5;
+    padding-top: $ah-space-5;
+    border-top: $border-width solid $ah-line;
   }
 
   .ah-additional-toggle {
     display: inline-flex;
     align-items: center;
-    gap: $uc-space-2;
-    padding: $uc-space-2 $uc-space-3;
-    border: $border-width solid $uc-primary;
-    border-radius: $uc-radius;
+    gap: $ah-space-2;
+    min-height: 2.5rem;
+    padding: $ah-space-2 $ah-space-4;
+    border: $border-width solid $ah-blue;
+    border-radius: $ah-radius-control;
     background-color: $white;
-    color: $uc-primary;
+    color: $ah-blue;
+    @include ah-type("button");
 
     &:hover {
-      background-color: $uc-hover;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-deep;
     }
 
     &:focus-visible {
-      @include uc-focus-ring;
+      @include ah-focus-ring;
     }
 
     .ah-additional-icon {
+      font-size: 0.8125rem;
       transition: transform 0.2s ease-in-out;
     }
 
@@ -372,67 +687,106 @@
   }
 
   .ah-additional-summary {
-    margin: $uc-space-2 0 $uc-space-4;
+    max-width: 48rem;
+    margin: $ah-space-2 0 $ah-space-4;
+
+    strong {
+      color: $ah-blue-deep;
+    }
   }
 
   .accordion {
-    --bs-accordion-active-color: #{$uc-primary};
-    --bs-accordion-active-bg: #{$uc-hover};
-    --bs-accordion-btn-focus-box-shadow: #{$uc-focus-ring};
-    --bs-accordion-border-radius: #{$uc-radius};
-    --bs-accordion-inner-border-radius: #{$uc-radius};
+    --bs-accordion-bg: #{$ah-panel};
+    --bs-accordion-border-color: #{$ah-line};
+    --bs-accordion-border-radius: #{$ah-radius-panel};
+    --bs-accordion-inner-border-radius: #{calc($ah-radius-panel - 1px)};
   }
 
+  // Dominion redefine las variables del acordeón sobre el propio botón (y su hover en gris): se reasignan aquí, en el mismo nivel.
   .accordion-button {
-    @include uc-type("h5");
+    --bs-accordion-btn-bg: #{$ah-panel};
+    --bs-accordion-btn-color: #{$ah-blue-deep};
+    --bs-accordion-btn-padding-y: #{$ah-space-3};
+    --bs-accordion-active-color: #{$ah-blue-deep};
+    --bs-accordion-active-bg: #{$ah-surface-soft};
+    --bs-accordion-btn-focus-box-shadow: #{$ah-focus-ring};
+
+    color: $ah-blue-deep;
+
+    &:hover,
+    &:focus {
+      background-color: $ah-surface-soft;
+    }
   }
 
   // --- Acciones del formulario (Cancelar / Guardar / Crear) -----------------------------------------------------------
 
-  // La barra de acciones de AtoM (fondo $secondary de Dominion) se integra en la superficie: sin fondo, separada por un borde.
-  // `!important` solo para ganar a la utilidad `.mb-3` que trae el partial nativo.
+  // La barra de acciones nativa (fondo $secondary de Dominion, botones en contorno blanco) se integra en la superficie: sin
+  // fondo, separada por una línea, con la acción primaria en relleno y Cancelar como secundaria. `!important` solo para
+  // ganar a la utilidad `.mb-3` que trae el partial nativo.
   .actions {
-    margin-top: $uc-space-5;
+    flex-wrap: wrap;
+    margin-top: $ah-space-5;
     margin-bottom: 0 !important;
-    padding: $uc-space-5 0 0;
-    border-top: $border-width solid $border-color;
+    padding: $ah-space-5 0 0;
+    border-top: $border-width solid $ah-line;
     border-radius: 0;
     background-color: transparent;
 
     .btn {
-      padding: $uc-space-2 $uc-space-4;
-      border-radius: $uc-radius;
+      min-height: 2.75rem;
+      padding: $ah-space-2 $ah-space-5;
+      border-radius: $ah-radius-control;
+      @include ah-type("button");
+      line-height: 1.6;
+
+      &:focus-visible {
+        @include ah-focus-ring;
+      }
     }
 
     .atom-btn-outline-success {
-      border-color: $uc-primary;
-      background-color: $uc-primary;
+      border-color: $ah-blue;
+      background-color: $ah-blue;
       color: $white;
 
-      &:hover {
-        border-color: $uc-primary-dark;
-        background-color: $uc-primary-dark;
-      }
-
-      &:focus-visible {
-        @include uc-focus-ring;
+      &:hover,
+      &:focus {
+        border-color: $ah-blue-deep;
+        background-color: $ah-blue-deep;
+        color: $white;
       }
     }
 
     .atom-btn-outline-light {
-      border-color: $gray-400;
+      border-color: $ah-line-control;
       background-color: $white;
-      color: $body-color;
+      color: $ah-blue-deep;
 
-      &:hover {
-        background-color: $uc-hover;
+      &:hover,
+      &:focus {
+        border-color: $ah-blue-action;
+        background-color: $ah-surface-soft;
+        color: $ah-blue-deep;
+      }
+    }
+
+    @include media-breakpoint-down(sm) {
+      li {
+        flex: 1 1 0;
       }
 
-      &:focus-visible {
-        @include uc-focus-ring;
+      .btn {
+        width: 100%;
       }
     }
   }
+}
+
+// La barra nativa de traducción (#l10n-client, solo para quien tiene permiso de traducir) es fija al pie de la ventana: en esta
+// vista se reserva su altura para que no tape las acciones del final. Fuera de la vista el shell queda como en AtoM.
+body:has(.ah-cataloging-form):has(#l10n-client) {
+  padding-bottom: 2.5em;
 }
 
 // --- Ficha adaptable (CAT-03) ------------------------------------------------------------------------------------------
@@ -440,66 +794,19 @@
 // de .ah-js, que pone js/cataloging-form.js al arrancar: sin JavaScript, o mientras el bundle no ha cargado, se ve el
 // formulario general completo.
 .ah-cataloging-form {
-  .ah-context {
-    margin-bottom: $uc-space-5;
-  }
-
-  .ah-location {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $uc-space-2;
-    margin-bottom: $uc-space-4;
-    color: $text-muted;
-    @include uc-type("small");
-  }
-
-  .ah-location-path {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $uc-space-1;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    li + li::before {
-      content: "\203A";
-      margin-right: $uc-space-1;
-    }
-
-    li[aria-current] {
-      color: $body-color;
-      @include uc-type("small-semibold");
-    }
-  }
-
-  .ah-profile-name {
-    color: $text-muted;
-    font-weight: normal;
-  }
-
   // Solo tiene sentido con la capa adaptable y mientras no se haya elegido nivel.
   .ah-no-level,
   .ah-reveal {
     display: none;
   }
 
-  .ah-reveal-title {
-    margin-bottom: $uc-space-1;
-    color: $text-muted;
-    @include uc-type("small-semibold");
-  }
-
-  .ah-reveal-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $uc-space-3;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    [hidden] {
-      display: none;
-    }
+  // Revelado: zona discontinua al final de la ficha, para que se lea como "campos opcionales disponibles".
+  .ah-reveal {
+    margin-top: $ah-space-2;
+    padding: $ah-space-3 $ah-space-4;
+    border: $border-width dashed $ah-line-strong;
+    border-radius: $ah-radius-panel;
+    background-color: rgba($ah-surface-soft, 0.5);
   }
 
   // Sin JavaScript (o si no cargó): formulario general completo, con las áreas adicionales abiertas.
@@ -521,7 +828,18 @@
 
     &[data-ah-state="initial"] {
       .ah-no-level {
-        display: block;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: $ah-space-1;
+
+        @include media-breakpoint-down(lg) {
+          margin-top: $ah-space-3;
+        }
+      }
+
+      .ah-context {
+        margin-bottom: 0;
       }
 
       .ah-daily,

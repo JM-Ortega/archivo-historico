@@ -62,7 +62,7 @@ cleanup() {
   local rc=$?
   trap - EXIT INT TERM
   set +e
-  for f in scss/main.scss scss/_foundation-marker.scss; do
+  for f in scss/main.scss scss/_base.scss; do
     [[ -f "$TMP/$(basename "$f").orig" ]] && cp "$TMP/$(basename "$f").orig" "$PDIR/$f"
   done
   rm -f "$PDIR/images/theme-test-$RUN.txt"
@@ -135,8 +135,8 @@ expect "la clase Configuration usa el nombre nuevo y extiende arDominionB5Plugin
 expect "la Configuration hereda la precedencia del skeleton: parent::initialize() y sin array_unshift propio" "1:0" \
   "$(grep -c 'parent::initialize()' "$PDIR/config/${PLUGIN}Configuration.class.php"):$(grep -c 'array_unshift' "$PDIR/config/${PLUGIN}Configuration.class.php" || true)"
 expect "el summary contiene 'theme' (AtoM lo lista como tema)" "1" "$(grep -cEi "summary = '.*theme" "$PDIR/config/${PLUGIN}Configuration.class.php")"
-expect "scss/ contiene EXACTAMENTE main.scss, _foundation-marker.scss, la foundation TIC (_tokens, _mixins, _fonts), el componente _help y _cataloging-form.scss (sin parciales copiados de Dominion)" \
-  "./_cataloging-form.scss ./_fonts.scss ./_foundation-marker.scss ./_help.scss ./_mixins.scss ./_tokens.scss ./main.scss" \
+expect "scss/ contiene EXACTAMENTE main.scss, la identidad (_tokens, _variables, _mixins, _fonts, _base), el componente _help y _cataloging-form.scss (sin parciales copiados de Dominion)" \
+  "./_base.scss ./_cataloging-form.scss ./_fonts.scss ./_help.scss ./_mixins.scss ./_tokens.scss ./_variables.scss ./main.scss" \
   "$(cd "$PDIR/scss" && find . -type f | sort | tr '\n' ' ' | sed 's/ $//')"
 expect "sin layout.php ni logos duplicados de Dominion" "0" \
   "$(ls "$PDIR/templates/layout.php" "$PDIR/images/logo.png" "$PDIR/images/default_atom_logo.png" 2>/dev/null | wc -l)"
@@ -182,12 +182,20 @@ expect "Nginx sirve el CSS custom (200)" "200" "$(code "$URL$CSS")"
 expect "Nginx sirve el JS custom (200)" "200" "$(code "$URL$(js_ref)")"
 expect "Nginx sirve images/image.png del plugin (200, idéntico al source)" "identical" \
   "$(curl -sS "$URL/plugins/$PLUGIN/images/image.png" | cmp -s - "$PDIR/images/image.png" && echo identical || echo different)"
-for f in scss/main.scss scss/_foundation-marker.scss webpack.entry.js js/main.js templates/_layout_start_webpack.php \
+for f in scss/main.scss scss/_base.scss webpack.entry.js js/main.js templates/_layout_start_webpack.php \
          config/${PLUGIN}Configuration.class.php tools/build.sh tests/test-theme.sh tests/cataloging-form.php \
          modules/sfIsadPlugin/templates/editSuccess.php modules/sfIsadPlugin/actions/editAction.class.php \
          lib/arUnicaucaCatalogingRoleEvents.class.php; do
   expect_ne "HTTP no expone $f del plugin" "200" "$(code "$URL/plugins/$PLUGIN/$f")"
 done
+BUNDLE="$TMP/bundle.css"
+curl -sS "$URL$CSS" >"$BUNDLE"
+expect "el bundle registra Lato y Merriweather (@font-face)" "2" "$(grep -oE '@font-face *\{ *font-family: *"(Lato|Merriweather)"' "$BUNDLE" | grep -oE 'Lato|Merriweather' | sort -u | wc -l | tr -d ' ')"
+expect "las fuentes del bundle se sirven desde dist/ (sin URLs absolutas a terceros)" "0" "$(grep -oE 'url\(["'\'']?https?://' "$BUNDLE" | wc -l | tr -d ' ')"
+expect "Titillium Web y el marcador naranja anterior ya no están en el bundle" "0:0" \
+  "$(grep -c 'Titillium' "$BUNDLE" || true):$(tr -d ' \n' <"$BUNDLE" | grep -cE 'body\{border-top:4pxsolid' || true)"
+expect "la última asignación de --bs-font-sans-serif es Lato (reasigna la Open Sans de Dominion)" "Lato" \
+  "$(grep -oE -- '--bs-font-sans-serif: *"[^"]+"' "$BUNDLE" | tail -n1 | grep -oE '"[^"]+"' | tr -d '"')"
 expect "el body de scss/main.scss no es el source" "0" "$(curl -sS "$URL/plugins/$PLUGIN/scss/main.scss" | grep -c '@import' || true)"
 expect "Nginx no contiene scss/, templates/ ni webpack.entry.js del plugin" "images" "$(in_svc nginx ls "$PIN")"
 
@@ -238,8 +246,8 @@ expect "nginx no se recreó ni reinició" "$NGINX_START" "$(docker inspect -f '{
 
 echo "== H. Edición de SCSS → theme build → refresh (sin rebuild de imagen) =="
 OLD_CSS="$(css_ref)"
-backup scss/_foundation-marker.scss
-printf '\nbody { --theme-test: "%s"; }\n' "$RUN" >>"$PDIR/scss/_foundation-marker.scss"
+backup scss/_base.scss
+printf '\nbody { --theme-test: "%s"; }\n' "$RUN" >>"$PDIR/scss/_base.scss"
 expect "sin build, dist sigue con el bundle anterior" "$OLD_CSS" "$(css_ref)"
 RC="$(run_build "$TMP/build2.log")"
 expect "theme_build tras editar SCSS: exit 0" "0" "$RC"
@@ -265,7 +273,7 @@ expect "ownership corregido pese al fallo del build (trap)" "$(host_owner "$PDIR
 cp "$TMP/main.scss.orig" "$PDIR/scss/main.scss"
 
 echo "== J. Restauración =="
-cp "$TMP/_foundation-marker.scss.orig" "$PDIR/scss/_foundation-marker.scss"
+cp "$TMP/_base.scss.orig" "$PDIR/scss/_base.scss"
 RC="$(run_build "$TMP/build4.log")"
 expect "theme_build con el source restaurado: exit 0" "0" "$RC"
 [[ "$RC" == 0 ]] && rm -f "$TMP/dirty"

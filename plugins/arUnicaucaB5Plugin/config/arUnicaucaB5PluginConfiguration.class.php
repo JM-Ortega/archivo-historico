@@ -26,7 +26,7 @@ require_once sfConfig::get('sf_plugins_dir')
 
 class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
 {
-    public static $summary = 'Institutional theme of the Archivo Histórico (Universidad del Cauca). Bootstrap 5 theme, extension of arDominionB5Plugin without modifications; foundation stage.';
+    public static $summary = 'Theme of the Archivo Histórico del Cauca. Bootstrap 5 theme, extension of arDominionB5Plugin without modifications.';
     public static $version = '0.0.1';
 
     public function initialize()
