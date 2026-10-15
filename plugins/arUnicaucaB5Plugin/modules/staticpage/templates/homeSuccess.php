@@ -80,6 +80,11 @@
         ]); ?>">
         <i class="fas fa-sliders-h me-2" aria-hidden="true"></i>Búsqueda avanzada
       </a>
+      <a
+        class="list-group-item list-group-item-action"
+        href="<?php echo url_for(['module' => 'user', 'action' => 'list']); ?>">
+        <i class="fas fa-users me-2" aria-hidden="true"></i>Usuarios
+      </a>
     </div>
   </section>
 <?php end_slot(); ?>
