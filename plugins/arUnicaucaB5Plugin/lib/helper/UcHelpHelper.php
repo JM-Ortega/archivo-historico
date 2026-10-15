@@ -21,7 +21,7 @@ function uc_help(string $id, string $label, string $text): string
     return '<span class="uc-help" data-uc-help>'
         .'<button type="button" class="uc-help-toggle" aria-expanded="false" aria-controls="'.$id.'" aria-label="'
         .htmlspecialchars(strip_tags($buttonLabel), ENT_QUOTES, 'UTF-8').'">'
-        .'<i class="fas fa-info-circle" aria-hidden="true"></i>'
+        .'<i class="fa-regular fa-circle-question" aria-hidden="true"></i>'
         .'</button>'
         .'<span class="uc-help-bubble" id="'.$id.'" role="tooltip">'.$text.'</span>'
         .'</span>';

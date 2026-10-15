@@ -17,7 +17,8 @@ final.
 - Cada fuente que orienta el cambio manda en lo suyo:
   - **Archivo Histórico** → la necesidad funcional (qué necesita quien usa el Archivo).
   - **AtoM** → las capacidades y el comportamiento que ya existen.
-  - **Sistema de Diseño TIC/UniCauca** → la presentación institucional y la UX aplicable.
+  - **Identidad visual del Archivo Histórico del Cauca** → la presentación y la UX aplicable (ver
+    [Identidad visual](#identidad-visual-del-archivo-histórico-del-cauca)).
   - **Arquitectura del Proyecto I** → los límites de extensión y la mantenibilidad.
   - **Referencias externas** → inspiración de patrones de UX, no especificación.
 - La intervención se decide por el **contrato que cambia**, no por cómo se ve la pantalla (ver
@@ -28,7 +29,7 @@ final.
 Materializado desde el skeleton oficial recomendado por AtoM 2.10 para themes BS5,
 [artefactual-labs/arThemeB5Plugin](https://github.com/artefactual-labs/arThemeB5Plugin), commit exacto
 `32743ffc5b008f09abea71f004e139174c1e8194` (2026-03-19). **AtoM target: 2.10.2.** Cambios respecto al skeleton: nombre
-(`arUnicaucaB5Plugin`), summary/versión, marcador de foundation (`scss/_foundation-marker.scss` + `<meta name="atom-theme">`),
+(`arUnicaucaB5Plugin`), summary/versión, marcador de theme activo (`<meta name="atom-theme">`),
 `images/image.png` propio del skeleton y **una divergencia deliberada**: `templates/_layout_start_webpack.php` parte de
 `arDominionB5Plugin` 2.10.2, no de la del skeleton. Webpack exige ese fichero en cada plugin, y el del skeleton está
 desfasado (sin `googleAnalytics`, favicon configurable, atributo `media` ni la clase `show-edit-tooltips` de 2.10.2), lo que
@@ -49,7 +50,7 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 | `plugins/arUnicaucaB5Plugin/tests/test-theme.sh` | Prueba de integración del ciclo del theme |
 | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/`, `lib/arUnicaucaCataloging*.class.php` | **Source**: formulario de catalogación (override de la vista y la action de edición ISAD(G)) |
 | `plugins/arUnicaucaB5Plugin/tests/test-cataloging-form.sh` | Prueba de integración del formulario de catalogación (HTTP real + SQL) |
-| `plugins/arUnicaucaB5Plugin/fonts/` | **Source**: fuentes self-hosted (Titillium Web; procedencia en su README) |
+| `plugins/arUnicaucaB5Plugin/fonts/` | **Source**: fuentes self-hosted de la identidad (Lato, Merriweather; procedencia y licencias en `fonts/README.md`) |
 | `plugins/arUnicaucaB5Plugin/templates/_layout_start.php` | **Derivado** por Webpack; ignorado por Git; no se edita (edita `_layout_start_webpack.php`) |
 | Volumen `archivo-historico_theme_dist` (`/atom/src/dist`) | **Derivado y reconstruible**; sin backup; no está en el repo |
 | `upstream/atom/` | Nunca se modifica |
@@ -184,21 +185,31 @@ publicado únicamente en `127.0.0.1`. No cambia `NODE_ENV`.
 
 `_layout_start_webpack.php` es una plantilla de build, no un override de recarga inmediata: editarla requiere `theme_build`.
 
-## Foundation visual TIC (`scss/_tokens.scss`, `_mixins.scss`, `_fonts.scss`)
+## Identidad visual del Archivo Histórico del Cauca
 
-Decisiones del Sistema de Diseño TIC compartidas por todas las superficies propias del theme:
+Frontera: **la tipografía es global; la identidad cromática es de las vistas personalizadas.** El shell, la navegación y las
+pantallas nativas conservan los colores, fondos, superficies y comportamiento de Dominion. Cascada de `scss/main.scss`:
 
-- `_tokens.scss`: paleta institucional y colores funcionales (`$uc-primary`, `$uc-error`, `$uc-hover`...), familias y escala
-  tipográfica (`$uc-type-scale`), espaciado 4–32 px (`$uc-space-1`…`$uc-space-6`), radio (`$uc-radius`) y foco
-  (`$uc-focus-ring`...). Los neutros (fondos, bordes, texto) siguen siendo los de Bootstrap/Dominion.
-- `_mixins.scss`: `uc-type("h2" | "body-strong" | "button"...)`, `uc-focus-ring()` y `uc-status-badge()` (indicador junto a un
-  mensaje de estado, para no depender solo del color).
-- `_fonts.scss`: único registro `@font-face` del plugin (Titillium Web 400/600/700; Open Sans la aporta Dominion).
+1. `_tokens.scss` (solo variables): paleta (`$ah-blue` #004783, `$ah-blue-deep`, `$ah-blue-action`, `$ah-panel`,
+   `$ah-surface-soft`, `$ah-text`, `$ah-text-muted`, `$ah-accent` #E31946, `$ah-line`...), derivados con contraste comprobado
+   (`$ah-line-control`, `$ah-surface-band`, `$ah-error`...), familias, escala de componentes (`$ah-type-scale`), espaciado,
+   radios (6 px controles, 8 px paneles) y foco. No se asignan a variables de Bootstrap/Dominion.
+2. `_variables.scss`: **solo tipografía**, antes de Dominion: Lato (`$font-family-sans-serif`), Merriweather
+   (`$headings-font-family`) y la escala y el peso de los encabezados.
+3. Dominion completo; Font Awesome *regular* (iconos lineales, mismo paquete) y `_fonts.scss` (`@font-face` de Lato y
+   Merriweather, self-hosted).
+4. `_base.scss`: solo tipografía sobre lo nativo (reasigna la Open Sans que Dominion fija en `:root`; etiquetas de las vistas de
+   ficha en Lato con su peso nativo).
+5. Componentes (`_help.scss`) y vistas (`_cataloging-form.scss`), los únicos que aplican la identidad cromática, desde sus
+   propios selectores. La ficha redefine dentro de `.ah-cataloging-form` las custom properties de Bootstrap (`--bs-body-color`,
+   `--bs-border-color`, `--bs-secondary-color`, enlaces...) y estiliza controles, foco, acordeones y sugerencias del autocomplete.
 
-Contrato: **centralizar no es aplicar**. Estos ficheros no generan reglas: no tocan `body`, títulos, controles, botones ni
-fondos, ni reasignan variables de Bootstrap/Dominion (`$primary`, `$font-family-base`...), porque eso cambiaría todo AtoM.
-Cada superficie consume los tokens desde sus propios selectores encapsulados (p. ej. `.ah-cataloging-form` en
-`_cataloging-form.scss`) y conserva localmente solo su layout y sus patrones propios.
+`_mixins.scss`: `ah-type()`, `ah-focus-ring()`, `ah-status-badge()`, `ah-paper` (superficie documental) y `ah-accent-rule()`.
+
+Reglas: Merriweather para títulos y encabezados, Lato para interfaz; el rojo de acento es identidad, **nunca** error; sin símbolos
+ni marcas de la Universidad del Cauca. Una vista nueva que deba llevar la identidad la aplica en su propio ámbito, como la ficha;
+no se cambian variables de color de Bootstrap/Dominion. Open Sans sigue declarada en el bundle por Dominion, pero ninguna regla la
+usa.
 
 Componentes reutilizables (por clase: solo actúan donde una vista los usa):
 
@@ -357,8 +368,9 @@ plugins/arUnicaucaB5Plugin/tests/test-theme.sh    # ~2 min; requiere el runtime 
 ```
 
 Revierte lo que toca (ediciones, activación temporal si la hizo ella, y reconstruye el theme). No destruye estado. Sella la
-foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss`, `_foundation-marker.scss`, la foundation
-TIC (`_tokens.scss`, `_mixins.scss`, `_fonts.scss`), el componente `_help.scss` y `_cataloging-form.scss`, y usa `templates/_footer.php` como override temporal (se detiene si ya existe uno durable). Un cambio
+foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss`, la identidad (`_tokens.scss`,
+`_variables.scss`, `_mixins.scss`, `_fonts.scss`, `_base.scss`), el componente `_help.scss` y `_cataloging-form.scss`, que el
+bundle registre Lato y Merriweather sin Titillium ni URLs de terceros, edita `_base.scss` para probar el ciclo SCSS y usa `templates/_footer.php` como override temporal (se detiene si ya existe uno durable). Un cambio
 que añada otro parcial SCSS o un override durable de ese fichero debe **adaptar esas aserciones de forma consciente**, no
 esquivarlas.
 

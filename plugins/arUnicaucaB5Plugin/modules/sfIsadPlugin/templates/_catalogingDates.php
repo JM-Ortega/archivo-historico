@@ -8,7 +8,8 @@
  * Diferencias de presentación:
  *   - La fila muestra siempre y agrupados la fecha o período registrado (expresión textual original), Desde y Hasta (fechas
  *     estructuradas, opcionales, para la búsqueda cronológica). El tipo de fecha (por defecto Creación, como en AtoM) va en
- *     "Más opciones de fecha", una expansión propia de cada fila. Cerrada solo se oculta con `hidden`: el select sigue en el
+ *     "Más opciones de fecha", una expansión propia de cada fila, en la última celda (tras Desde, Hasta y Quitar: el orden de
+ *     tabulación coincide con el visual, ver scss/_cataloging-form.scss). Cerrada solo se oculta con `hidden`: el select sigue en el
  *     formulario y se envía siempre, así que el tipo de una fecha existente se conserva tal cual. Si el tipo no es Creación,
  *     la expansión se muestra abierta para que se vea. Comportamiento: js/cataloging-form.js.
  *   - Las filas no llevan la clase `date`, de modo que date.js no rellena inicio/fin a partir de la expresión: las fechas
@@ -71,6 +72,30 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
             'aria-describedby' => 'ah-dates-tip',
             'onlyInputs' => true,
         ]); ?>
+      </td>
+      <td data-label="<?php echo __('Desde'); ?>">
+        <?php $form->setDefault('startDate', $row['startDate']); ?>
+        <?php echo render_field($form->startDate, null, [
+            'aria-labelledby' => 'ah-dates-label ah-dates-start-head',
+            'aria-describedby' => 'ah-dates-tip',
+            'onlyInputs' => true,
+        ]); ?>
+      </td>
+      <td data-label="<?php echo __('Hasta'); ?>">
+        <?php $form->setDefault('endDate', $row['endDate']); ?>
+        <?php echo render_field($form->endDate, null, [
+            'aria-labelledby' => 'ah-dates-label ah-dates-end-head',
+            'aria-describedby' => 'ah-dates-tip',
+            'onlyInputs' => true,
+        ]); ?>
+      </td>
+      <td class="ah-rows-action">
+        <button type="button" class="multi-row-delete btn ah-btn-icon">
+          <i class="fas fa-times" aria-hidden="true"></i>
+          <span class="visually-hidden"><?php echo __('Quitar esta fecha'); ?></span>
+        </button>
+      </td>
+      <td class="ah-dates-more-cell">
         <button
           type="button"
           class="ah-date-more-toggle"
@@ -96,28 +121,6 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
           ?>
         </div>
       </td>
-      <td data-label="<?php echo __('Desde'); ?>">
-        <?php $form->setDefault('startDate', $row['startDate']); ?>
-        <?php echo render_field($form->startDate, null, [
-            'aria-labelledby' => 'ah-dates-label ah-dates-start-head',
-            'aria-describedby' => 'ah-dates-tip',
-            'onlyInputs' => true,
-        ]); ?>
-      </td>
-      <td data-label="<?php echo __('Hasta'); ?>">
-        <?php $form->setDefault('endDate', $row['endDate']); ?>
-        <?php echo render_field($form->endDate, null, [
-            'aria-labelledby' => 'ah-dates-label ah-dates-end-head',
-            'aria-describedby' => 'ah-dates-tip',
-            'onlyInputs' => true,
-        ]); ?>
-      </td>
-      <td class="ah-rows-action">
-        <button type="button" class="multi-row-delete btn ah-btn-icon">
-          <i class="fas fa-times" aria-hidden="true"></i>
-          <span class="visually-hidden"><?php echo __('Quitar esta fecha'); ?></span>
-        </button>
-      </td>
     </tr>
 <?php
 
@@ -131,7 +134,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
       __('Escribe la fecha o el período tal como está registrado. Desde y Hasta son opcionales: facilitan la búsqueda cronológica por período; complétalos solo cuando puedan determinarse con fiabilidad. Formato: AAAA, AAAA-MM o AAAA-MM-DD.')
   ); ?></h3>
 
-  <div class="table-responsive">
+  <div class="ah-rows-wrap">
     <table class="table mb-0 multi-row ah-rows ah-dates" aria-labelledby="ah-dates-label" data-default-type="<?php echo $creationUrl; ?>">
       <thead>
         <tr>
@@ -139,6 +142,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
           <th id="ah-dates-start-head" class="ah-dates-normalized"><?php echo __('Desde'); ?></th>
           <th id="ah-dates-end-head" class="ah-dates-normalized"><?php echo __('Hasta'); ?></th>
           <th class="ah-rows-action"><span class="visually-hidden"><?php echo __('Quitar'); ?></span></th>
+          <th class="ah-dates-more-cell"><span class="visually-hidden"><?php echo __('Tipo de fecha'); ?></span></th>
         </tr>
       </thead>
       <tbody>
@@ -148,7 +152,7 @@ $renderRow = static function ($form, int $i, array $row, string $creationUrl): s
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="4">
+          <td colspan="5">
             <button type="button" class="multi-row-add btn ah-btn-add">
               <i class="fas fa-plus" aria-hidden="true"></i>
               <?php echo __('Agregar otra fecha'); ?>
