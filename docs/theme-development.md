@@ -47,6 +47,9 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 | `plugins/arUnicaucaB5Plugin/tools/build.sh` | Wrapper de build del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tools/watch.sh` | Wrapper del watch DEV opt-in del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tests/test-theme.sh` | Prueba de integración del ciclo del theme |
+| `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/`, `lib/arUnicaucaCataloging*.class.php` | **Source**: formulario de catalogación (override de la vista y la action de edición ISAD(G)) |
+| `plugins/arUnicaucaB5Plugin/tests/test-cataloging-form.sh` | Prueba de integración del formulario de catalogación (HTTP real + SQL) |
+| `plugins/arUnicaucaB5Plugin/fonts/` | **Source**: fuentes self-hosted (Titillium Web; procedencia en su README) |
 | `plugins/arUnicaucaB5Plugin/templates/_layout_start.php` | **Derivado** por Webpack; ignorado por Git; no se edita (edita `_layout_start_webpack.php`) |
 | Volumen `archivo-historico_theme_dist` (`/atom/src/dist`) | **Derivado y reconstruible**; sin backup; no está en el repo |
 | `upstream/atom/` | Nunca se modifica |
@@ -164,21 +167,47 @@ Contrato de recarga (lo que está verificado):
 - **Partial global del theme en `templates/`** (verificado con `templates/_footer.php`): editar → refrescar el navegador. Sin
   `symfony cc`, sin reload de FPM, sin rebuild de imagen. Hay que contar con la revalidación de OPcache: `atom` corre con
   `ATOM_DEVELOPMENT_MODE=true` (solo `atom`, solo este Compose DEV), que activa `opcache.validate_timestamps=On` con
-  `opcache.revalidate_freq` = 2 s, así que un cambio puede tardar hasta ~2 s en verse. Los overrides bajo
-  `modules/<módulo>/templates/` siguen la convención de rutas del skeleton, pero **las pruebas actuales no los caracterizan**:
-  compruébalo en la primera WU que use uno.
-- **Otros cambios PHP/configuración del plugin** (la clase `Configuration`, actions, cualquier código que Symfony cachee):
-  están bind-mounted, pero **no se garantiza** que se apliquen sin `symfony cc` o reinicio de `atom`. Se caracterizará cuando
-  aparezca un caso real; hasta entonces, ante la duda: `docker compose exec atom php symfony cc` o `docker compose restart atom`.
-
-Sobre las actions: el skeleton documenta copiar actions y templates bajo `modules/<módulo>/…` con la misma ruta, y su
-Configuration sube el plugin al primer puesto con esa intención; en este proyecto **solo** está caracterizado el caso del
-partial global. Tratar una action como override "por ruta" exige inspeccionar antes el mecanismo concreto.
+  `opcache.revalidate_freq` = 2 s, así que un cambio puede tardar hasta ~2 s en verse.
+- **Override de módulo de un plugin de AtoM** (verificado con `modules/sfIsadPlugin/`, el formulario de catalogación): un
+  `templates/<vista>.php` o `actions/<acción>Action.class.php` con la misma ruta que en el plugin original gana, porque la
+  Configuration pone este plugin el primero y Symfony toma el primer directorio de módulo que aporta el fichero. Una action
+  se carga **por nombre de clase** (`<módulo><Acción>Action`), así que el override es una copia de la clase upstream, no una
+  subclase: hay que revisarla al actualizar AtoM. Editar un template o una action ya existentes: igual que un partial
+  (refrescar, ~2 s). **Añadir** un fichero de action o una clase nueva en `lib/`: `docker compose exec atom php symfony cc`
+  (el autoload de Symfony está cacheado).
+- **Otros cambios PHP/configuración del plugin** (la clase `Configuration`, cualquier código que Symfony cachee): están
+  bind-mounted, pero **no se garantiza** que se apliquen sin `symfony cc` o reinicio de `atom`; ante la duda:
+  `docker compose exec atom php symfony cc` o `docker compose restart atom`.
 
 `ATOM_DEVELOPMENT_MODE` también expone `/qubit_dev.php`, accesible solo desde el host DEV porque el puerto web sigue
 publicado únicamente en `127.0.0.1`. No cambia `NODE_ENV`.
 
 `_layout_start_webpack.php` es una plantilla de build, no un override de recarga inmediata: editarla requiere `theme_build`.
+
+## Foundation visual TIC (`scss/_tokens.scss`, `_mixins.scss`, `_fonts.scss`)
+
+Decisiones del Sistema de Diseño TIC compartidas por todas las superficies propias del theme:
+
+- `_tokens.scss`: paleta institucional y colores funcionales (`$uc-primary`, `$uc-error`, `$uc-hover`...), familias y escala
+  tipográfica (`$uc-type-scale`), espaciado 4–32 px (`$uc-space-1`…`$uc-space-6`), radio (`$uc-radius`) y foco
+  (`$uc-focus-ring`...). Los neutros (fondos, bordes, texto) siguen siendo los de Bootstrap/Dominion.
+- `_mixins.scss`: `uc-type("h2" | "body-strong" | "button"...)`, `uc-focus-ring()` y `uc-status-badge()` (indicador junto a un
+  mensaje de estado, para no depender solo del color).
+- `_fonts.scss`: único registro `@font-face` del plugin (Titillium Web 400/600/700; Open Sans la aporta Dominion).
+
+Contrato: **centralizar no es aplicar**. Estos ficheros no generan reglas: no tocan `body`, títulos, controles, botones ni
+fondos, ni reasignan variables de Bootstrap/Dominion (`$primary`, `$font-family-base`...), porque eso cambiaría todo AtoM.
+Cada superficie consume los tokens desde sus propios selectores encapsulados (p. ej. `.ah-cataloging-form` en
+`_cataloging-form.scss`) y conserva localmente solo su layout y sus patrones propios.
+
+Componentes reutilizables (por clase: solo actúan donde una vista los usa):
+
+- Ayuda contextual `uc_help($id, $label, $text)` (`lib/helper/UcHelpHelper.php`, `scss/_help.scss`, `js/help.js`): botón de
+  información junto a la etiqueta que muestra un texto breve; se abre al pasar el ratón, al enfocarlo con el teclado o con un
+  clic (queda fijada), y se cierra con Escape, al salir o con un clic fuera. El control del campo debe referenciar `$id` en su
+  `aria-describedby`. Usar ids que no terminen en `-help` (Dominion oculta esas ayudas en edición y les añade su tooltip).
+- No hay todavía indicador de obligatorio: un asterisco significará "el sistema no deja guardar si está vacío", nunca
+  "importante" o "frecuente".
 
 ## Editar SCSS / JS
 
@@ -328,9 +357,10 @@ plugins/arUnicaucaB5Plugin/tests/test-theme.sh    # ~2 min; requiere el runtime 
 ```
 
 Revierte lo que toca (ediciones, activación temporal si la hizo ella, y reconstruye el theme). No destruye estado. Sella la
-foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss` y `_foundation-marker.scss`, y usa
-`templates/_footer.php` como override temporal (se detiene si ya existe uno durable). La WU que añada el primer parcial SCSS o
-el primer override de ese fichero debe **adaptar esas aserciones de forma consciente**, no esquivarlas.
+foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss`, `_foundation-marker.scss`, la foundation
+TIC (`_tokens.scss`, `_mixins.scss`, `_fonts.scss`), el componente `_help.scss` y `_cataloging-form.scss`, y usa `templates/_footer.php` como override temporal (se detiene si ya existe uno durable). Un cambio
+que añada otro parcial SCSS o un override durable de ese fichero debe **adaptar esas aserciones de forma consciente**, no
+esquivarlas.
 
 El E2E completo (`scripts/test-fresh-e2e.sh`) no se ejecuta por defecto para cada cambio local: cada WU decide según su alcance
 y riesgo. Compose y el arranque son casos claros que lo justifican, pero también puede justificarlo un flujo crítico transversal.
@@ -357,7 +387,7 @@ ESCALATION:
 
 `arUnicaucaB5Plugin` está habilitado por el servicio `reconcile` (`docker compose up -d --wait` lo ejecuta antes de `atom`/`atom_worker`), a partir del
 desired state versionado `config/atom/required-plugins.conf`. La presencia del plugin en el filesystem no lo habilita: la activación es estado de la BD
-y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-plugins-desired-state). `theme_build` no toca la BD.
+y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-atom-desired-state). `theme_build` no toca la BD.
 
 ```bash
 docker compose run --rm reconcile          # aplicar/verificar a mano

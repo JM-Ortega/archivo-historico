@@ -1,4 +1,6 @@
 import "../../arDominionB5Plugin/js/main";
+import "./help";
+import "./cataloging-form";
 
 /*
 
