@@ -61,32 +61,7 @@
 </style>
 
 <?php slot('sidebar'); ?>
-  <section class="home-menu card rounded-4 shadow-sm mb-3">
-    <h2 class="home-menu-title fw-bold p-3 mb-0"><?php echo __('Opciones de búsqueda'); ?></h2>
-    <div class="list-group list-group-flush">
-      <a
-        class="list-group-item list-group-item-action active"
-        aria-current="page"
-        href="<?php echo url_for('@homepage'); ?>#search-box-input">
-        <i class="fas fa-search me-2" aria-hidden="true"></i>Búsqueda básica
-      </a>
-      <a
-        class="list-group-item list-group-item-action"
-        href="<?php echo url_for([
-            'module' => 'informationobject',
-            'action' => 'browse',
-            'showAdvanced' => true,
-            'topLod' => false,
-        ]); ?>">
-        <i class="fas fa-sliders-h me-2" aria-hidden="true"></i>Búsqueda avanzada
-      </a>
-      <a
-        class="list-group-item list-group-item-action"
-        href="<?php echo url_for(['module' => 'user', 'action' => 'list']); ?>">
-        <i class="fas fa-users me-2" aria-hidden="true"></i>Usuarios
-      </a>
-    </div>
-  </section>
+  <?php echo get_partial('informationobject/searchOptions', ['advancedSearch' => false]); ?>
 <?php end_slot(); ?>
 
 <section class="p-4">
