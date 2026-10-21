@@ -2,6 +2,25 @@ import "../../arDominionB5Plugin/js/main";
 import "./help";
 import "./cataloging-form";
 
+const initializeLoginControls = () => {
+  const forgot = document.querySelector("[data-ah-login-forgot]");
+  const recovery = document.getElementById("ah-login-recovery");
+
+  if (forgot && recovery) {
+    forgot.addEventListener("click", () => {
+      const isExpanded = "true" === forgot.getAttribute("aria-expanded");
+      recovery.hidden = isExpanded;
+      forgot.setAttribute("aria-expanded", isExpanded ? "false" : "true");
+    });
+  }
+};
+
+if ("loading" === document.readyState) {
+  document.addEventListener("DOMContentLoaded", initializeLoginControls);
+} else {
+  initializeLoginControls();
+}
+
 /*
 
 Extra/custom JS:
