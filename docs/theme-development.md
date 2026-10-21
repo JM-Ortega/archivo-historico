@@ -65,6 +65,29 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 - `atom`, `atom_worker` y `nginx` dependen de `theme_build` (`service_completed_successfully`): en un checkout limpio el
   runtime no consume el theme antes de que exista `_layout_start.php`. `bootstrap` (BD) **no** depende del theme build.
 
+### Navegación independiente de búsqueda
+
+La navegación lateral de búsqueda vive en
+`plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_searchOptions.php` y se incluye desde la vista de
+resultados (`browseSuccess.php`) y desde la página de inicio. Expone las rutas de búsqueda básica y avanzada para todos
+los visitantes bajo el título `Navegación`. La opción `Usuarios` solo se incluye cuando la sesión tiene la credencial
+`administrator`, que es la misma protección definida por AtoM para la acción `user/list`. La vista de usuarios reutiliza
+el mismo panel y marca `Usuarios` como la sección activa.
+
+La vista de administración de usuarios mantiene el slot lateral vacío de forma intencional. Esto evita que el panel de
+opciones quede acoplado a permisos del módulo `user`; el comentario en `listSuccess.php` documenta esa decisión. No se
+modificó el formulario ni el acordeón de búsqueda avanzada: el partial solo organiza su navegación externa. El panel
+usa una tarjeta blanca compacta, con bordes redondeados, sombra suave, separadores y estado activo azul oscuro para
+coincidir con el prototipo.
+
+En resultados de búsqueda, el panel de facetas nativo (`collapse-aggregations`, mostrado como “Restringir resultados
+por”, “Parte de”, “Nombre”, etc.) también se oculta. No se modifica el template upstream ni el formulario principal de
+búsqueda avanzada.
+
+La vista `browseSuccess.php` del plugin conserva el flujo de resultados y reemplaza únicamente el contenido del sidebar:
+el panel de facetas nativo se sustituye por `informationobject/_searchOptions.php` para todos los roles. No se oculta con
+CSS ni depende del estado de autenticación; el formulario principal y los resultados mantienen sus acciones existentes.
+
 No hay Node/npm ni PHP en el host: Webpack y Node ya están en la imagen AtoM.
 
 ## Arrancar
