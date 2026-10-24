@@ -17,6 +17,6 @@ cd "$ROOT"
 docker compose exec -T atom php symfony cc >/dev/null
 
 docker compose exec -T \
-  -e CATALOGING_TEST_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}" \
+  -e CATALOGING_TEST_EMAIL="${ATOM_ADMIN_EMAIL:-admin@unicauca.edu.co}" \
   -e CATALOGING_TEST_PASSWORD="${ATOM_ADMIN_PASSWORD:-admin_dev_12345}" \
   atom php symfony tools:run plugins/arUnicaucaB5Plugin/tests/cataloging-form.php

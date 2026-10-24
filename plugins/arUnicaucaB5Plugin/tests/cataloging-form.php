@@ -17,7 +17,7 @@
  */
 (static function (): void {
     $base = rtrim(getenv('CATALOGING_TEST_URL') ?: 'http://nginx', '/');
-    $email = getenv('CATALOGING_TEST_EMAIL') ?: 'admin@example.com';
+    $email = getenv('CATALOGING_TEST_EMAIL') ?: 'admin@unicauca.edu.co';
     $password = getenv('CATALOGING_TEST_PASSWORD') ?: 'admin_dev_12345';
     $run = bin2hex(random_bytes(4));
     $fails = 0;
