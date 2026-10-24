@@ -1,0 +1,94 @@
+// Componentes de la búsqueda básica, reutilizables en cualquier vista:
+//
+// - .ah-search-box: campo y botón (modules/search/templates/_box.php).
+// - .ah-search-options: menú «Opciones de búsqueda» (modules/search/templates/_searchOptions.php), usado en la portada y en
+//   el listado de resultados.
+//
+// Solo usan tokens; el borde del campo usa $ah-line-control para llegar al 3:1 de WCAG 1.4.11.
+
+// --- Caja de búsqueda -----------------------------------------------------------------------------------------------------
+
+.ah-search-box {
+  &__icon {
+    color: $ah-blue-action;
+    font-size: 1.1rem;
+  }
+
+  &__input {
+    padding-left: 3rem;
+    border-color: $ah-line-control;
+    border-radius: $ah-radius-field;
+    background-color: $ah-panel;
+    color: $ah-text;
+    font-size: $ah-font-size-label;
+
+    &::placeholder {
+      color: $ah-text-muted;
+      opacity: 1;
+    }
+
+    &:focus {
+      @include ah-focus-ring;
+
+      border-color: $ah-focus-color;
+      background-color: $ah-panel;
+      color: $ah-text;
+    }
+  }
+
+  &__button {
+    @include ah-type("button");
+
+    --bs-btn-padding-x: 2rem;
+    --bs-btn-color: #{$ah-panel};
+    --bs-btn-bg: #{$ah-blue};
+    --bs-btn-border-color: #{$ah-blue};
+    --bs-btn-hover-color: #{$ah-panel};
+    --bs-btn-hover-bg: #{$ah-blue-deep};
+    --bs-btn-hover-border-color: #{$ah-blue-deep};
+    --bs-btn-active-color: #{$ah-panel};
+    --bs-btn-active-bg: #{$ah-blue-deep};
+    --bs-btn-active-border-color: #{$ah-blue-deep};
+    --bs-btn-focus-box-shadow: #{$ah-focus-ring};
+
+    border-radius: $ah-radius-field;
+  }
+}
+
+// --- Menú «Opciones de búsqueda» ------------------------------------------------------------------------------------------
+
+.ah-search-options {
+  @include ah-paper;
+
+  margin-bottom: $ah-space-4;
+  overflow: hidden;
+  border-radius: $ah-radius-feature;
+
+  &__title {
+    @include ah-type("subsection-title");
+
+    margin: 0;
+    padding: $ah-space-4;
+    color: $ah-blue;
+  }
+
+  .list-group {
+    --bs-list-group-color: #{$ah-text};
+    --bs-list-group-border-color: #{$ah-line};
+    --bs-list-group-active-bg: #{$ah-blue};
+    --bs-list-group-active-border-color: #{$ah-blue};
+    --bs-list-group-active-color: #{$ah-panel};
+    --bs-list-group-action-hover-bg: #{$ah-surface-soft};
+    --bs-list-group-action-hover-color: #{$ah-blue};
+    --bs-list-group-action-active-bg: #{$ah-surface-soft};
+    --bs-list-group-action-active-color: #{$ah-blue};
+  }
+
+  .list-group-item {
+    @include ah-type("small");
+
+    &.active {
+      font-weight: 700;
+    }
+  }
+}
