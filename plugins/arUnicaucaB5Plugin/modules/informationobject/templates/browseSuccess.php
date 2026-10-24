@@ -32,30 +32,7 @@
 
     <?php $advancedSearch = filter_var($sf_request->getParameter('showAdvanced'), FILTER_VALIDATE_BOOLEAN); ?>
 
-    <section class="home-menu card rounded-4 shadow-sm mb-3">
-      <h2 class="home-menu-title fw-bold p-3 mb-0"><?php echo __('Opciones de búsqueda'); ?></h2>
-      <div class="list-group list-group-flush">
-        <a
-          class="list-group-item list-group-item-action<?php echo $advancedSearch ? '' : ' active'; ?>"
-          href="<?php echo url_for('@homepage'); ?>#search-box-input"
-          <?php echo $advancedSearch ? '' : 'aria-current="page"'; ?>>
-          <i class="fas fa-search me-2" aria-hidden="true"></i>
-          Búsqueda básica
-        </a>
-        <a
-          class="list-group-item list-group-item-action<?php echo $advancedSearch ? ' active' : ''; ?>"
-          href="<?php echo url_for([
-              'module' => 'informationobject',
-              'action' => 'browse',
-              'showAdvanced' => true,
-              'topLod' => false,
-          ]); ?>"
-          <?php echo $advancedSearch ? 'aria-current="page"' : ''; ?>>
-          <i class="fas fa-sliders-h me-2" aria-hidden="true"></i>
-          Búsqueda avanzada
-        </a>
-      </div>
-    </section>
+    <?php echo get_partial('search/searchOptions', ['active' => $advancedSearch ? 'advanced' : 'basic']); ?>
 
   <?php end_slot(); ?>
 
