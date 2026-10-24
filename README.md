@@ -42,7 +42,7 @@ Abre <http://localhost:8080>. Un solo comando: Compose construye las imágenes q
 minutos), arranca la infraestructura, ejecuta `bootstrap`, `reconcile` (habilita el plugin del theme) y `theme_build` (compila el theme) y levanta `atom`, `atom_worker` y
 `nginx`. `up` termina cuando todos los servicios están `healthy` y `bootstrap`, `reconcile` y `theme_build` han terminado con éxito.
 
-- **Administrador DEV:** `admin@example.com` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
+- **Administrador DEV:** `admin@unicauca.edu.co` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
   de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**).
   Para overrides habituales (puerto, admin, timezone, título), copia [`.env.example`](.env.example) a `.env` y
   descomenta/ajusta únicamente las variables que necesites.
