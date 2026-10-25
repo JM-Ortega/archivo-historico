@@ -30,6 +30,7 @@ Cascada:
 // Búsqueda básica y avanzada.
 @import "search"; // Caja de búsqueda (.ah-search-box) y menú «Opciones de búsqueda» (.ah-search-options).
 @import "home"; // Portada: banner, panel de consulta y ayuda (.ah-home-*).
+@import "search-results"; // Listado de resultados de descripciones (.ah-results).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.

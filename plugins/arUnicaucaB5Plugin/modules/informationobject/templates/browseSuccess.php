@@ -81,7 +81,7 @@
     </div>
 
     <?php if ($view === $tableView) { ?>
-      <div id="content">
+      <div id="content" class="ah-results">
         <?php if (!isset($sf_request->onlyMedia) && isset($aggs['digitalobjects']) && 0 < $aggs['digitalobjects']['doc_count']) { ?>
           <div class="d-grid d-sm-flex gap-2 align-items-center p-3 border-bottom">
             <?php echo __('%1% results with digital objects', ['%1%' => $aggs['digitalobjects']['doc_count']]); ?>
