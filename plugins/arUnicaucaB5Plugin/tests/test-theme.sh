@@ -135,6 +135,8 @@ expect "la clase Configuration usa el nombre nuevo y extiende arDominionB5Plugin
 expect "la Configuration hereda la precedencia del skeleton: parent::initialize() y sin array_unshift propio" "1:0" \
   "$(grep -c 'parent::initialize()' "$PDIR/config/${PLUGIN}Configuration.class.php"):$(grep -c 'array_unshift' "$PDIR/config/${PLUGIN}Configuration.class.php" || true)"
 expect "el summary contiene 'theme' (AtoM lo lista como tema)" "1" "$(grep -cEi "summary = '.*theme" "$PDIR/config/${PLUGIN}Configuration.class.php")"
+expect "scss/ contiene EXACTAMENTE main.scss, la identidad (_tokens, _variables, _mixins, _fonts, _base), el componente _help, las vistas _search, _home, _about y _cataloging-form.scss (sin parciales copiados de Dominion)" \
+  "./_about.scss ./_base.scss ./_cataloging-form.scss ./_fonts.scss ./_help.scss ./_home.scss ./_mixins.scss ./_search.scss ./_tokens.scss ./_variables.scss ./main.scss" \
 expect "scss/ contiene EXACTAMENTE main.scss, la identidad (_tokens, _variables, _mixins, _fonts, _base), el componente _help, las vistas _search, _search-results, _home y _cataloging-form.scss (sin parciales copiados de Dominion)" \
   "./_base.scss ./_cataloging-form.scss ./_fonts.scss ./_help.scss ./_home.scss ./_mixins.scss ./_search-results.scss ./_search.scss ./_tokens.scss ./_variables.scss ./main.scss" \
   "$(cd "$PDIR/scss" && find . -type f | sort | tr '\n' ' ' | sed 's/ $//')"
