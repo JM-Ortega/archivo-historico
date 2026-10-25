@@ -122,7 +122,7 @@
     </div>
 
     <?php if ($view === $tableView) { ?>
-      <div id="content">
+      <div id="content" class="ah-results">
         <?php if (
             !isset($sf_request->onlyMedia)
             && isset($aggs['digitalobjects'])
