@@ -63,6 +63,10 @@
 
     <label for="search-box-input" class="ah-home-card__label">¿Qué desea encontrar?</label>
 
+    <?php /* OCULTO-001
+      SIRVE PARA: buscar texto en todas las descripciones desde cualquier página.
+      MOTIVO: la búsqueda básica se reubicó en la portada.
+    */ ?>
     <?php /* Caja de búsqueda básica de AtoM; su markup está en modules/search/templates/_box.php del tema. */ ?>
     <?php echo get_component('search', 'box'); ?>
 
