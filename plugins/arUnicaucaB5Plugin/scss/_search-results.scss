@@ -65,6 +65,19 @@
       background-color: $ah-panel;
     }
 
+    // Extracto del contenido (frame «Resultados»): AtoM lo trae con d-none; la ficha lo muestra con el trazo rojo de identidad.
+    .text-block {
+      display: block !important; // Anula el d-none nativo.
+      margin-top: $ah-space-2;
+      padding-left: $ah-space-4;
+      border-left: 3px solid $ah-accent;
+      color: $ah-text;
+
+      p {
+        margin: 0;
+      }
+    }
+
     // «Parte de …»: enlace discreto.
     .text-muted a {
       color: $ah-blue-action;
