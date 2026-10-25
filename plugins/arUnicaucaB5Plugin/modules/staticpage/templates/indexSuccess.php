@@ -27,6 +27,11 @@
 
 </div>
 
+<?php /* OCULTO-003
+   SERVÍA PARA: que el administrador pudiera editar y borrar la página estática desde los botones "Editar" y "Borrar" al pie del contenido.
+   MOTIVO: no se le ve funcionalidad en el prototipo; el contenido de las páginas estáticas (p. ej. «Acerca de») se maneja desde código.
+   Código original:
+
 <?php if (QubitAcl::check($resource, 'update')) { ?>
   <?php slot('after-content'); ?>
     <ul class="actions mb-3 nav gap-2">
@@ -37,3 +42,5 @@
     </ul>
   <?php end_slot(); ?>
 <?php } ?>
+
+*/ ?>
