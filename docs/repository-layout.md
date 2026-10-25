@@ -41,8 +41,8 @@ de una feature.
   `theme_dist`, Nginx) está en [theme-development.md](theme-development.md). Su tooling y sus tests viven dentro del plugin
   (`tools/`, `tests/`), no en `scripts/`.
 - **¿Dónde va migration?** En `migration/`. Contrato en [migration/README.md](../migration/README.md).
-- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara un
-  par de propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado y `check_for_updates = 0`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
+- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara unas pocas
+  propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado, `check_for_updates = 0` y `require_strong_passwords = 1`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
   tests viven ahí (`reconcile*.{sh,php}`, `runtime-config.sh`, `tests/`), no en `scripts/`.
 - **¿Dónde irá deployment?** En `deploy/`. Fuera de esta foundation: producción, TLS, CI/CD, Ansible/Terraform, etc.
 - **¿Dónde van datos reales locales?** En `migration/local/`, ignorado por Git (ver abajo).
