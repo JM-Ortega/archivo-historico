@@ -1,0 +1,72 @@
+// Resultados de búsqueda de descripciones (KAN-102): cada resultado se lee como una ficha.
+//
+// Se aplica solo dentro de `.ah-results`, que el listado de informationobject/browse pone en su contenedor. No cambia el
+// marcado de AtoM (search/_searchResult): solo estilos sobre sus clases nativas, así que el resto de listados no se afecta.
+// Solo usa tokens de _tokens.scss.
+
+.ah-results {
+  display: flex;
+  flex-direction: column;
+  gap: $ah-space-3;
+  margin-bottom: $ah-space-5;
+
+  .search-result {
+    @include ah-paper;
+
+    margin: 0;
+    padding: $ah-space-4 !important; // Sustituye el p-3 nativo para dar aire a la ficha.
+    border-bottom: $border-width solid $ah-line !important; // El border-bottom nativo es solo una línea; aquí es el borde de la ficha.
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover,
+    &:focus-within {
+      border-color: $ah-line-strong;
+      box-shadow: $ah-shadow-overlay;
+    }
+
+    // Título: serif de identidad, azul profundo; se subraya solo al interactuar.
+    .h5 {
+      @include ah-type("subsection-title");
+
+      color: $ah-blue-deep;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        color: $ah-blue-action;
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        @include ah-focus-ring;
+
+        border-radius: $ah-radius-control;
+      }
+    }
+
+    // Línea de referencia: código, nivel y fechas.
+    .text-primary {
+      @include ah-type("small-strong");
+
+      color: $ah-blue !important; // Sustituye el text-primary nativo por el azul de la identidad.
+    }
+
+    .text-muted {
+      @include ah-type("small");
+
+      color: $ah-text-muted !important;
+    }
+
+    // Miniatura del objeto digital, si lo hay.
+    .img-thumbnail {
+      border-color: $ah-line;
+      border-radius: $ah-radius-control;
+      background-color: $ah-panel;
+    }
+
+    // «Parte de …»: enlace discreto.
+    .text-muted a {
+      color: $ah-blue-action;
+    }
+  }
+}
