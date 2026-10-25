@@ -27,9 +27,10 @@ Cascada:
 // Componentes reutilizables (por clase; solo afectan a donde una vista los usa).
 @import "help"; // Ayuda contextual .uc-help (lib/helper/UcHelpHelper.php, js/help.js).
 
-// Búsqueda básica y avanzada.
+// Búsqueda básica y acerca.
 @import "search"; // Caja de búsqueda (.ah-search-box) y menú «Opciones de búsqueda» (.ah-search-options).
 @import "home"; // Portada: banner, panel de consulta y ayuda (.ah-home-*).
+@import "about"; // Vista estática «Acerca de la plataforma» (.ah-about-*).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
