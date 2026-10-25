@@ -24,6 +24,8 @@
 require_once sfConfig::get('sf_plugins_dir')
     .'/arDominionB5Plugin/config/arDominionB5PluginConfiguration.class.php';
 
+require_once __DIR__.'/../lib/arUnicaucaSearchInput.class.php';
+
 class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
 {
     public static $summary = 'Theme of the Archivo Histórico del Cauca. Bootstrap 5 theme, extension of arDominionB5Plugin without modifications.';
@@ -32,6 +34,12 @@ class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
     public function initialize()
     {
         parent::initialize();
+
+        // KAN-98/KAN-99: normaliza los parámetros de búsqueda antes de que Symfony construya el request, de modo que
+        // la caja básica, el panel avanzado y cualquier enlace directo pasan por la misma regla sin tocar sus templates.
+        if ('cli' !== PHP_SAPI && !empty($_GET)) {
+            $_GET = arUnicaucaSearchInput::sanitize($_GET);
+        }
 
         // Add this plugin templates before arDominionB5Plugin
         sfConfig::set('sf_decorator_dirs', array_merge(
