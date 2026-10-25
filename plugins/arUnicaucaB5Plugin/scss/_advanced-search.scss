@@ -1,0 +1,210 @@
+.adv-search {
+  color: $ah-text;
+  font-family: $ah-font-sans;
+
+  > .accordion-item {
+    overflow: hidden;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  > .accordion-item > .accordion-header > .accordion-button {
+    min-height: 50px;
+    padding: $ah-space-4 $ah-space-5;
+    color: $ah-blue-deep;
+    border-bottom: 1px solid $ah-line;
+    background-color: $ah-panel;
+    font-family: $ah-font-serif;
+    font-size: $ah-font-size-label;
+    font-weight: 700;
+
+    &:not(.collapsed) {
+      color: $ah-blue-deep;
+      background-color: $ah-panel;
+      box-shadow: none;
+    }
+
+    &:focus {
+      box-shadow: $ah-focus-ring;
+    }
+  }
+
+  .accordion-body {
+    padding: $ah-space-5;
+    background-color: $ah-panel;
+  }
+
+  h5 {
+    margin: $ah-space-5 0 $ah-space-3;
+    padding-bottom: $ah-space-3;
+    color: $ah-blue-deep;
+    border-bottom: 1px solid $ah-line;
+    font-family: $ah-font-serif;
+    font-size: $ah-font-size-label;
+    font-weight: 700;
+  }
+
+  .criteria {
+    margin-bottom: $ah-space-5 !important;
+    padding-bottom: $ah-space-3;
+    border-bottom: 0;
+  }
+
+  .form-label,
+  .form-text {
+    color: $ah-blue-deep;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+  }
+
+  .form-control,
+  .form-select {
+    min-height: 38px;
+    padding: $ah-space-2 $ah-space-3;
+    color: $ah-text;
+    border-color: $ah-line-control;
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    font-size: $ah-font-size-xsmall;
+
+    &:focus {
+      border-color: $ah-blue-action;
+      box-shadow: $ah-focus-ring;
+    }
+  }
+
+  .add-new-criteria .btn,
+  .actions .btn {
+    min-height: 34px;
+    padding: $ah-space-2 $ah-space-4;
+    border-radius: 999px;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+  }
+
+  .add-new-criteria .btn {
+    color: $ah-blue-action;
+    border-color: $ah-blue-secondary;
+    background-color: $ah-panel;
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      border-color: $ah-blue-action;
+      background-color: $ah-blue-action;
+    }
+  }
+
+  .actions {
+    margin-top: $ah-space-4;
+    padding: $ah-space-4 0 0;
+    background-color: $ah-panel;
+    border-top: 1px solid $ah-line;
+
+    .atom-btn-outline-light {
+      color: $ah-blue-action;
+      border-color: $ah-blue-action;
+      background-color: $ah-panel;
+
+      &:hover,
+      &:focus {
+        color: #fff;
+        border-color: $ah-blue-action;
+        background-color: $ah-blue-action;
+      }
+    }
+
+    input[type="submit"] {
+      color: #fff;
+      border-color: $ah-blue;
+      background-color: $ah-blue;
+
+      &:hover,
+      &:focus {
+        border-color: $ah-blue-deep;
+        background-color: $ah-blue-deep;
+      }
+    }
+  }
+
+  .date-type {
+    margin-top: 0;
+  }
+
+  .criteria.row.mb-2 {
+    margin-bottom: $ah-space-5 !important;
+    padding-bottom: $ah-space-3;
+  }
+
+  .date-range-section {
+    margin-right: 0;
+    margin-left: 0;
+    padding-right: $ah-space-5;
+    padding-left: $ah-space-5;
+  }
+
+  #other-search-options {
+    margin-bottom: $ah-space-5 !important;
+
+    .accordion-item {
+      border: 1px solid $ah-line;
+      border-radius: $ah-radius-control;
+      background-color: $ah-surface-soft;
+    }
+
+    .accordion-header .accordion-button {
+      min-height: 48px;
+      padding: $ah-space-3 $ah-space-4;
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      font-family: $ah-font-serif;
+      font-size: $ah-font-size-label;
+      font-weight: 700;
+
+      &:not(.collapsed),
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+        background-color: $ah-surface-soft;
+      }
+
+      &:not(.collapsed) {
+        box-shadow: none;
+      }
+
+      &:focus {
+        box-shadow: $ah-focus-ring;
+      }
+    }
+
+    .accordion-body {
+      padding: $ah-space-4;
+      background-color: $ah-panel;
+    }
+  }
+
+  .form-check-label {
+    color: $ah-text;
+    font-size: $ah-font-size-xsmall;
+  }
+
+  .form-check-input {
+    border-color: $ah-line-control;
+
+    &:checked {
+      border-color: $ah-blue-action;
+      background-color: $ah-blue-action;
+    }
+  }
+
+  .delete-criterion {
+    color: $ah-text-muted !important;
+
+    &:hover,
+    &:focus {
+      color: $ah-error !important;
+    }
+  }
+}
