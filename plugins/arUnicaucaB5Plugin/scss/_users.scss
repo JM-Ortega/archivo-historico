@@ -1,0 +1,264 @@
+.users-view {
+  color: $ah-text;
+  font-family: $ah-font-sans;
+
+  .users-eyebrow {
+    margin-bottom: $ah-space-1;
+    color: $ah-blue-action;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .users-title {
+    margin: 0;
+    color: $ah-blue-deep;
+    font-family: $ah-font-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  .users-lead {
+    color: $ah-text;
+    font-size: $ah-font-size-xsmall;
+  }
+
+  .users-create-user {
+    color: #fff;
+    background-color: $ah-blue-action;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      background-color: $ah-blue-deep;
+    }
+
+    &:focus-visible {
+      box-shadow: $ah-focus-ring;
+    }
+  }
+
+  .users-stat {
+    min-height: 68px;
+    color: $ah-blue-deep;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  .users-stat-icon {
+    display: inline-grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    color: $ah-blue-action;
+    border-radius: $ah-radius-control;
+    background-color: $ah-surface-soft;
+    font-size: $ah-font-size-small;
+  }
+
+  .users-stat-value {
+    color: $ah-blue-deep;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .users-stat-label {
+    margin-top: $ah-space-1;
+    color: $ah-text-muted;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .users-table-card {
+    overflow: hidden;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  .users-table-toolbar {
+    background-color: $ah-surface-band;
+    border-bottom: 1px solid $ah-line;
+
+    .search {
+      flex: 1 1 260px;
+    }
+
+    .nav {
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 30px;
+      padding: .35rem .7rem;
+      color: $ah-blue-deep;
+      border: 1px solid $ah-line-strong;
+      border-radius: $ah-radius-control;
+      background-color: $ah-panel;
+      font-size: $ah-font-size-xsmall;
+
+      &:hover,
+      &:focus,
+      &.active {
+        color: #fff;
+        border-color: $ah-blue;
+        background-color: $ah-blue;
+      }
+
+      &:focus-visible {
+        box-shadow: $ah-focus-ring;
+      }
+    }
+  }
+
+  .users-table {
+    margin: 0;
+    color: $ah-text;
+    font-size: $ah-font-size-xsmall;
+
+    th {
+      padding: .6rem .75rem;
+      color: $ah-blue-deep;
+      border-bottom: 1px solid $ah-line;
+      background-color: $ah-panel;
+      font-size: .625rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: .7rem .75rem;
+      border-bottom: 1px solid $ah-line;
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover {
+      background-color: $ah-surface-soft;
+    }
+  }
+
+  .user-identity {
+    display: flex;
+    align-items: center;
+    gap: $ah-space-2;
+    min-width: 190px;
+  }
+
+  .user-avatar {
+    display: inline-grid;
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    color: #fff;
+    border-radius: 50%;
+    background-color: $ah-blue;
+    font-size: .625rem;
+    font-weight: 700;
+  }
+
+  .user-name {
+    font-weight: 700;
+
+    a {
+      color: $ah-blue-deep;
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-action;
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .user-email {
+    color: $ah-text-muted;
+    font-size: .625rem;
+  }
+
+  .user-role,
+  .user-status {
+    display: inline-block;
+    padding: .2rem .45rem;
+    border-radius: 999px;
+    background-color: $ah-surface-soft;
+    color: $ah-blue-deep;
+    font-size: .625rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .user-status::before {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    margin-right: .3rem;
+    border-radius: 50%;
+    background-color: $ah-blue-action;
+    content: "";
+  }
+
+  .user-status.inactive {
+    color: $ah-text-muted;
+    background-color: $ah-disabled-bg;
+  }
+
+  .user-status.inactive::before {
+    background-color: $ah-disabled-text;
+  }
+
+  .users-action {
+    color: $ah-blue-action;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      text-decoration: underline;
+    }
+  }
+
+  .pager {
+    margin-top: $ah-space-4;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .users-view {
+    .users-title {
+      font-size: 1.5rem;
+    }
+
+    .users-create-user {
+      width: 100%;
+    }
+
+    .users-table-toolbar > .d-flex {
+      align-items: stretch !important;
+    }
+
+    .users-table-toolbar .nav {
+      width: 100%;
+    }
+  }
+}
