@@ -40,6 +40,8 @@
                 'required' => 'required',
                 'placeholder' => 'nombre@correo.com',
                 'autocomplete' => 'email',
+                'pattern' => '[^@\s]+@unicauca\.edu\.co',
+                'title' => 'Ingrese un correo institucional terminado en @unicauca.edu.co',
             ]); ?>
             <?php echo $form->email->renderError(); ?>
           </div>
