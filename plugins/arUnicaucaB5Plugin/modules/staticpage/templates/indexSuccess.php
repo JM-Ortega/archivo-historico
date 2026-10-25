@@ -8,14 +8,21 @@
 <?php } ?>
 <?php decorate_with($layout); ?>
 
+<?php if ('about' !== (string) $resource->slug) { ?>
 <?php slot('title'); ?>
   <h1><?php echo render_title($resource->getTitle(['cultureFallback' => true])); ?></h1>
 <?php end_slot(); ?>
+<?php } ?>
 
 <div class="page p-3">
 
   <div>
+    <?php if ('about' === (string) $resource->slug) { ?>
+      <?php /* «Acerca de»: contenido fijo desde código (staticpage/_aboutPlatform.php). */ ?>
+      <?php echo get_partial('staticpage/aboutPlatform'); ?>
+    <?php } else { ?>
     <?php echo render_value_html($sf_data->getRaw('content')); ?>
+    <?php } ?>
   </div>
 
 </div>
