@@ -1,0 +1,626 @@
+// Crear, editar, detalle y permisos de usuario (KAN-77 / KAN-78).
+//
+// Solo presentación de las plantillas de modules/user (editSuccess, indexSuccess, _aclMenu, _aclMatrix, index*AclSuccess);
+// todo bajo .ah-user-admin para no afectar a otras vistas. La lista de usuarios tiene sus propios estilos (_users.scss).
+
+body:has(.ah-user-admin) {
+  background-color: $ah-canvas;
+}
+
+.ah-user-admin {
+  max-width: 62rem;
+  margin: 0 auto;
+  padding-bottom: $ah-space-6;
+  color: $ah-text;
+  font-family: $ah-font-sans;
+
+  a {
+    color: $ah-blue-action;
+  }
+
+  // ---- Cabecera ----
+  .ah-user-back {
+    display: inline-flex;
+    align-items: center;
+    gap: $ah-space-2;
+    min-height: 2.75rem;
+    margin-bottom: $ah-space-3;
+    @include ah-type("small-strong");
+    text-decoration: none;
+
+    &:hover {
+      color: $ah-blue-deep;
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  .ah-user-page-head {
+    margin-bottom: $ah-space-5;
+
+    h1 {
+      margin: 0;
+      color: $ah-blue-deep;
+      @include ah-type("page-title");
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+
+      &::after {
+        display: block;
+        width: 5rem;
+        height: 2px;
+        margin-top: $ah-space-3;
+        background: $ah-accent;
+        content: "";
+      }
+    }
+  }
+
+  .ah-user-page-head--split {
+    display: flex;
+    flex-direction: column;
+    gap: $ah-space-4;
+
+    @media (min-width: 576px) {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+  }
+
+  .ah-user-eyebrow {
+    margin: 0 0 $ah-space-1;
+    color: $ah-blue-action;
+    @include ah-type("kicker");
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ah-user-lead {
+    max-width: 42rem;
+    margin: $ah-space-3 0 0;
+    font-size: $ah-font-size-small;
+    line-height: 1.6;
+  }
+
+  .ah-user-head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $ah-space-2;
+  }
+
+  // ---- Botones ----
+  .btn {
+    min-height: 2.75rem;
+    padding: $ah-space-2 $ah-space-5;
+    border-radius: 999px;
+    @include ah-type("button");
+    text-decoration: none;
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  .btn.ah-user-btn-primary,
+  .btn.atom-btn-outline-success {
+    border-color: $ah-blue-action;
+    color: #fff;
+    background-color: $ah-blue-action;
+
+    &:hover,
+    &:focus {
+      border-color: $ah-blue-deep;
+      color: #fff;
+      background-color: $ah-blue-deep;
+    }
+  }
+
+  .btn.atom-btn-outline-light,
+  .btn.atom-btn-white {
+    border-color: transparent;
+    color: $ah-blue-action;
+    background-color: transparent;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+    }
+  }
+
+  .actions {
+    justify-content: flex-end;
+    margin: $ah-space-5 0 0;
+    padding: $ah-space-5 0 0;
+    border-top: 1px solid $ah-line;
+    border-radius: 0;
+    background-color: transparent; // Dominion pinta .actions con el gris secundario.
+    list-style: none;
+  }
+
+  // ---- Paneles ----
+  .ah-user-panel {
+    margin-bottom: $ah-space-4;
+    border: 1px solid $ah-line; // Sin overflow:hidden: recortaría la lista del autocompletado de grupos.
+    border-radius: $ah-radius-panel;
+    background-color: $ah-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  .ah-user-panel-head {
+    display: flex;
+    align-items: center;
+    gap: $ah-space-3;
+    padding: $ah-space-4;
+    border-bottom: 1px solid $ah-line;
+    border-radius: $ah-radius-panel $ah-radius-panel 0 0;
+    background-color: $ah-surface-band;
+
+    h2 {
+      margin: 0;
+      color: $ah-blue-deep;
+      @include ah-type("section-title");
+    }
+
+    p {
+      margin: $ah-space-1 0 0;
+      color: $ah-text-muted;
+      font-size: $ah-font-size-xsmall;
+    }
+
+    @media (min-width: 576px) {
+      padding: $ah-space-4 $ah-space-5;
+    }
+  }
+
+  .ah-user-panel-icon {
+    display: inline-grid;
+    flex: none;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
+    border-radius: $ah-radius-control;
+    color: $ah-blue-action;
+    background-color: $ah-panel;
+  }
+
+  .ah-user-panel-body {
+    padding: $ah-space-4;
+
+    @media (min-width: 576px) {
+      padding: $ah-space-5;
+    }
+  }
+
+  .ah-user-grid {
+    display: grid;
+    column-gap: $ah-space-4;
+
+    @media (min-width: 768px) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .ah-user-note {
+    margin: 0 0 $ah-space-4;
+    padding: $ah-space-3 $ah-space-4;
+    border-left: 2px solid $ah-blue-action;
+    border-radius: 0 $ah-radius-control $ah-radius-control 0;
+    background-color: $ah-surface-band;
+    font-size: $ah-font-size-small;
+    line-height: 1.55;
+  }
+
+  .ah-user-hint {
+    margin: 0 0 $ah-space-4;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-xsmall;
+  }
+
+  .ah-user-muted {
+    color: $ah-text-muted;
+    font-style: italic;
+  }
+
+  // ---- Formulario nativo ----
+  .form-control,
+  .form-select {
+    border-color: $ah-line-control;
+    border-radius: $ah-radius-control;
+    color: $ah-text;
+    background-color: #fff;
+
+    &:focus {
+      border-color: $ah-focus-color;
+      box-shadow: $ah-focus-ring;
+    }
+  }
+
+  .form-label,
+  .form-floating > label,
+  .form-check-label {
+    color: $ah-blue-deep;
+    font-weight: 700;
+  }
+
+  .form-check-input:checked {
+    border-color: $ah-blue-action;
+    background-color: $ah-blue-action;
+  }
+
+  .form-check-input:focus {
+    border-color: $ah-focus-color;
+    box-shadow: $ah-focus-ring;
+  }
+
+  // Errores: texto + indicador, nunca solo color.
+  .is-invalid,
+  .form-control.is-invalid {
+    border-color: $ah-error;
+  }
+
+  .invalid-feedback,
+  .text-danger,
+  .error {
+    color: $ah-error !important;
+    font-weight: 700;
+  }
+
+  .alert-danger {
+    border-color: rgba($ah-error, 0.3);
+    color: $ah-error;
+    background-color: rgba($ah-error, 0.05);
+
+    &::before {
+      @include ah-status-badge($ah-error);
+    }
+  }
+
+  // ---- Indicador de seguridad de contraseña (JS nativo de AtoM) ----
+  .ah-user-strength {
+    margin-bottom: $ah-space-4;
+
+    .ah-user-note {
+      margin-bottom: 0;
+    }
+
+    .progress {
+      height: 0.375rem;
+      border-radius: 999px;
+      background-color: $ah-line;
+    }
+
+    .progress-bar.bg-danger {
+      background-color: $ah-error !important;
+    }
+
+    .progress-bar.bg-warning {
+      background-color: $ah-warning !important;
+    }
+
+    .progress-bar.bg-success {
+      background-color: $ah-success !important;
+    }
+
+    ul {
+      margin: $ah-space-2 0 0;
+      padding-left: $ah-space-4;
+      font-size: $ah-font-size-xsmall;
+    }
+  }
+
+  // ---- Detalle ----
+  .ah-user-account-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: $ah-space-4;
+    padding: $ah-space-4;
+    border-radius: $ah-radius-panel $ah-radius-panel 0 0;
+    color: #fff;
+    background-color: $ah-blue;
+    background-image: linear-gradient(112deg, transparent 0 68%, rgba($ah-blue-action, 0.55) 68% 100%);
+  }
+
+  .ah-user-avatar {
+    display: inline-grid;
+    width: 3rem;
+    height: 3rem;
+    place-items: center;
+    border-radius: 50%;
+    color: $ah-blue;
+    background-color: $ah-panel;
+    font-size: 1.25rem;
+  }
+
+  .ah-user-account-id {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+
+  .ah-user-account-label {
+    margin: 0;
+    color: rgba(#fff, 0.75);
+    @include ah-type("kicker");
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .ah-user-account-name {
+    margin: $ah-space-1 0 0;
+    @include ah-type("section-title");
+    overflow-wrap: anywhere;
+  }
+
+  .ah-user-status {
+    padding: $ah-space-1 $ah-space-3;
+    border-radius: 999px;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+  }
+
+  .ah-user-status--active {
+    color: $ah-blue;
+    background-color: $ah-panel;
+  }
+
+  .ah-user-status--inactive {
+    border: 1px solid rgba(#fff, 0.4);
+    color: #fff;
+    background-color: rgba(#fff, 0.1);
+  }
+
+  .ah-user-inline-alert {
+    margin: $ah-space-4 $ah-space-4 0;
+  }
+
+  .ah-user-dl {
+    display: grid;
+    gap: $ah-space-5;
+    margin: 0;
+    padding: $ah-space-4;
+
+    > div {
+      min-width: 0;
+    }
+
+    dt {
+      color: $ah-text-muted;
+      font-size: $ah-font-size-xsmall;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: $ah-space-2 0 0;
+      color: $ah-blue-deep;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+    }
+
+    @media (min-width: 576px) {
+      grid-template-columns: 1fr 1fr;
+      padding: $ah-space-5;
+
+      .ah-user-span {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+
+  .ah-user-break {
+    overflow-wrap: anywhere;
+  }
+
+  .ah-user-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $ah-space-2;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      padding: $ah-space-1 $ah-space-3;
+      border: 1px solid $ah-line;
+      border-radius: 999px;
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      font-size: $ah-font-size-xsmall;
+      font-weight: 700;
+    }
+  }
+
+  // ---- Categorías de permisos (enlaces nativos entre vistas) ----
+  .ah-user-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: $ah-space-2;
+    margin: 0;
+    padding: 0 0 $ah-space-3;
+    overflow-x: auto;
+    list-style: none;
+  }
+
+  .ah-user-tab {
+    display: block;
+    flex: none;
+    padding: $ah-space-2 $ah-space-4;
+    border: 1px solid $ah-line;
+    border-radius: 999px;
+    color: $ah-blue-deep;
+    background-color: $ah-panel;
+    @include ah-type("small-strong");
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+    }
+
+    &.active {
+      border-color: $ah-blue;
+      color: #fff;
+      background-color: $ah-blue;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  // ---- Matriz de permisos ----
+  .ah-user-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $ah-space-2;
+    margin: 0;
+    padding: $ah-space-3 0;
+    border-top: 1px solid $ah-line;
+    list-style: none;
+  }
+
+  .ah-user-badge {
+    display: inline-flex;
+    padding: $ah-space-1 0.625rem;
+    border: 1px solid;
+    border-radius: 999px;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .ah-user-badge--grant {
+    border-color: rgba($ah-blue-action, 0.3);
+    color: $ah-blue;
+    background-color: rgba($ah-blue-action, 0.1);
+  }
+
+  .ah-user-badge--deny {
+    border-color: rgba($ah-error, 0.3);
+    color: $ah-error;
+    background-color: rgba($ah-error, 0.08);
+  }
+
+  .ah-user-badge--inherit {
+    border-color: $ah-line-strong;
+    color: $ah-blue-deep;
+    background-color: $ah-surface-soft;
+  }
+
+  .ah-user-badge--unset {
+    border-color: $ah-line;
+    color: $ah-text-muted;
+    background-color: $ah-panel;
+  }
+
+  .ah-user-badge-note {
+    margin-left: $ah-space-1;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-xsmall;
+  }
+
+  .ah-user-matrix-wrap {
+    overflow-x: auto;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-control;
+  }
+
+  .ah-user-matrix {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    text-align: left;
+
+    th,
+    td {
+      padding: $ah-space-3 $ah-space-4;
+    }
+
+    thead th {
+      border-bottom: 1px solid $ah-line;
+      color: $ah-text-muted;
+      font-size: $ah-font-size-xsmall;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    tbody th[scope="row"] {
+      color: $ah-blue-deep;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+    }
+
+    tbody tr + tr > * {
+      border-top: 1px solid $ah-line;
+    }
+
+    td,
+    .ah-user-matrix-col {
+      text-align: center;
+    }
+
+    .ah-user-matrix-section th {
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-align: left;
+      text-transform: none;
+    }
+
+    // En móvil cada operación pasa a ser una tarjeta con la etiqueta de cada columna.
+    @media (max-width: 767.98px) {
+      thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+      }
+
+      tr,
+      tbody,
+      th,
+      td {
+        display: block;
+      }
+
+      tbody tr:not(.ah-user-matrix-section) {
+        padding: $ah-space-2 0;
+      }
+
+      th,
+      td {
+        padding: $ah-space-1 $ah-space-4;
+      }
+
+      td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $ah-space-4;
+        text-align: right;
+
+        &::before {
+          color: $ah-text-muted;
+          font-size: $ah-font-size-small;
+          text-align: left;
+          content: attr(data-label);
+        }
+      }
+    }
+  }
+
+  #editing-history-wrapper {
+    margin-bottom: $ah-space-4;
+  }
+}

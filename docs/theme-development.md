@@ -49,6 +49,7 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 | `plugins/arUnicaucaB5Plugin/tools/watch.sh` | Wrapper del watch DEV opt-in del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tests/test-theme.sh` | Prueba de integración del ciclo del theme |
 | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/`, `lib/arUnicaucaCataloging*.class.php` | **Source**: formulario de catalogación (override de la vista y la action de edición ISAD(G)) |
+| `plugins/arUnicaucaB5Plugin/modules/user/templates/` (`editSuccess*`, `indexSuccess*`, `index*AclSuccess`, `_aclMenu`, `_aclMatrix`, `_showActions`), `scss/_user-admin.scss` | **Source**: crear/editar, detalle y permisos de usuario (solo presentación: la action, el formulario y las validaciones son las nativas; el `editAction` del plugin solo añade la política de correo) |
 | `plugins/arUnicaucaB5Plugin/tests/test-cataloging-form.sh` | Prueba de integración del formulario de catalogación (HTTP real + SQL) |
 | `plugins/arUnicaucaB5Plugin/fonts/` | **Source**: fuentes self-hosted de la identidad (Lato, Merriweather; procedencia y licencias en `fonts/README.md`) |
 | `plugins/arUnicaucaB5Plugin/templates/_layout_start.php` | **Derivado** por Webpack; ignorado por Git; no se edita (edita `_layout_start_webpack.php`) |
