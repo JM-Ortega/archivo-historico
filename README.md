@@ -44,6 +44,8 @@ minutos), arranca la infraestructura, ejecuta `bootstrap`, `reconcile` (habilita
 
 - **Administrador DEV:** `admin@unicauca.edu.co` / `admin_dev_12345` (credenciales locales de desarrollo, sin valor fuera
   de tu máquina; se pueden cambiar con `ATOM_ADMIN_EMAIL` / `ATOM_ADMIN_PASSWORD` **antes del primer arranque**).
+  El correo debe pertenecer al dominio `@unicauca.edu.co`: el login y la creación/edición de usuarios rechazan
+  cualquier otro dominio.
   Para overrides habituales (puerto, admin, timezone, título), copia [`.env.example`](.env.example) a `.env` y
   descomenta/ajusta únicamente las variables que necesites.
 - En el primer arranque la base de datos está vacía: `bootstrap` ejecuta `tools:install` **una sola vez**. Arranques
