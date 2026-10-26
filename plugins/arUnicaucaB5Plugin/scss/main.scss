@@ -37,6 +37,7 @@ Cascada:
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
 @import "login";
 @import "users";
+@import "user-admin"; // Crear, editar, detalle y permisos de usuario, todo bajo .ah-user-admin.
 @import "advanced-search";
 @import "header";
 @import "footer";
