@@ -5,8 +5,8 @@
  * Fuente de verdad: el fichero versionado config/atom/content/privacy-policy.es.md. Escribe solo si difiere.
  * Se ejecuta con `php symfony tools:run` desde config/atom/reconcile.sh.
  *
- * Exit: 0 éxito; 81 fichero ilegible o vacío; 82 la página estática no existe; 83 la escritura falló;
- *       84 postcondición no satisfecha.
+ * Exit: 0 éxito; 89 fichero ilegible o vacío; 90 la página estática no existe; 91 la escritura falló;
+ *       92 postcondición no satisfecha.
  */
 (static function (): void {
     $slug = 'privacy';
@@ -25,12 +25,12 @@
 
     $desired = is_readable($file) ? rtrim(str_replace("\r\n", "\n", (string) file_get_contents($file))) : '';
     if ('' === $desired) {
-        $fail(81, "no se puede leer o está vacío: {$file}");
+        $fail(89, "no se puede leer o está vacío: {$file}");
     }
 
     $page = QubitStaticPage::getBySlug($slug);
     if (null === $page) {
-        $fail(82, "no existe la página estática '{$slug}' (¿otro slug?)");
+        $fail(90, "no existe la página estática '{$slug}' (¿otro slug?)");
     }
 
     $read = static fn ($p, string $c): string => rtrim(str_replace("\r\n", "\n", (string) $p->getContent(['culture' => $c])));
@@ -49,13 +49,13 @@
         }
         $page->save();
     } catch (Throwable $e) {
-        $fail(83, 'la escritura falló ('.get_class($e).')');
+        $fail(91, 'la escritura falló ('.get_class($e).')');
     }
 
     $after = QubitStaticPage::getBySlug($slug);
     foreach ($cultures as $c) {
         if (null === $after || $read($after, $c) !== $desired) {
-            $fail(84, "POSTCONDICIÓN NO SATISFECHA: el contenido releído ({$c}) no coincide");
+            $fail(92, "POSTCONDICIÓN NO SATISFECHA: el contenido releído ({$c}) no coincide");
         }
     }
     $log('escrita la versión del repo en '.implode(', ', $pending));

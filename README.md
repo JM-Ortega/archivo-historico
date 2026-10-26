@@ -9,7 +9,7 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
   la imagen, los scripts con shebang (necesario en checkouts Windows; ver
   [repository-layout.md](docs/repository-layout.md#fin-de-línea)).
 - **Runtime DEV** (`compose.yaml`, solo desarrollo local): Percona 8.4, Elasticsearch 7.10 (OSS), Memcached, Gearmand, `bootstrap`
-  (instalación inicial segura), `dev_secrets` (secreto CSRF local), `reconcile` (plugins requeridos, `check_for_updates = 0` y términos propios de taxonomías), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
+  (instalación inicial segura), `dev_secrets` (secreto CSRF local), `reconcile` (plugins requeridos, `check_for_updates = 0`, términos propios de taxonomías, `require_strong_passwords = 1` e `inherit_code_informationobject = 0`), `theme_build` (build del theme), `atom` (PHP-FPM), `atom_worker` (jobs de AtoM) y `nginx`.
 - **Theme institucional:** `plugins/arUnicaucaB5Plugin/` (plugin de AtoM propio, basado en el skeleton oficial `arThemeB5Plugin` y extensión de `arDominionB5Plugin`). Ciclo DEV
   (editar → build → refresh) en [docs/theme-development.md](docs/theme-development.md).
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
@@ -72,7 +72,7 @@ docker compose stop             # parar conservando contenedores y datos
 | Comprobar que la web es AtoM (READY) | `scripts/web-ready.sh --wait` |
 | Recompilar el theme tras editar su SCSS/JS | `docker compose run --rm theme_build` (ver [theme](docs/theme-development.md)) |
 | Recompilar el theme automáticamente mientras edito (opt-in, DEV) | `docker compose run --rm theme_watch` (ver [theme](docs/theme-development.md#editar-scss--js)) |
-| Reaplicar/verificar el estado gestionado de AtoM (plugins, `check_for_updates`, términos) | `docker compose run --rm reconcile` (ver [runbook](docs/dev-runbook.md#reconcile-de-atom-desired-state)) |
+| Reaplicar/verificar el estado gestionado de AtoM (plugins, `check_for_updates`, términos, contraseñas seguras, códigos de referencia) | `docker compose run --rm reconcile` (ver [runbook](docs/dev-runbook.md#reconcile-de-atom-desired-state)) |
 | Eliminar contenedores y red, **conservando** los datos | `docker compose down` |
 
 `stop` y `down` (sin `-v`) conservan la base de datos y los ficheros subidos; `up -d --wait` siempre vuelve a pasar por
@@ -112,7 +112,7 @@ El source del theme vive en `plugins/arUnicaucaB5Plugin/` (repo) y se monta en l
 
 Los scripts de `scripts/test-*.sh` son pruebas de integración contra Docker (la del theme vive con él:
 `plugins/arUnicaucaB5Plugin/tests/test-theme.sh`; las del reconcile y de la configuración crítica, con su desired state:
-`config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-reconcile-terms.sh` y `config/atom/tests/test-critical-config.sh`, esta última sobre un proyecto Docker aislado). Los `test-db-probe`, `test-bootstrap`,
+`config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-reconcile-terms.sh`, `config/atom/tests/test-reconcile-strong-passwords.sh`, `config/atom/tests/test-reconcile-reference-codes.sh` y `config/atom/tests/test-critical-config.sh`, esta última sobre un proyecto Docker aislado). Los `test-db-probe`, `test-bootstrap`,
 `test-runtime`, `test-web` y `test-worker` operan sobre el proyecto DEV real sin borrar estado (nunca `down -v`).
 `scripts/test-image-portability.sh` compara la imagen `atom` final contra la imagen upstream cruda (`atom-upstream`,
 build-only) para probar la capa de portabilidad EOL, sin arrancar el runtime.

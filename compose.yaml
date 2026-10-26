@@ -230,7 +230,7 @@ services:
         condition: service_healthy
 
   # Reconcile de AtoM (one-shot; queda en Exited (0), como `bootstrap` y `theme_build`). Alinea SOLO estado PROJECT-MANAGED, en
-  # tres pasos selectivos (config/atom/reconcile.sh):
+  # cinco pasos selectivos (config/atom/reconcile.sh):
   #   1. plugins: cada plugin de config/atom/required-plugins.conf (hoy arUnicaucaB5Plugin) habilitado en la BD. Aditivo: solo añade
   #      el plugin requerido si falta, no gestiona ni quita plugins ajenos, y verifica la postcondición releyendo el estado.
   #   2. check_for_updates = 0 (la única fila de `setting` que gestiona el proyecto): escribe solo si difiere, invalida SOLO la caché
@@ -238,6 +238,9 @@ services:
   #   3. términos propios (config/atom/reconcile-terms.php): Sección (nivel de descripción), Remitente y Destinatario (tipos de evento),
   #      identificados por taxonomía + `code`. Solo crea los que faltan; nunca toca otros términos. Término propio ausente + homónimo ajeno
   #      → STOP sin escribir; término propio canónico existente + homónimo ajeno posterior → solo AVISO.
+  #   4. require_strong_passwords = 1 (opción nativa «Require strong passwords»): mismo patrón que el paso 2 (escribe solo si difiere,
+  #      invalida solo `settings:i18n:*` y exige la postcondición en BD y caché).
+  #   5. inherit_code_informationobject = 0 (código de referencia = `identifier`, sin anteponer ancestros ni país/repositorio): mismo patrón.
   # Idempotente y no destructivo. No instala, no siembra ni compila assets.
   #
   #   docker compose run --rm reconcile; echo $?
@@ -265,6 +268,8 @@ services:
       - ./config/atom/reconcile-plugins.sh:/project/scripts/reconcile-plugins.sh:ro
       - ./config/atom/reconcile-check-for-updates.php:/project/scripts/reconcile-check-for-updates.php:ro
       - ./config/atom/reconcile-terms.php:/project/scripts/reconcile-terms.php:ro
+      - ./config/atom/reconcile-strong-passwords.php:/project/scripts/reconcile-strong-passwords.php:ro
+      - ./config/atom/reconcile-reference-codes.php:/project/scripts/reconcile-reference-codes.php:ro
       - ./config/atom/required-plugins.conf:/project/config/atom/required-plugins.conf:ro
       - ./config/atom/reconcile-privacy-policy.php:/project/scripts/reconcile-privacy-policy.php:ro
       - ./config/atom/content/privacy-policy.es.md:/project/content/privacy-policy.es.md:ro
