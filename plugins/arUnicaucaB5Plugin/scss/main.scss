@@ -27,18 +27,109 @@ Cascada:
 // Componentes reutilizables (por clase; solo afectan a donde una vista los usa).
 @import "help"; // Ayuda contextual .uc-help (lib/helper/UcHelpHelper.php, js/help.js).
 
-// Búsqueda básica y avanzada.
+// Búsqueda básica y acerca.
 @import "search"; // Caja de búsqueda (.ah-search-box) y menú «Opciones de búsqueda» (.ah-search-options).
 @import "home"; // Portada: banner, panel de consulta y ayuda (.ah-home-*).
+@import "about"; // Vista estática «Acerca de la plataforma» (.ah-about-*).
+@import "search-results"; // Listado de resultados de descripciones (.ah-results).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
+@import "login";
+@import "users";
+@import "user-admin"; // Crear, editar, detalle y permisos de usuario, todo bajo .ah-user-admin.
+@import "advanced-search";
+@import "header";
+@import "footer";
 
 /*
 
 Extend:
 
 - Add extra SCSS and CSS imports.
-- Add custom styles in their own partial under scss/ using the tokens of _tokens.scss (no hex colors or font names here).
+- Add custom styles directly.
 
 */
+
+$space-1: .25rem;
+$space-2: .5rem;
+$space-3: .75rem;
+$space-4: 1rem;
+$space-6: 1.5rem;
+
+.home-menu-title {
+  color: #1f2a5a;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.home-menu .list-group-item {
+  font-size: 14px;
+}
+
+.home-menu .list-group {
+  --bs-list-group-active-bg: #1f2a5a;
+  --bs-list-group-active-border-color: #1f2a5a;
+  --bs-list-group-active-color: #fff;
+  --bs-list-group-action-hover-bg: #f5f3fa;
+  --bs-list-group-action-hover-color: #1f2a5a;
+  --bs-list-group-action-active-bg: #f5f3fa;
+  --bs-list-group-action-active-color: #1f2a5a;
+  --bs-list-group-color: #2d2d3a;
+}
+
+.search-options-navigation {
+  overflow: hidden;
+  padding: 0;
+  background-color: #fff;
+  border: $border-width solid #b8d6e9;
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+
+  h2 {
+    margin: 0;
+    padding: 15px 14px;
+    color: #0b4778;
+    font-family: "Open Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 18px;
+  }
+
+  .list-group {
+    gap: 0;
+  }
+
+  .list-group-item {
+    min-height: 37px;
+    padding: 9px 14px;
+    color: #0b4778;
+    border: 0;
+    border-top: $border-width solid #b8d6e9;
+    border-radius: 0;
+    background-color: #fff;
+    font-family: "Open Sans", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 18px;
+
+    .fas {
+      width: 16px;
+      margin-right: 5px !important;
+      text-align: center;
+    }
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      background-color: #006ca8;
+      border-color: #006ca8;
+    }
+
+    &.active {
+      color: #fff;
+      background-color: #0b4778;
+      border-color: #0b4778;
+    }
+  }
+}

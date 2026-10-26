@@ -1,0 +1,121 @@
+// Página «Acerca de la plataforma» (modules/staticpage/templates/_aboutPlatform.php). Diseño Figma «About»: cabecera
+// institucional azul y panel de texto. Solo usa tokens; todo cuelga de .ah-about, así que no afecta a otras páginas.
+
+.ah-about {
+  padding: 0;
+
+  // --- Cabecera institucional ---------------------------------------------------------------------------------------------
+
+  &__header {
+    position: relative;
+    margin-bottom: $ah-space-5;
+    padding: $ah-space-6 $ah-space-5;
+    overflow: hidden;
+    border-radius: $ah-radius-feature;
+    background-color: $ah-blue;
+    background-image:
+      linear-gradient(112deg, transparent 0 68%, rgba($ah-blue-action, 0.55) 68% 100%),
+      repeating-linear-gradient(135deg, rgba($ah-panel, 0.02) 0 1px, transparent 1px 12px),
+      radial-gradient(circle at 18% 0%, rgba($ah-panel, 0.09), transparent 32%);
+    box-shadow:
+      0 1.25rem 1.5625rem -0.3125rem rgba($ah-blue, 0.15),
+      0 0.5rem 0.625rem -0.375rem rgba($ah-blue, 0.15);
+    color: $ah-panel;
+
+    @include media-breakpoint-up(sm) {
+      padding: 2.5rem 2.25rem;
+    }
+  }
+
+  &__eyebrow {
+    @include ah-type("kicker");
+
+    margin: 0;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba($ah-panel, 0.65);
+  }
+
+  &__title {
+    margin: $ah-space-2 0 0;
+    font-family: $ah-font-serif;
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: $ah-panel;
+
+    @include media-breakpoint-up(sm) {
+      font-size: 2.25rem;
+    }
+
+    // Trazo rojo de identidad bajo el título.
+    &::after {
+      @include ah-accent-rule(5rem);
+
+      margin-top: $ah-space-4;
+    }
+  }
+
+  // --- Panel de texto -----------------------------------------------------------------------------------------------------
+
+  &__panel {
+    @include ah-paper;
+
+    overflow: hidden;
+    border-radius: $ah-radius-feature;
+  }
+
+  &__panel-head {
+    padding: $ah-space-4 1.25rem;
+    border-bottom: $border-width solid $ah-line;
+    background-color: rgba($ah-surface-soft, 0.7);
+
+    @include media-breakpoint-up(sm) {
+      padding: $ah-space-4 $ah-space-6;
+    }
+  }
+
+  &__kicker {
+    @include ah-type("kicker");
+
+    margin: 0;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: $ah-blue-action;
+  }
+
+  &__body {
+    padding: 1.75rem 1.25rem;
+
+    @include media-breakpoint-up(sm) {
+      padding: 2.25rem $ah-space-6;
+    }
+
+    p {
+      max-width: 56rem;
+      margin: 0;
+      font-size: $ah-font-size-small;
+      line-height: 1.75rem;
+      color: $ah-text;
+
+      @include media-breakpoint-up(sm) {
+        font-size: $ah-font-size-body;
+        line-height: 2rem;
+      }
+
+      & + p {
+        margin-top: $ah-space-5;
+      }
+    }
+  }
+}
+
+// Fondo de página «lienzo», solo cuando se muestra «Acerca de».
+body:has(.ah-about) {
+  background-color: $ah-canvas;
+  background-image:
+    radial-gradient(circle at 95% 18%, rgba($ah-blue-action, 0.09), transparent 28rem),
+    radial-gradient(circle at 6% 74%, rgba($ah-blue-secondary, 0.12), transparent 24rem),
+    linear-gradient(135deg, rgba($ah-panel, 0.82), transparent 48%),
+    repeating-linear-gradient(0deg, rgba($ah-text, 0.014) 0 1px, transparent 1px 5px);
+}
