@@ -266,6 +266,8 @@ services:
       - ./config/atom/reconcile-check-for-updates.php:/project/scripts/reconcile-check-for-updates.php:ro
       - ./config/atom/reconcile-terms.php:/project/scripts/reconcile-terms.php:ro
       - ./config/atom/required-plugins.conf:/project/config/atom/required-plugins.conf:ro
+      - ./config/atom/reconcile-privacy-policy.php:/project/scripts/reconcile-privacy-policy.php:ro
+      - ./config/atom/content/privacy-policy.es.md:/project/content/privacy-policy.es.md:ro
     depends_on:
       bootstrap:
         condition: service_completed_successfully
@@ -313,7 +315,7 @@ services:
       - ./plugins/arUnicaucaB5Plugin:/atom/src/plugins/arUnicaucaB5Plugin
       # Derivado y reconstruible (webpack `clean: true`): NO es estado, NO va a backup.
       - theme_dist:/atom/src/dist
-
+      
   # Runtime AtoM (PHP-FPM, escucha en 9000 solo dentro de la red Compose; lo consume `nginx`).
   #
   # Gate: depende de `bootstrap` con service_completed_successfully, así que `atom` solo puede arrancar
