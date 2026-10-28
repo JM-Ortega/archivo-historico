@@ -1,10 +1,10 @@
 <?php
-/*
- * OCULTO-002: no mostrar el menú superior de importación administrativa.
- * La plantilla upstream itera también $importMenu; se conserva el resto de
- * menús de la barra y se omite únicamente ese elemento.
- */
-foreach ([$addMenu, $manageMenu, $adminMenu] as $menu) { ?>
+// PROYECTO: ítems del menú Administrador que SÍ se muestran. El resto queda
+// oculto (no borrado): groups, staticPages, menu, plugins, themes, settings,
+// globalReplace, visibleElements. Para mostrar otro, agrega su `name` aquí.
+$visibleAdminItems = ['users', 'descriptionUpdates'];
+?>
+<?php foreach ([$addMenu, $manageMenu, $importMenu, $adminMenu] as $menu) { ?>
   <?php if (
       $menu && ('add' == $menu->getName()
       || 'manage' == $menu->getName())
@@ -40,6 +40,15 @@ foreach ([$addMenu, $manageMenu, $adminMenu] as $menu) { ?>
           </h6>
         </li>
         <?php foreach ($menu->getChildren() as $child) { ?>
+          <?php
+            // Menú Administrador: solo se muestran estos ítems.
+            // Ocultos a propósito (no borrados): groups, staticPages, menu, plugins,
+            // themes, settings, globalReplace, visibleElements.
+            // Para volver a mostrar uno, agrega su `name` a este arreglo.
+            if ('admin' === $menu->getName() && !in_array($child->name, ['users', 'descriptionUpdates'], true)) {
+                continue;
+            }
+            ?>
           <?php if ($child->checkUserAccess()) { ?>
             <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
               <?php echo link_to(
