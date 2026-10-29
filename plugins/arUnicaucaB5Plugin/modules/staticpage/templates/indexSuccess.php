@@ -18,8 +18,8 @@
 
   <div>
     <?php if ('about' === (string) $resource->slug) { ?>
-      <?php /* «Acerca de»: contenido fijo desde código (staticpage/_aboutPlatform.php). */ ?>
-      <?php echo get_partial('staticpage/aboutPlatform'); ?>
+      <?php /* «Acerca de»: el texto sale de la BD (lo escribe el reconcile desde config/atom/content/about-platform.es.md); el diseño lo pone staticpage/_aboutPlatform.php. */ ?>
+      <?php echo get_partial('staticpage/aboutPlatform', ['resource' => $resource, 'content' => $sf_data->getRaw('content')]); ?>
     <?php } else { ?>
     <?php echo render_value_html($sf_data->getRaw('content')); ?>
     <?php } ?>
