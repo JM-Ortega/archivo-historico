@@ -101,7 +101,7 @@ expect "reconcile depende del bootstrap (completed_successfully)" "service_compl
 expect "reconcile NO depende de theme_build (gates independientes)" "bootstrap" "$(py "print(' '.join(sorted(d['reconcile']['depends_on'])))")"
 expect "atom depende del reconcile (completed_successfully)" "service_completed_successfully" "$(py "print(d['atom']['depends_on']['reconcile']['condition'])")"
 expect "atom_worker depende del reconcile (completed_successfully)" "service_completed_successfully" "$(py "print(d['atom_worker']['depends_on']['reconcile']['condition'])")"
-expect "reconcile: solo binds/volúmenes RO (entrypoint, secreto, plugin, scripts, desired state), sin puertos" "ro ro ro ro ro ro ro ro ro ro none" \
+expect "reconcile: solo binds/volúmenes RO (entrypoint, secreto, plugin, scripts, desired state), sin puertos" "ro ro ro ro ro ro ro ro ro ro ro ro ro ro none" \
   "$(py "r=d['reconcile']; print(' '.join(v.get('read_only') and 'ro' or 'RW' for v in r['volumes']), 'none' if 'ports' not in r else 'PORTS')")"
 expect "reconcile usa el entrypoint del proyecto (que delega en el upstream)" '["bash", "/project/scripts/runtime-config.sh"]' "$(py "print(json.dumps(d['reconcile'].get('entrypoint')))")"
 

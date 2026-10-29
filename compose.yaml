@@ -273,6 +273,8 @@ services:
       - ./config/atom/required-plugins.conf:/project/config/atom/required-plugins.conf:ro
       - ./config/atom/reconcile-privacy-policy.php:/project/scripts/reconcile-privacy-policy.php:ro
       - ./config/atom/content/privacy-policy.es.md:/project/content/privacy-policy.es.md:ro
+      - ./config/atom/reconcile-about.php:/project/scripts/reconcile-about.php:ro
+      - ./config/atom/content/about-platform.es.md:/project/content/about-platform.es.md:ro
     depends_on:
       bootstrap:
         condition: service_completed_successfully
