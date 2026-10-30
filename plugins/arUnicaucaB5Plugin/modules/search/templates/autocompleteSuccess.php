@@ -68,6 +68,11 @@
   <?php $addDivider = true; ?>
 <?php } ?>
 
+<?php /* OCULTO-009
+   SERVÍA PARA: sugerir, al escribir en la caja de búsqueda, hasta 3 registros de autoridad (personas y entidades) con el
+   enlace "Explorar todos los resultados" hacia su listado.
+   MOTIVO: el archivo no maneja registros de autoridad en este prototipo; sus páginas ya no son accesibles (OCULTO-008).
+   Código original:
 <?php if ($actors->getTotalHits() > 0) { ?>
   <?php if ($addDivider) { ?>
     <li><hr class="dropdown-divider"></li>
@@ -100,6 +105,7 @@
   <?php } ?>
   <?php $addDivider = true; ?>
 <?php } ?>
+*/ ?>
 
 <?php if ($places->getTotalHits() > 0) { ?>
   <?php if ($addDivider) { ?>
