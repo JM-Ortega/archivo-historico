@@ -1,3 +1,10 @@
+<?php /* OCULTO-007
+   SERVÍA PARA: que el nombre del productor de una descripción fuera un enlace a la ficha de su registro de autoridad.
+   MOTIVO: el archivo no maneja registros de autoridad; el nombre se sigue mostrando, pero como texto.
+   Código original:
+   <?php echo link_to(render_title($item), [$item]); ?>
+   <?php echo link_to(render_title($item), [$item], ['title' => __('Inherited from %1%', ['%1%' => $ancestor])]); ?>
+*/ ?>
 <?php $actorsShown = []; ?>
 <?php foreach ($ancestor->getCreators() as $item) { ?>
   <?php if (!isset($actorsShown[$item->id])) { ?>
@@ -7,9 +14,9 @@
 
         <div class="creator">
           <?php if (0 < count($resource->getCreators())) { ?>
-            <?php echo link_to(render_title($item), [$item]); ?>
+            <?php echo render_title($item); ?>
           <?php } else { ?>
-            <?php echo link_to(render_title($item), [$item], ['title' => __('Inherited from %1%', ['%1%' => $ancestor])]); ?>
+            <span title="<?php echo __('Inherited from %1%', ['%1%' => $ancestor]); ?>"><?php echo render_title($item); ?></span>
           <?php } ?>
         </div>
 
