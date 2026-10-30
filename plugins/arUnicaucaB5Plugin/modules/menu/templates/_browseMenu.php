@@ -8,8 +8,14 @@
         <?php echo $browseMenu->getLabel(['cultureFallback' => true]); ?>
       </h6>
     </li>
+    <?php /* OCULTO-004
+       SERVÍA PARA: abrir el listado de todos los registros de autoridad (personas, familias y entidades) desde el botón «Navegar».
+       MOTIVO: el archivo no maneja información de registros de autoridad en este prototipo.
+       Código original:
+       <?php if ($child->checkUserAccess()) { ?>
+    */ ?>
     <?php foreach ($browseMenu->getChildren() as $child) { ?>
-      <?php if ($child->checkUserAccess()) { ?>
+      <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName()) { ?>
         <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
           <?php echo link_to(
               $child->getLabel(['cultureFallback' => true]),

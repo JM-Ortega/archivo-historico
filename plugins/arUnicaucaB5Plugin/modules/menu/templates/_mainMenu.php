@@ -49,7 +49,13 @@ $visibleAdminItems = ['users', 'descriptionUpdates'];
                 continue;
             }
             ?>
-          <?php if ($child->checkUserAccess()) { ?>
+            <?php /* OCULTO-005
+                SERVÍA PARA: crear un registro de autoridad nuevo desde el botón «Agregar».
+                MOTIVO: el archivo no maneja información de registros de autoridad en este prototipo.
+                Código original:
+                <?php if ($child->checkUserAccess()) { ?>
+              */ ?>
+            <?php if ($child->checkUserAccess() && 'addActor' != $child->getName()) { ?>
             <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
               <?php echo link_to(
                   $child->getLabel(['cultureFallback' => true]),
