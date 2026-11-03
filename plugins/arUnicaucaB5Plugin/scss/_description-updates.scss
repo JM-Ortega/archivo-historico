@@ -1,0 +1,545 @@
+// Historial de descripciones del administrador (search/descriptionUpdates), según el App Design del Archivo Histórico.
+//
+// Overrides: modules/search/templates/descriptionUpdatesSuccess.php y _updatesSearch.php (mismo formulario, mismos parámetros
+// GET y mismo AdvancedSearch de AtoM; solo cambia el markup). Todo queda acotado a body.search.descriptionUpdates y a las
+// clases .ah-updates-*, y gana sobre los estilos genéricos de .adv-search (_advanced-search.scss).
+
+body.search.descriptionUpdates {
+  background-color: $ah-canvas;
+  background-image:
+    radial-gradient(circle at 95% 18%, rgba($ah-blue-action, 0.09), transparent 28rem),
+    radial-gradient(circle at 6% 74%, rgba($ah-blue-secondary, 0.12), transparent 24rem),
+    linear-gradient(135deg, rgba($white, 0.82), transparent 48%);
+
+  #main-column {
+    color: $ah-text;
+    font-family: $ah-font-sans;
+  }
+
+  // --- Panel tipo papel -----------------------------------------------------------------------------------------------
+
+  .ah-updates-panel {
+    overflow: hidden;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-panel;
+    background-image:
+      linear-gradient(135deg, rgba($white, 0.72), transparent 45%),
+      repeating-linear-gradient(90deg, rgba($ah-blue, 0.012) 0 1px, transparent 1px 7px);
+    box-shadow: 0 10px 15px -3px rgba($ah-blue, 0.08), 0 4px 6px -4px rgba($ah-blue, 0.08);
+  }
+
+  // --- Encabezado -----------------------------------------------------------------------------------------------------
+
+  .ah-updates-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $ah-space-4;
+    margin-bottom: 1.75rem;
+  }
+
+  .ah-updates-header-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-top: $ah-space-1;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-blue;
+    color: $ah-panel;
+    box-shadow: 0 4px 6px -1px rgba($ah-blue, 0.15), 0 2px 4px -2px rgba($ah-blue, 0.15);
+
+    svg {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+  }
+
+  .ah-updates-eyebrow {
+    margin: 0 0 $ah-space-1;
+    color: $ah-blue-action;
+    font-family: $ah-font-sans;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .ah-updates-header h1 {
+    margin: 0;
+    color: $ah-blue;
+    font-family: $ah-font-serif;
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+
+    @include media-breakpoint-up(sm) {
+      font-size: 2.25rem;
+    }
+  }
+
+  .ah-updates-subtitle {
+    display: block;
+    margin-top: $ah-space-2;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+  }
+
+  .ah-updates-accent {
+    width: 5rem;
+    height: 2px;
+    margin-top: $ah-space-3;
+    background-color: $ah-accent;
+  }
+
+  // --- Desplegable «Opciones de filtrado» ------------------------------------------------------------------------------
+
+  .ah-updates-filters {
+    margin-bottom: 1.25rem;
+
+    > .accordion-item {
+      overflow: visible;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .accordion-header {
+      margin: 0;
+    }
+
+    > .accordion-item > .accordion-header > .accordion-button {
+      display: flex;
+      width: 100%;
+      min-height: 0;
+      align-items: center;
+      justify-content: space-between;
+      gap: $ah-space-4;
+      padding: $ah-space-4 $ah-space-5;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      color: $ah-blue;
+      font-family: $ah-font-sans;
+      font-size: $ah-font-size-body;
+      font-weight: 700;
+      text-align: left;
+      transition: background-color 0.15s ease;
+
+      &::after {
+        display: none;
+      }
+
+      &:hover {
+        background-color: rgba($ah-surface-soft, 0.6);
+      }
+
+      &:focus {
+        box-shadow: none;
+      }
+
+      &:focus-visible {
+        box-shadow: inset $ah-focus-ring;
+      }
+
+      &:not(.collapsed) {
+        border-bottom: 3px solid mix($ah-blue-secondary, $white, 70%);
+        color: $ah-blue;
+        background: transparent;
+        box-shadow: none;
+
+        .ah-updates-chevron {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .ah-updates-filter-label {
+      display: flex;
+      align-items: center;
+      gap: $ah-space-3;
+
+      svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: $ah-blue-action;
+      }
+    }
+
+    .ah-updates-chevron {
+      width: 1.25rem;
+      height: 1.25rem;
+      transition: transform 0.15s ease;
+    }
+
+    .accordion-body {
+      padding: 1.75rem 1.75rem $ah-space-5;
+      background: transparent;
+    }
+
+    .ah-updates-section-title {
+      margin: 0 0 1.25rem;
+      padding-bottom: 0.9rem;
+      border-bottom: 1px solid $ah-line;
+      color: $ah-blue;
+      font-family: $ah-font-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .criteria {
+      --bs-gutter-x: 1.875rem;
+      margin-bottom: $ah-space-5 !important;
+      padding-bottom: 0;
+    }
+
+    .mb-3 {
+      margin-bottom: 1.25rem !important;
+    }
+
+    .form-label {
+      margin-bottom: 0.4rem;
+      color: $ah-blue;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+    }
+
+    .form-text {
+      color: $ah-text-muted;
+      font-size: $ah-font-size-xsmall;
+      font-weight: 400;
+    }
+
+    fieldset {
+      margin-bottom: 1.25rem;
+    }
+
+    .ah-updates-legend {
+      float: none;
+      margin-bottom: 0.6rem;
+      color: $ah-text;
+      font-family: $ah-font-sans;
+      font-size: 1.05rem;
+      font-weight: 400;
+    }
+
+    .form-control,
+    .form-select {
+      min-height: 3rem;
+      padding: 0.7rem $ah-space-4;
+      border: 1px solid $ah-line-control;
+      border-radius: $ah-radius-control;
+      background-color: $ah-panel;
+      color: $ah-text;
+      font-size: $ah-font-size-small;
+      box-shadow: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+      &:hover {
+        border-color: $ah-blue-deep;
+      }
+
+      &:focus {
+        border-color: $ah-blue-action;
+        box-shadow: 0 0 0 4px rgba($ah-blue-action, 0.1);
+      }
+    }
+
+    .form-select {
+      padding-right: 2.75rem;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3e%3cpath d='m7 9 5 5 5-5' stroke='%23173651' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+      background-position: right 0.85rem center;
+      background-size: 1.25rem 1.25rem;
+    }
+
+    .form-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 0;
+      margin: 0 $ah-space-4 0 0;
+      padding-left: 0;
+    }
+
+    .form-check-input {
+      float: none;
+      width: 1.15rem;
+      height: 1.15rem;
+      margin: 0;
+      border: 1.5px solid $ah-line-control;
+      background-color: $ah-panel;
+      cursor: pointer;
+
+      &:checked {
+        border-color: $ah-blue-action;
+        background-color: $ah-blue-action;
+      }
+
+      &:focus {
+        box-shadow: $ah-focus-ring;
+      }
+    }
+
+    .form-check-label {
+      color: $ah-text;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  }
+
+  .ah-updates-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem;
+    margin: $ah-space-2 0 0;
+    padding: 1.25rem 0 0;
+    border-top: 1px solid $ah-line;
+    background: transparent;
+    list-style: none;
+  }
+
+  .ah-updates-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    padding: 0.7rem $ah-space-5;
+    border: 1px solid $ah-blue;
+    border-radius: 999px;
+    font-family: $ah-font-sans;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  .ah-updates-btn-primary {
+    background-color: $ah-blue;
+    color: $ah-panel;
+
+    &:hover,
+    &:focus {
+      border-color: $ah-blue-deep;
+      background-color: $ah-blue-deep;
+      color: $ah-panel;
+    }
+  }
+
+  .ah-updates-btn-outline {
+    background-color: $ah-panel;
+    color: $ah-blue;
+
+    &:hover,
+    &:focus {
+      border-color: $ah-blue;
+      background-color: $ah-surface-soft;
+      color: $ah-blue;
+    }
+  }
+
+  // --- Tabla de resultados --------------------------------------------------------------------------------------------
+
+  .ah-updates-results {
+    margin-bottom: $ah-space-4;
+  }
+
+  .ah-updates-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    text-align: left;
+
+    thead tr {
+      border-bottom: 1px solid $ah-line;
+      background-color: rgba($ah-surface-soft, 0.7);
+    }
+
+    th {
+      padding: $ah-space-4 1.25rem;
+      background: transparent;
+      color: $ah-text-muted;
+      font-family: $ah-font-sans;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    th:first-child,
+    td:first-child {
+      padding-left: $ah-space-5;
+    }
+
+    th + th,
+    td + td {
+      border-left: 1px solid $ah-line;
+    }
+
+    tbody tr {
+      border-top: 1px solid $ah-line;
+      vertical-align: top;
+      transition: background-color 0.15s ease;
+
+      &:first-child {
+        border-top: 0;
+      }
+
+      &:hover {
+        background-color: rgba($ah-surface-soft, 0.4);
+      }
+    }
+
+    td {
+      padding: $ah-space-4 1.25rem;
+      background: transparent;
+      color: $ah-text;
+      font-size: $ah-font-size-small;
+    }
+
+    .ah-updates-col-title {
+      width: 50%;
+    }
+
+    .ah-updates-col-meta {
+      width: 25%;
+    }
+
+    .ah-updates-title,
+    .ah-updates-title a {
+      color: $ah-blue;
+      font-family: $ah-font-serif;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+      line-height: 1.5rem;
+      text-decoration: none;
+    }
+
+    .ah-updates-title a:hover,
+    .ah-updates-title a:focus {
+      color: $ah-blue-action;
+      text-decoration: underline;
+    }
+
+    .ah-updates-strong,
+    .ah-updates-strong a {
+      color: $ah-text;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .ah-updates-strong a:hover,
+    .ah-updates-strong a:focus {
+      color: $ah-blue-action;
+    }
+
+    .ah-updates-draft {
+      color: $ah-text-muted;
+      font-family: $ah-font-sans;
+      font-weight: 400;
+    }
+
+    .ah-updates-date {
+      white-space: nowrap;
+    }
+
+    // Tarjetas en pantallas pequeñas.
+    @include media-breakpoint-down(lg) {
+      thead {
+        display: none;
+      }
+
+      &,
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100% !important;
+      }
+
+      tbody tr {
+        padding: 1.25rem;
+      }
+
+      td,
+      td:first-child {
+        padding: 0;
+        border-left: 0 !important;
+      }
+
+      td + td {
+        margin-top: 0.85rem;
+      }
+
+      td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: $ah-space-1;
+        color: $ah-text-muted;
+        font-family: $ah-font-sans;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .ah-updates-date {
+        white-space: normal;
+      }
+    }
+  }
+
+  // --- Estado vacío ---------------------------------------------------------------------------------------------------
+
+  .ah-updates-empty {
+    padding: 3.5rem $ah-space-5;
+    text-align: center;
+
+    svg {
+      width: 2.25rem;
+      height: 2.25rem;
+      color: $ah-blue-secondary;
+    }
+
+    h2 {
+      margin: $ah-space-4 0 0;
+      color: $ah-blue;
+      font-family: $ah-font-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    p {
+      margin: $ah-space-2 0 0;
+      color: $ah-text-muted;
+      font-size: $ah-font-size-small;
+    }
+  }
+
+  // --- Paginador ------------------------------------------------------------------------------------------------------
+
+  .pagination {
+    .page-link {
+      border-color: $ah-line;
+      background-color: $ah-panel;
+      color: $ah-blue;
+    }
+
+    .page-item.active .page-link {
+      border-color: $ah-blue;
+      background-color: $ah-blue;
+      color: $ah-panel;
+    }
+  }
+}
