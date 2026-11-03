@@ -41,6 +41,7 @@ Cascada:
 @import "users";
 @import "user-admin"; // Crear, editar, detalle y permisos de usuario, todo bajo .ah-user-admin.
 @import "advanced-search";
+@import "description-updates"; // Historial de descripciones del administrador (search/descriptionUpdates), .ah-updates-*.
 @import "header";
 @import "footer";
 
