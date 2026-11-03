@@ -8,7 +8,8 @@
 <?php } ?>
 <?php decorate_with($layout); ?>
 
-<?php if ('about' !== (string) $resource->slug) { ?>
+<?php /* «Acerca de» y «Política de privacidad» pintan su propio título dentro de la cabecera institucional. */ ?>
+<?php if (!in_array((string) $resource->slug, ['about', 'privacy'], true)) { ?>
 <?php slot('title'); ?>
   <h1><?php echo render_title($resource->getTitle(['cultureFallback' => true])); ?></h1>
 <?php end_slot(); ?>
@@ -20,6 +21,9 @@
     <?php if ('about' === (string) $resource->slug) { ?>
       <?php /* «Acerca de»: el texto sale de la BD (lo escribe el reconcile desde config/atom/content/about-platform.es.md); el diseño lo pone staticpage/_aboutPlatform.php. */ ?>
       <?php echo get_partial('staticpage/aboutPlatform', ['resource' => $resource, 'content' => $sf_data->getRaw('content')]); ?>
+    <?php } elseif ('privacy' === (string) $resource->slug) { ?>
+      <?php /* «Política de privacidad»: el texto sale de la BD (lo escribe el reconcile desde config/atom/content/privacy-policy.es.md); el diseño lo pone staticpage/_privacyPolicy.php. */ ?>
+      <?php echo get_partial('staticpage/privacyPolicy', ['resource' => $resource, 'content' => $sf_data->getRaw('content')]); ?>
     <?php } else { ?>
     <?php echo render_value_html($sf_data->getRaw('content')); ?>
     <?php } ?>
