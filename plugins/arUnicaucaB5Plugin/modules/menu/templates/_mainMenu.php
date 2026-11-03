@@ -1,7 +1,9 @@
-<?php
-// PROYECTO: ítems del menú Administrador que SÍ se muestran. El resto queda
-// oculto (no borrado): groups, staticPages, menu, plugins, themes, settings,
-// globalReplace, visibleElements. Para mostrar otro, agrega su `name` aquí.
+<?php /* OCULTO-010
+   SERVÍA PARA: acceder desde el engranaje a Grupos, Páginas estáticas, Menús,
+   Plugins, Temas, Configuraciones, Reemplazo global y Elementos visibles.
+   MOTIVO: el administrador solo gestiona usuarios y consulta el historial.
+   Código original: el foreach de $menu->getChildren() sin filtro (sigue
+   intacto debajo; solo se le añadió el `continue` de la lista permitida). */
 $visibleAdminItems = ['users', 'descriptionUpdates'];
 ?>
 <?php foreach ([$addMenu, $manageMenu, $importMenu, $adminMenu] as $menu) { ?>
