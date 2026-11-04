@@ -55,7 +55,7 @@ $visibleAdminItems = ['users', 'descriptionUpdates'];
                 Código original:
                 <?php if ($child->checkUserAccess()) { ?>
               */ ?>
-            <?php /* OCULTO-011
+            <?php /* OCULTO-012
              SERVÍA PARA: crear una institución archivística nueva desde el botón «Agregar».
              MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
              Código original:

@@ -14,7 +14,7 @@
        Código original:
        <?php if ($child->checkUserAccess()) { ?>
     */ ?>
-    <?php /* OCULTO-010
+    <?php /* OCULTO-011
          SERVÍA PARA: abrir el listado de instituciones archivísticas desde el botón «Navegar».
          MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
          Código original:
