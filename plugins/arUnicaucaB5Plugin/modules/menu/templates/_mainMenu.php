@@ -1,14 +1,11 @@
-<?php
-// PROYECTO: ítems del menú Administrador que SÍ se muestran. El resto queda
-// oculto (no borrado): groups, staticPages, menu, plugins, themes, settings,
-// globalReplace, visibleElements. Para mostrar otro, agrega su `name` aquí.
-$visibleAdminItems = ['users', 'descriptionUpdates'];
-?>
-<?php foreach ([$addMenu, $manageMenu, $importMenu, $adminMenu] as $menu) { ?>
+<?php foreach ([$addMenu, $manageMenu, $adminMenu] as $menu) { ?>
   <?php if (
-      $menu && ('add' == $menu->getName()
-      || 'manage' == $menu->getName())
-      || $sf_user->isAdministrator()
+      $menu
+      && (
+          'add' === $menu->getName()
+          || 'manage' === $menu->getName()
+          || $sf_user->isAdministrator()
+      )
   ) { ?>
     <li class="nav-item dropdown d-flex flex-column">
       <a
