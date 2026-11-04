@@ -35,6 +35,12 @@
   <?php $addDivider = true; ?>
 <?php } ?>
 
+<?php /* OCULTO-013
+   SERVÍA PARA: sugerir, al escribir en la caja de búsqueda, hasta 3 instituciones archivísticas con el enlace
+   "all matching institutions" hacia su listado.
+   MOTIVO: el archivo es una sola institución y no maneja este módulo; sus páginas ya no son accesibles (OCULTO-015).
+   Código original:
+
 <?php if ($repositories->getTotalHits() > 0) { ?>
   <?php if ($addDivider) { ?>
     <li><hr class="dropdown-divider"></li>
@@ -67,6 +73,7 @@
   <?php } ?>
   <?php $addDivider = true; ?>
 <?php } ?>
+*/ ?>
 
 <?php /* OCULTO-009
    SERVÍA PARA: sugerir, al escribir en la caja de búsqueda, hasta 3 registros de autoridad (personas y entidades) con el
