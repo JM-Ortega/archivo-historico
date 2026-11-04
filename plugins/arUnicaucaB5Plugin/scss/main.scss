@@ -32,6 +32,7 @@ Cascada:
 @import "home"; // Portada: banner, panel de consulta y ayuda (.ah-home-*).
 @import "about"; // Vista estática «Acerca de la plataforma» (.ah-about-*).
 @import "search-results"; // Listado de resultados de descripciones (.ah-results).
+@import "description"; // Fichas públicas de descripciones archivísticas (sfIsadPlugin/index).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
@@ -39,6 +40,7 @@ Cascada:
 @import "users";
 @import "user-admin"; // Crear, editar, detalle y permisos de usuario, todo bajo .ah-user-admin.
 @import "advanced-search";
+@import "action-pages";
 @import "header";
 @import "footer";
 
