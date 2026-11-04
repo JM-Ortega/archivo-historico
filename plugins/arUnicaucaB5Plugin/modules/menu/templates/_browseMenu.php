@@ -14,8 +14,14 @@
        Código original:
        <?php if ($child->checkUserAccess()) { ?>
     */ ?>
+    <?php /* OCULTO-010
+         SERVÍA PARA: abrir el listado de instituciones archivísticas desde el botón «Navegar».
+         MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
+         Código original:
+         <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName()) { ?>
+      */ ?>
     <?php foreach ($browseMenu->getChildren() as $child) { ?>
-      <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName()) { ?>
+      <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName() && 'browseRepositories' != $child->getName()) { ?>
         <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
           <?php echo link_to(
               $child->getLabel(['cultureFallback' => true]),
