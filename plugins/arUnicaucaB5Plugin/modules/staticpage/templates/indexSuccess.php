@@ -1,9 +1,14 @@
 <?php $menu = get_component('menu', 'staticPagesMenu'); ?>
 <?php $layout = 'layout_1col'; ?>
-<?php if (!empty($menu)) { ?>
+<?php $isPrivacy = 'privacy' === (string) $resource->slug; ?>
+<?php if ($isPrivacy || !empty($menu)) { ?>
   <?php $layout = 'layout_2col'; ?>
   <?php slot('sidebar'); ?>
-    <?php echo $menu; ?>
+    <?php if ($isPrivacy) { ?>
+      <?php echo get_partial('search/searchOptions', ['active' => 'privacy']); ?>
+    <?php } else { ?>
+      <?php echo $menu; ?>
+    <?php } ?>
   <?php end_slot(); ?>
 <?php } ?>
 <?php decorate_with($layout); ?>

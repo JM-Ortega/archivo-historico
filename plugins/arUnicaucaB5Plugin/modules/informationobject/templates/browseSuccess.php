@@ -22,10 +22,10 @@
 <?php slot('sidebar'); ?>
     <?php
       // The upstream facet sidebar is intentionally replaced for every role.
-      // Search navigation remains available through this independent panel.
+      // Search navigation remains available through the shared panel.
       $advancedSearch = filter_var($sf_request->getParameter('showAdvanced'), FILTER_VALIDATE_BOOLEAN);
     ?>
-    <?php echo get_partial('informationobject/searchOptions', ['advancedSearch' => $advancedSearch]); ?>
+    <?php echo get_partial('search/searchOptions', ['active' => $advancedSearch ? 'advanced' : 'basic']); ?>
 <?php end_slot(); ?>
 
 <?php slot('before-content'); ?>
