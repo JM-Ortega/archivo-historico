@@ -1,0 +1,572 @@
+// Navegación temática «Lugares» (Navegar → Lugares, taxonomy/index de la taxonomía de lugares).
+//
+// Todo bajo .ah-places, que solo pone la vista modules/taxonomy/templates/indexSuccess.php del plugin cuando la taxonomía es
+// Lugares. Traslada al theme las medidas del prototipo «Archivo Histórico App Design» (features/places/PlacesBrowser.tsx,
+// Tailwind) con los tokens de _tokens.scss. Las equivalencias Tailwind → rem se anotan donde no son evidentes.
+
+$ah-places-breakpoint-lg: 1024px; // lg de Tailwind: panel lateral a la izquierda.
+$ah-places-breakpoint-xl: 1280px; // xl de Tailwind: barra de filtros en una fila y tabla en lugar de fichas.
+$ah-places-shadow: 0 10px 15px -3px rgba($ah-blue, 0.08), 0 4px 6px -4px rgba($ah-blue, 0.08); // shadow-lg shadow-navy/8
+$ah-places-band: rgba($ah-surface-soft, 0.7); // bg-surface/70
+
+.ah-places {
+  max-width: 64rem; // max-w-5xl
+  margin: 0 auto;
+  padding: $ah-space-5 0 $ah-space-6;
+  color: $ah-text;
+  font-family: $ah-font-sans;
+
+  // --- Encabezado ---------------------------------------------------------------------------------------------------
+
+  &-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $ah-space-4;
+    margin-bottom: 1.75rem; // mb-7
+  }
+
+  &-header-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    margin-top: $ah-space-1;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-blue;
+    color: $ah-panel;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba($ah-blue, 0.15), 0 2px 4px -2px rgba($ah-blue, 0.15);
+  }
+
+  &-kicker {
+    margin: 0 0 $ah-space-1;
+    color: $ah-blue-action;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  &-title {
+    margin: 0;
+    color: $ah-blue;
+    font-family: $ah-font-serif;
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.25;
+
+    @media (min-width: 640px) {
+      font-size: 2.25rem;
+    }
+  }
+
+  &-label {
+    margin: $ah-space-2 0 0;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+
+    &::after {
+      @include ah-accent-rule(5rem);
+
+      height: 2px;
+      margin-top: $ah-space-3;
+      border-radius: 0;
+    }
+  }
+
+  // --- Rejilla ------------------------------------------------------------------------------------------------------
+
+  &-layout {
+    display: grid;
+    gap: $ah-space-5;
+
+    @media (min-width: $ah-places-breakpoint-lg) {
+      grid-template-columns: 15rem minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  &-main {
+    min-width: 0;
+  }
+
+  &-panel {
+    overflow: hidden;
+    border: $border-width solid $ah-line;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-panel;
+    background-image:
+      linear-gradient(135deg, rgba($white, 0.72), transparent 45%),
+      repeating-linear-gradient(90deg, rgba($ah-blue, 0.012) 0 1px, transparent 1px 7px);
+    box-shadow: $ah-places-shadow;
+  }
+
+  // --- Panel lateral «Navegar lugares» ------------------------------------------------------------------------------
+
+  &-quick {
+    @media (min-width: $ah-places-breakpoint-lg) {
+      position: sticky;
+      top: 7rem;
+    }
+  }
+
+  &-quick-header {
+    padding: $ah-space-4 1.25rem;
+    border-bottom: $border-width solid $ah-line;
+    background-color: $ah-places-band;
+  }
+
+  &-quick-title {
+    margin: 0;
+    color: $ah-blue;
+    font-family: $ah-font-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  &-quick-text {
+    margin: $ah-space-1 0 0;
+    color: $ah-text-muted;
+    font-size: 0.75rem;
+    line-height: 1.625;
+  }
+
+  &-quick-list {
+    max-height: 24rem;
+    overflow-y: auto;
+  }
+
+  &-quick-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $ah-space-3;
+    padding: $ah-space-3 1.25rem;
+    color: $ah-blue-action;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    & + & {
+      border-top: $border-width solid $ah-line;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: $ah-surface-soft;
+      color: $ah-blue;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  &-quick-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-count {
+    flex: none;
+    padding: 0.125rem $ah-space-2;
+    border-radius: 999px;
+    background-color: $ah-surface-soft;
+    color: $ah-text-muted;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  &-quick-empty {
+    margin: 0;
+    padding: $ah-space-4 1.25rem;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+  }
+
+  // --- Barra de búsqueda y orden ------------------------------------------------------------------------------------
+
+  &-toolbar {
+    display: grid;
+    gap: $ah-space-3;
+    margin-bottom: 1.25rem;
+    padding: $ah-space-4;
+
+    @media (min-width: 640px) {
+      padding: 1.25rem;
+    }
+
+    @media (min-width: $ah-places-breakpoint-xl) {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+    }
+  }
+
+  &-field {
+    width: 100%;
+    padding: $ah-space-3 $ah-space-4;
+    border: $border-width solid rgba($ah-line-strong, 0.7);
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    color: $ah-text;
+    font-family: $ah-font-sans;
+    font-size: $ah-font-size-small;
+    line-height: 1.25rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &::placeholder {
+      color: rgba($ah-text-muted, 0.7);
+    }
+
+    &:hover {
+      border-color: $ah-line-strong;
+    }
+
+    &:focus {
+      border-color: $ah-blue-action;
+      outline: 0;
+      box-shadow: 0 0 0 4px rgba($ah-blue-action, 0.1);
+    }
+  }
+
+  &-search {
+    position: relative;
+    display: block;
+    margin: 0;
+  }
+
+  &-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 0.875rem;
+    color: $ah-text-muted;
+    font-size: 1rem;
+    pointer-events: none;
+    transform: translateY(-50%);
+  }
+
+  &-search-input {
+    padding-left: 2.75rem;
+  }
+
+  &-sort {
+    display: flex;
+    align-items: center;
+    gap: $ah-space-2;
+    margin: 0;
+  }
+
+  &-sort-label {
+    flex: none;
+    color: $ah-text-muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  &-select {
+    min-width: 8.5rem;
+    padding-top: 0.625rem;
+    padding-right: 2.25rem;
+    padding-bottom: 0.625rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23173651' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='m4 6 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 14px 14px;
+    cursor: pointer;
+  }
+
+  // --- Resultados ---------------------------------------------------------------------------------------------------
+
+  &-term {
+    color: $ah-blue-action;
+    font-family: $ah-font-serif;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    line-height: 1.5rem;
+    text-decoration: none;
+    transition: color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      color: $ah-blue;
+      text-decoration: underline;
+      text-decoration-color: $ah-accent;
+      text-underline-offset: 4px;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+
+      border-radius: 2px;
+    }
+  }
+
+  &-descendants,
+  &-usefor {
+    color: $ah-text-muted;
+    font-size: $ah-font-size-xsmall;
+  }
+
+  &-usefor {
+    margin: $ah-space-1 0 0;
+  }
+
+  &-note {
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+  }
+
+  &-number {
+    color: $ah-blue;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+  }
+
+  // Fichas (por debajo de xl).
+  &-cards {
+    @media (min-width: $ah-places-breakpoint-xl) {
+      display: none;
+    }
+  }
+
+  &-card {
+    padding: 1.25rem;
+
+    & + & {
+      border-top: $border-width solid $ah-line;
+    }
+
+    .ah-places-term {
+      font-size: 1rem;
+    }
+  }
+
+  &-card-data {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $ah-space-3;
+    margin: $ah-space-4 0 0;
+    font-size: $ah-font-size-small;
+
+    dt {
+      color: $ah-text-muted;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    dd {
+      margin: $ah-space-1 0 0;
+    }
+
+    .ah-places-note {
+      color: $ah-text;
+    }
+  }
+
+  &-card-wide {
+    grid-column: 1 / -1;
+  }
+
+  // Tabla (desde xl).
+  &-table-wrap {
+    display: none;
+    overflow-x: auto;
+
+    @media (min-width: $ah-places-breakpoint-xl) {
+      display: block;
+    }
+  }
+
+  &-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    text-align: left;
+
+    thead tr {
+      border-bottom: $border-width solid $ah-line;
+      background-color: $ah-places-band;
+    }
+
+    th {
+      padding: $ah-space-4;
+      color: $ah-text-muted;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      line-height: 1.35;
+      text-transform: uppercase;
+      vertical-align: middle;
+    }
+
+    td {
+      padding: $ah-space-4;
+      vertical-align: top;
+    }
+
+    th + th,
+    td + td {
+      border-left: $border-width solid $ah-line;
+    }
+
+    th:first-child,
+    td:first-child {
+      padding-left: 1.25rem;
+      padding-right: 1.25rem;
+    }
+
+    tbody tr {
+      transition: background-color 0.15s ease;
+
+      & + tr {
+        border-top: $border-width solid $ah-line;
+      }
+
+      &:hover {
+        background-color: rgba($ah-surface-soft, 0.4);
+      }
+    }
+  }
+
+  &-col-term {
+    width: 36%;
+  }
+
+  &-col-note {
+    width: 24%;
+  }
+
+  &-col-count {
+    width: 20%;
+  }
+
+  // --- Paginación ---------------------------------------------------------------------------------------------------
+
+  &-pager {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $ah-space-3;
+    margin-top: 1.25rem;
+  }
+
+  &-pager-count {
+    margin: 0;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+  }
+
+  &-pagination {
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+    border: $border-width solid $ah-line;
+    border-radius: $ah-radius-panel;
+    background-color: $ah-panel;
+    box-shadow: 0 1px 2px rgba($black, 0.05);
+  }
+
+  &-page {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.625rem $ah-space-4;
+    color: $ah-blue-action;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    line-height: 1.25rem;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+
+    & + & {
+      border-left: $border-width solid $ah-line;
+    }
+
+    &:hover,
+    &:focus-visible {
+      background-color: $ah-surface-soft;
+      color: $ah-blue-action;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+
+    &.is-active {
+      background-color: $ah-blue;
+      color: $ah-panel;
+    }
+
+    &.is-disabled {
+      color: rgba($ah-text-muted, 0.5);
+      cursor: not-allowed;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+
+  // --- Sin resultados -----------------------------------------------------------------------------------------------
+
+  &-empty {
+    padding: 3.5rem $ah-space-5;
+    text-align: center;
+  }
+
+  &-empty-icon {
+    color: $ah-blue-secondary;
+    font-size: 2.25rem;
+  }
+
+  &-empty-title {
+    margin: $ah-space-4 0 0;
+    color: $ah-blue;
+    font-family: $ah-font-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  &-empty-text {
+    margin: $ah-space-2 0 0;
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+  }
+
+  &-empty-action {
+    display: inline-block;
+    margin-top: 1.25rem;
+    padding: $ah-space-3 $ah-space-5;
+    border-radius: 999px;
+    background-color: $ah-blue-action;
+    color: $ah-panel;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+      background-color: $ah-blue;
+      color: $ah-panel;
+    }
+  }
+
+  &-actions {
+    margin-top: $ah-space-4;
+  }
+}
+
+// Lienzo de la página (bg-canvas del prototipo), solo cuando se muestra esta vista.
+body.taxonomy.index:has(.ah-places) {
+  background-color: $ah-canvas;
+}
