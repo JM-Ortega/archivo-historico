@@ -1,6 +1,7 @@
 import "../../arDominionB5Plugin/js/main";
 import "./help";
 import "./cataloging-form";
+import "./places";
 
 const initializeLoginControls = () => {
   const forgot = document.querySelector("[data-ah-login-forgot]");
