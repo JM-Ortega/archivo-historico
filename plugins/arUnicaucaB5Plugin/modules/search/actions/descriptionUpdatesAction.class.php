@@ -3,8 +3,7 @@
 /*
  * Derived from AtoM v2.10.2 (upstream commit 02a70b8a4b23a805256abd0a14cd0f93e311a581),
  * apps/qubit/modules/search/actions/descriptionUpdatesAction.class.php (Administrador → Historial).
- * Cambios: el filtro «Tipo» ya no ofrece Registro de autoridad, Institución archivística ni Término
- * (OCULTO-023), y el filtro «Institución archivística» arranca en «Archivo Central del Cauca» si esa
+ * Cambios: el filtro «Tipo» solo ofrece Descripción archivística (OCULTO-023), y el filtro «Institución archivística» arranca en «Archivo Central del Cauca» si esa
  * institución existe.
  *
  * This file is part of the Access to Memory (AtoM) software.
@@ -237,9 +236,10 @@ class SearchDescriptionUpdatesAction extends sfAction
             case 'className':
                 /* OCULTO-023
                    SERVÍA PARA: consultar en el historial los registros de autoridad, las instituciones
-                   archivísticas y los términos creados o modificados.
-                   MOTIVO: el archivo no maneja registros de autoridad ni instituciones (OCULTO-004 a 016) y no
-                   gestiona taxonomías desde la interfaz; el historial queda en descripciones archivísticas.
+                   archivísticas, los términos y las funciones creados o modificados.
+                   MOTIVO: el archivo no maneja registros de autoridad, instituciones (OCULTO-004 a 016) ni
+                   funciones, y no gestiona taxonomías desde la interfaz; el historial queda en descripciones
+                   archivísticas.
                    Limitación: se ocultan las opciones; la URL con className=… sigue respondiendo.
                    Código original:
                 $choices = [
@@ -252,7 +252,6 @@ class SearchDescriptionUpdatesAction extends sfAction
                 */
                 $choices = [
                     'QubitInformationObject' => sfConfig::get('app_ui_label_informationobject'),
-                    'QubitFunctionObject' => sfConfig::get('app_ui_label_function'),
                 ];
 
                 $this->form->setValidator($name, new sfValidatorString());
