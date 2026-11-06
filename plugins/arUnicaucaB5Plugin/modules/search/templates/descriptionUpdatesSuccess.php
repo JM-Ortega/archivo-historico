@@ -19,7 +19,7 @@ $hasResults = isset($pager) && $pager->getNbResults();
 
   <div class="ah-updates-header">
     <span class="ah-updates-header-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" focusable="false">
         <path d="M4.5 8V4.5M4.5 4.5H8M4.5 4.5A9 9 0 1 1 3 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -202,12 +202,13 @@ $hasResults = isset($pager) && $pager->getNbResults();
   <?php } else { ?>
 
     <div class="ah-updates-panel ah-updates-empty">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
-        <path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+        <circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="1.8"/>
+        <path d="m15 15 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
       <h2><?php echo __('No se encontraron incorporaciones'); ?></h2>
       <p><?php echo __('Ajuste o elimine los filtros para consultar el historial.'); ?></p>
+      <?php echo link_to(__('Limpiar filtros'), ['module' => 'search', 'action' => 'descriptionUpdates'], ['class' => 'ah-updates-btn ah-updates-btn-primary ah-updates-empty-action']); ?>
     </div>
 
   <?php } ?>
