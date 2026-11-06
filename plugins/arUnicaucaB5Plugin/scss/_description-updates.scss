@@ -12,6 +12,11 @@ body.search.descriptionUpdates {
     linear-gradient(135deg, rgba($white, 0.82), transparent 48%),
     repeating-linear-gradient(0deg, rgba($ah-text, 0.014) 0 1px, transparent 1px 5px);
 
+  // Contenedor más ancho que el container-xxl nativo (1320px), igual que «Lugares», para reducir el espacio lateral vacío.
+  #wrapper {
+    max-width: 1600px;
+  }
+
   #main-column {
     color: $ah-text;
     font-family: $ah-font-sans;
