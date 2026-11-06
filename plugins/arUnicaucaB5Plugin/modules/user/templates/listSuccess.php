@@ -139,9 +139,16 @@
                 if ($item->hasGroup(QubitAclGroup::ADMINISTRATOR_ID)) {
                     $role = 'Administrador';
                 } elseif ($item->hasGroup(QubitAclGroup::EDITOR_ID)) {
-                    $role = 'Editor';
+                    $role = 'Catalogador';
                 } else {
+                    /* OCULTO-021
+                       SERVÍA PARA: mostrar «Usuario autenticado» (nombre del grupo autenticado de AtoM) como rol
+                       de las cuentas que no son administrador ni catalogador.
+                       MOTIVO: el archivo solo usa administrador y catalogador; el grupo autenticado no se muestra.
+                       Código original:
                     $role = 'Usuario autenticado';
+                    */
+                    $role = 'Sin rol asignado';
                 }
                 $name = trim((string) $item->username);
                 $initials = strtoupper(substr($name, 0, 2));

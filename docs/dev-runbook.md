@@ -177,7 +177,7 @@ Prueba de integración (proyecto aislado, no toca la DEV; ~4 min): `config/atom/
 
 `reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en cinco pasos que corren en orden
 (`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado**, (2) `check_for_updates = 0` (ver
-[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)), (3) los [términos propios del proyecto](#términos-project-managed-de-taxonomías) existen, (4) `require_strong_passwords = 1` y (5) `inherit_code_informationobject = 0`. No es un reconciliador genérico. Vive en `config/atom/`:
+[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)), (3) los [términos propios del proyecto](#términos-project-managed-de-taxonomías) existen, (4) `require_strong_passwords = 1`, (5) `inherit_code_informationobject = 0` y, después de la política de privacidad y la página «Acerca de», (8) el grupo `editor` (101) se llama «catalogador». No es un reconciliador genérico. Vive en `config/atom/`:
 
 | Fichero | Papel |
 | --- | --- |
@@ -187,6 +187,7 @@ Prueba de integración (proyecto aislado, no toca la DEV; ~4 min): `config/atom/
 | `config/atom/reconcile-check-for-updates.php` | Paso 2: `check_for_updates = 0` (vía `php symfony tools:run`) |
 | `config/atom/reconcile-strong-passwords.php` | Paso 4: `require_strong_passwords = 1` (vía `php symfony tools:run`) |
 | `config/atom/reconcile-reference-codes.php` | Paso 5: `inherit_code_informationobject = 0` (vía `php symfony tools:run`) |
+| `config/atom/reconcile-group-names.php` | Paso 8: el grupo `editor` de AtoM (id 101) se llama «catalogador» en `es` (vía `php symfony tools:run`). Solo ese nombre; nunca permisos, miembros ni el nombre `en`. Si alguien le puso otro nombre, o si otro grupo ya se llama «catalogador», es STOP (100) sin escribir |
 | `config/atom/reconcile-terms.php` | Paso 3: términos PROJECT-MANAGED de taxonomías (vía `php symfony tools:run`); el desired state está en el propio script |
 | `config/atom/runtime-config.sh`, `config/atom/dev-secrets.sh` | Entrypoint del proyecto y proveedor del secreto DEV (ver arriba) |
 | `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-reconcile-terms.sh`, `config/atom/tests/test-reconcile-strong-passwords.sh`, `config/atom/tests/test-reconcile-reference-codes.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
@@ -235,7 +236,7 @@ su padre o su cultura fuente, o el `code` está repetido o en otra taxonomía, e
 Un homónimo ajeno aparecido después (con el nuestro correcto) solo se **avisa** en el log (`AVISO`): la identidad del nuestro sigue siendo inequívoca.
 Nunca borra. Si se borra uno, el siguiente reconcile lo recrea con otro id (no distingue "nunca creado" de "borrado"), pero **recrear no recupera lo perdido**:
 borrar el nivel deja en NULL el nivel de las descripciones que lo usaban, y borrar un tipo de evento **elimina en cascada todos sus eventos** (p. ej. todos los
-Remitente). Hoy el grupo `editor` de AtoM puede borrar términos; impedirlo es un requisito pendiente antes de entregar cuentas reales de catalogación.
+Remitente). Hoy el grupo catalogador (el `editor` de AtoM, id 101) puede borrar términos; impedirlo es un requisito pendiente antes de entregar cuentas reales de catalogación.
 
 Ojo: el import CSV/EAD de AtoM resuelve el nivel de descripción **por nombre en la cultura del usuario** y, si no lo encuentra, crea un término nuevo; el export
 CSV usa siempre el nombre `en`. Un CSV exportado (`Section`) e importado en `es` crea un `Section` duplicado sin `code` (lo mismo pasa con los niveles estándar,
