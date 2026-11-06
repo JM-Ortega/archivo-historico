@@ -73,9 +73,13 @@
             */ ?>
             <?php
               $visibleGroupIds = [QubitAclGroup::ADMINISTRATOR_ID, QubitAclGroup::EDITOR_ID];
-              $groups = array_filter($resource->getAclGroups(), function ($group) use ($visibleGroupIds) {
-                  return in_array((int) $group->id, $visibleGroupIds, true);
-              });
+              // getAclGroups() llega envuelto por el escaper de Symfony (no es un array): se recorre con foreach.
+              $groups = [];
+              foreach ($resource->getAclGroups() as $group) {
+                  if (in_array((int) $group->id, $visibleGroupIds, true)) {
+                      $groups[] = $group;
+                  }
+              }
             ?>
             <?php if (0 < count($groups)) { ?>
               <ul class="ah-user-chips">
