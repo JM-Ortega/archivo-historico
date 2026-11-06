@@ -11,7 +11,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-020 | 06/11/2026 | Columnas de grupos distintos de administrador y catalogador en la matriz de permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMatrix.php` | Oculto |
 | OCULTO-021 | 06/11/2026 | Rol «Usuario autenticado» en la lista de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/listSuccess.php` | Reemplazado |
 | OCULTO-022 | 06/11/2026 | Pestañas Registros de autoridad, Instituciones archivísticas y Taxonomías de los permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` | Oculto |
-| OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística y Término del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
+| OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística, Término y Función del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -89,8 +89,8 @@ Una ficha por cada fila del índice.
 | --- | --- |
 | Identificador | OCULTO-023 |
 | Tipo y método | Oculto (lista original comentada y reemplazada) |
-| Elemento y dónde se veía | Opciones **Registro de autoridad**, **Institución archivística** y **Término** del campo **Tipo** en Administrador → Historial → Opciones de filtrado. Quedan Descripción archivística (por defecto) y Función. |
+| Elemento y dónde se veía | Opciones **Registro de autoridad**, **Institución archivística**, **Término** y **Función** del campo **Tipo** en Administrador → Historial → Opciones de filtrado. Solo queda Descripción archivística. |
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` (override de `upstream/atom/apps/qubit/modules/search/actions/descriptionUpdatesAction.class.php`) |
-| Para qué servía | Consultar en el historial los registros de autoridad, las instituciones y los términos creados o modificados. |
-| Motivo | El archivo no maneja registros de autoridad ni instituciones y no gestiona taxonomías desde la interfaz. Limitación: la URL con `className=QubitActor`, `QubitRepository` o `QubitTerm` sigue respondiendo. En el mismo override, el filtro **Institución archivística** arranca en «Archivo Central del Cauca» si existe (no es un ocultamiento). |
+| Para qué servía | Consultar en el historial los registros de autoridad, las instituciones, los términos y las funciones creados o modificados. |
+| Motivo | El archivo no maneja registros de autoridad, instituciones ni funciones, y no gestiona taxonomías desde la interfaz. Limitación: la URL con `className=QubitActor`, `QubitRepository`, `QubitTerm` o `QubitFunctionObject` sigue respondiendo. En el mismo override, el filtro **Institución archivística** arranca en «Archivo Central del Cauca» si existe (no es un ocultamiento). |
 
