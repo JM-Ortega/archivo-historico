@@ -10,6 +10,8 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-019 | 06/11/2026 | Grupos distintos de administrador y catalogador en «Grupos asignados» de la ficha del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
 | OCULTO-020 | 06/11/2026 | Columnas de grupos distintos de administrador y catalogador en la matriz de permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMatrix.php` | Oculto |
 | OCULTO-021 | 06/11/2026 | Rol «Usuario autenticado» en la lista de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/listSuccess.php` | Reemplazado |
+| OCULTO-022 | 06/11/2026 | Pestañas Registros de autoridad, Instituciones archivísticas y Taxonomías de los permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` | Oculto |
+| OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística y Término del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -69,3 +71,26 @@ Una ficha por cada fila del índice.
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/listSuccess.php` |
 | Para qué servía | Indicar que la cuenta solo pertenece al grupo autenticado de AtoM. |
 | Motivo | El grupo autenticado no se muestra. Esas cuentas ahora dicen **Sin rol asignado**. |
+
+### OCULTO-022 - Pestañas de permisos sobre autoridades, instituciones y taxonomías
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-022 |
+| Tipo y método | Oculto (excluido por condición: lista `$hiddenAclItems`; el código original queda intacto) |
+| Elemento y dónde se veía | Pestañas **Registros de autoridad**, **Instituciones archivísticas** y **Taxonomías** de la sección Permisos, en la ficha de cada usuario (Administrador → Usuarios → clic en un usuario) y en sus vistas de permisos. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` (partial que usan `indexSuccess.mod_standard.php` y las cuatro vistas `index*AclSuccess.php`) |
+| Para qué servía | Consultar los permisos del usuario y de sus grupos sobre registros de autoridad, instituciones archivísticas y términos de taxonomías. |
+| Motivo | El archivo no maneja registros de autoridad ni instituciones y no gestiona taxonomías desde la interfaz; solo quedan los permisos sobre descripciones archivísticas. Limitación: las URL `user/indexActorAcl`, `indexRepositoryAcl` e `indexTermAcl` siguen abriendo. Para revertir, quitar el `name` de `$hiddenAclItems`. |
+
+### OCULTO-023 - Tipos ajenos en el filtro del historial
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-023 |
+| Tipo y método | Oculto (lista original comentada y reemplazada) |
+| Elemento y dónde se veía | Opciones **Registro de autoridad**, **Institución archivística** y **Término** del campo **Tipo** en Administrador → Historial → Opciones de filtrado. Quedan Descripción archivística (por defecto) y Función. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` (override de `upstream/atom/apps/qubit/modules/search/actions/descriptionUpdatesAction.class.php`) |
+| Para qué servía | Consultar en el historial los registros de autoridad, las instituciones y los términos creados o modificados. |
+| Motivo | El archivo no maneja registros de autoridad ni instituciones y no gestiona taxonomías desde la interfaz. Limitación: la URL con `className=QubitActor`, `QubitRepository` o `QubitTerm` sigue respondiendo. En el mismo override, el filtro **Institución archivística** arranca en «Archivo Central del Cauca» si existe (no es un ocultamiento). |
+
