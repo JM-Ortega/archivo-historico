@@ -241,6 +241,8 @@ services:
   #   4. require_strong_passwords = 1 (opción nativa «Require strong passwords»): mismo patrón que el paso 2 (escribe solo si difiere,
   #      invalida solo `settings:i18n:*` y exige la postcondición en BD y caché).
   #   5. inherit_code_informationobject = 0 (código de referencia = `identifier`, sin anteponer ancestros ni país/repositorio): mismo patrón.
+  #   8. nombre `es` del grupo editor (101) = «catalogador» (config/atom/reconcile-group-names.php). Solo ese nombre; no toca permisos,
+  #      miembros ni otros grupos. Nombre ajeno a «editor»/«catalogador» u homónimo en otro grupo → STOP sin escribir.
   # Idempotente y no destructivo. No instala, no siembra ni compila assets.
   #
   #   docker compose run --rm reconcile; echo $?
@@ -252,7 +254,7 @@ services:
   #
   # Entrypoint del proyecto (runtime-config.sh: cultura, timezone y secreto CSRF; delega en el upstream) y monta RO solo lo
   # necesario: el plugin (para validar su source y para que la CLI de AtoM lo cargue), los scripts y el desired state.
-  # Escribe únicamente en la BD (vía tools:atom-plugins, QubitSetting y QubitTerm), en la caché de settings de Memcached y, al crear un
+  # Escribe únicamente en la BD (vía tools:atom-plugins, QubitSetting, QubitTerm y QubitAclGroup), en la caché de settings de Memcached y, al crear un
   # término, en el índice de búsqueda (como cualquier alta de término en AtoM).
   reconcile:
     <<: *atom-image
@@ -275,6 +277,7 @@ services:
       - ./config/atom/content/privacy-policy.es.md:/project/content/privacy-policy.es.md:ro
       - ./config/atom/reconcile-about.php:/project/scripts/reconcile-about.php:ro
       - ./config/atom/content/about-platform.es.md:/project/content/about-platform.es.md:ro
+      - ./config/atom/reconcile-group-names.php:/project/scripts/reconcile-group-names.php:ro
     depends_on:
       bootstrap:
         condition: service_completed_successfully

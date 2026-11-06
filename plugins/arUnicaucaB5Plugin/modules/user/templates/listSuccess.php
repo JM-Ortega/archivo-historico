@@ -139,7 +139,7 @@
                 if ($item->hasGroup(QubitAclGroup::ADMINISTRATOR_ID)) {
                     $role = 'Administrador';
                 } elseif ($item->hasGroup(QubitAclGroup::EDITOR_ID)) {
-                    $role = 'Editor';
+                    $role = 'Catalogador';
                 } else {
                     $role = 'Usuario autenticado';
                 }
