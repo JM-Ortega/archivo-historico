@@ -3,12 +3,12 @@
     <h2 class="accordion-header" id="heading-adv-search">
       <button class="accordion-button<?php echo $show ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-adv-search" aria-expanded="<?php echo $show ? 'true' : 'false'; ?>" aria-controls="collapse-adv-search">
         <span class="ah-updates-filter-label">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
             <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
           <?php echo __('Filter options'); ?>
         </span>
-        <svg class="ah-updates-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <svg class="ah-updates-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
           <path d="m7 9 5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
