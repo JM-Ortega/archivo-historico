@@ -9,7 +9,8 @@ body.search.descriptionUpdates {
   background-image:
     radial-gradient(circle at 95% 18%, rgba($ah-blue-action, 0.09), transparent 28rem),
     radial-gradient(circle at 6% 74%, rgba($ah-blue-secondary, 0.12), transparent 24rem),
-    linear-gradient(135deg, rgba($white, 0.82), transparent 48%);
+    linear-gradient(135deg, rgba($white, 0.82), transparent 48%),
+    repeating-linear-gradient(0deg, rgba($ah-text, 0.014) 0 1px, transparent 1px 5px);
 
   #main-column {
     color: $ah-text;
@@ -119,14 +120,15 @@ body.search.descriptionUpdates {
       align-items: center;
       justify-content: space-between;
       gap: $ah-space-4;
-      padding: $ah-space-4 $ah-space-5;
+      padding: $ah-space-4 1.25rem;
       border: 0;
       border-radius: 0;
       background: transparent;
       box-shadow: none;
       color: $ah-blue;
       font-family: $ah-font-sans;
-      font-size: $ah-font-size-body;
+      font-size: $ah-font-size-small;
+      line-height: 1.25rem;
       font-weight: 700;
       text-align: left;
       transition: background-color 0.15s ease;
@@ -147,8 +149,14 @@ body.search.descriptionUpdates {
         box-shadow: inset $ah-focus-ring;
       }
 
+      @include media-breakpoint-up(sm) {
+        padding-right: $ah-space-5;
+        padding-left: $ah-space-5;
+        font-size: $ah-font-size-body;
+        line-height: 1.5rem;
+      }
+
       &:not(.collapsed) {
-        border-bottom: 3px solid mix($ah-blue-secondary, $white, 70%);
         color: $ah-blue;
         background: transparent;
         box-shadow: none;
@@ -178,8 +186,13 @@ body.search.descriptionUpdates {
     }
 
     .accordion-body {
-      padding: 1.75rem 1.75rem $ah-space-5;
-      background: transparent;
+      padding: 1.25rem;
+      border-top: 1px solid $ah-line;
+      background-color: rgba($ah-surface-soft, 0.4);
+
+      @include media-breakpoint-up(sm) {
+        padding: 1.25rem $ah-space-5;
+      }
     }
 
     .ah-updates-section-title {
@@ -193,7 +206,7 @@ body.search.descriptionUpdates {
     }
 
     .criteria {
-      --bs-gutter-x: 1.875rem;
+      --bs-gutter-x: #{$ah-space-4};
       margin-bottom: $ah-space-5 !important;
       padding-bottom: 0;
     }
@@ -203,7 +216,7 @@ body.search.descriptionUpdates {
     }
 
     .form-label {
-      margin-bottom: 0.4rem;
+      margin-bottom: 0.375rem;
       color: $ah-blue;
       font-size: $ah-font-size-small;
       font-weight: 700;
@@ -230,9 +243,9 @@ body.search.descriptionUpdates {
 
     .form-control,
     .form-select {
-      min-height: 3rem;
-      padding: 0.7rem $ah-space-4;
-      border: 1px solid $ah-line-control;
+      min-height: 0;
+      padding: 0.75rem $ah-space-4;
+      border: 1px solid rgba($ah-line-strong, 0.7);
       border-radius: $ah-radius-control;
       background-color: $ah-panel;
       color: $ah-text;
@@ -241,7 +254,7 @@ body.search.descriptionUpdates {
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
       &:hover {
-        border-color: $ah-blue-deep;
+        border-color: $ah-line-strong;
       }
 
       &:focus {
@@ -252,6 +265,7 @@ body.search.descriptionUpdates {
 
     .form-select {
       padding-right: 2.75rem;
+      line-height: 1.25rem;
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3e%3cpath d='m7 9 5 5 5-5' stroke='%23173651' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
       background-position: right 0.85rem center;
       background-size: 1.25rem 1.25rem;
@@ -271,7 +285,7 @@ body.search.descriptionUpdates {
       width: 1.15rem;
       height: 1.15rem;
       margin: 0;
-      border: 1.5px solid $ah-line-control;
+      border: 1.5px solid $ah-line-strong;
       background-color: $ah-panel;
       cursor: pointer;
 
@@ -299,8 +313,11 @@ body.search.descriptionUpdates {
     gap: 0.6rem;
     margin: $ah-space-2 0 0;
     padding: 1.25rem 0 0;
+    border: 0;
     border-top: 1px solid $ah-line;
+    border-radius: 0;
     background: transparent;
+    box-shadow: none;
     list-style: none;
   }
 
@@ -309,42 +326,50 @@ body.search.descriptionUpdates {
     align-items: center;
     justify-content: center;
     min-height: 0;
-    padding: 0.7rem $ah-space-5;
-    border: 1px solid $ah-blue;
+    padding: 0.75rem 1.75rem;
+    border: 0;
     border-radius: 999px;
     font-family: $ah-font-sans;
     font-size: $ah-font-size-small;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.25rem;
+    text-decoration: none;
     cursor: pointer;
     transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
     &:focus-visible {
-      @include ah-focus-ring;
+      outline: 2px solid $ah-blue;
+      outline-offset: 2px;
     }
   }
 
+  // primaryButtonClass del diseño: bg-blue, hover navy.
   .ah-updates-btn-primary {
-    background-color: $ah-blue;
+    background-color: $ah-blue-action;
     color: $ah-panel;
 
     &:hover,
     &:focus {
-      border-color: $ah-blue-deep;
-      background-color: $ah-blue-deep;
+      background-color: $ah-blue;
       color: $ah-panel;
     }
   }
 
+  // secondaryButtonClass del diseño: texto azul, sin borde; hover con fondo suave.
   .ah-updates-btn-outline {
-    background-color: $ah-panel;
-    color: $ah-blue;
+    padding-right: 1.25rem;
+    padding-left: 1.25rem;
+    background-color: transparent;
+    color: $ah-blue-action;
 
     &:hover,
     &:focus {
-      border-color: $ah-blue;
       background-color: $ah-surface-soft;
       color: $ah-blue;
+    }
+
+    &:focus-visible {
+      outline-color: $ah-blue-action;
     }
   }
 
@@ -494,6 +519,20 @@ body.search.descriptionUpdates {
         text-transform: uppercase;
       }
 
+      // En la tarjeta del diseño el título va sin etiqueta.
+      td:first-child::before {
+        content: none;
+      }
+
+      td + td {
+        margin-top: $ah-space-4;
+      }
+
+      .ah-updates-title,
+      .ah-updates-title a {
+        font-size: $ah-font-size-body;
+      }
+
       .ah-updates-date {
         white-space: normal;
       }
@@ -507,8 +546,10 @@ body.search.descriptionUpdates {
     text-align: center;
 
     svg {
+      display: block;
       width: 2.25rem;
       height: 2.25rem;
+      margin: 0 auto;
       color: $ah-blue-secondary;
     }
 
@@ -524,6 +565,12 @@ body.search.descriptionUpdates {
       margin: $ah-space-2 0 0;
       color: $ah-text-muted;
       font-size: $ah-font-size-small;
+    }
+
+    .ah-updates-empty-action {
+      margin-top: 1.25rem;
+      padding-right: $ah-space-5;
+      padding-left: $ah-space-5;
     }
   }
 
