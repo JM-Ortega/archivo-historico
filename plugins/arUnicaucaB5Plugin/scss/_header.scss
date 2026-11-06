@@ -68,6 +68,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  padding-right: 1.25rem;
+  border-right: 1px solid rgba(255, 255, 255, .25);
   text-align: right;
 
   strong {
@@ -81,39 +83,144 @@
   margin: 0;
 }
 
-.ah-site-header .ah-site-header-tools > .dropdown > a,
-.ah-site-header .ah-site-header-tools > .dropdown > button {
+.ah-login-header-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
   min-width: 138px;
   padding: .6rem 1rem;
   color: #fff;
-  border: 1px solid #b8d6e9;
+  border: 1px solid rgba(255, 255, 255, .8);
   border-radius: 999px;
   background-color: transparent;
-  font-size: .75rem;
+  font-size: .8rem;
   font-weight: 700;
-  text-align: center;
   text-decoration: none;
+
+  .fa-chevron-right {
+    font-size: .75rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #0b4778;
+    border-color: #fff;
+    background-color: #e4f1f8;
+    text-decoration: none;
+  }
 }
 
-.ah-site-header .ah-site-header-tools > .dropdown > a:hover,
-.ah-site-header .ah-site-header-tools > .dropdown > a:focus,
-.ah-site-header .ah-site-header-tools > .dropdown > button:hover,
-.ah-site-header .ah-site-header-tools > .dropdown > button:focus {
-  color: #0b4778;
-  border-color: #fff;
-  background-color: #e4f1f8;
+.ah-user-header-button {
+  min-width: 138px;
+  padding: .6rem 1rem;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  background-color: transparent;
+  font-size: .8rem;
+  font-weight: 700;
+
+  &:hover,
+  &:focus-visible,
+  &.show {
+    color: #0b4778;
+    border-color: #fff;
+    background-color: #e4f1f8;
+  }
 }
 
-.ah-site-toggler {
-  margin: 0 !important;
-  padding: .5rem .65rem;
-  border-color: #b8d6e9;
+.ah-header-utilities {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > .nav-item > .dropdown-toggle::after {
+    display: none;
+  }
+
+  > .nav-item > .nav-link,
+  > .nav-item > .nav-link:hover,
+  > .nav-item > .nav-link:focus {
+    color: #fff !important;
+  }
 }
 
-.ah-native-navigation {
-  flex-basis: 100%;
-  justify-content: flex-end;
-  padding: .5rem 0;
+.ah-header-utilities .dropdown-menu,
+.ah-header-dropdown-menu {
+  min-width: 290px;
+  margin-top: .75rem !important;
+  padding: .8rem .7rem .65rem;
+  border: 1px solid #c5d5e0;
+  border-radius: .55rem;
+  background-color: #fffdf9;
+  box-shadow: 0 .45rem 1.2rem rgba(#003b63, .18);
+
+  .dropdown-header {
+    margin: 0 .15rem .35rem;
+    padding: .25rem .7rem .75rem;
+    color: #5b7488;
+    border-bottom: 1px solid #c5d5e0;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .65rem .7rem;
+    color: $ah-blue-deep;
+    font-size: .95rem;
+    font-weight: 700;
+    border-radius: .25rem;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      background-color: #eaf3f8;
+    }
+  }
+
+  .text-muted {
+    color: $ah-text-muted !important;
+  }
+}
+
+.ah-header-utilities .dropdown-menu .dropdown-item {
+  &::after {
+    color: $ah-blue-action;
+    content: "\f054";
+    font-family: "Font Awesome 6 Free";
+    font-size: .65rem;
+    font-weight: 900;
+  }
+}
+
+.ah-header-utilities .dropdown-menu #counts-block {
+  word-spacing: .12em;
+}
+
+.ah-user-header-dropdown {
+  .ah-header-dropdown-menu {
+    right: 0;
+    left: auto;
+
+    .dropdown-item {
+      justify-content: flex-start;
+
+      &::before,
+      &::after {
+        display: none !important;
+        content: none !important;
+      }
+    }
+  }
 }
 
 @media (max-width: 991.98px) {
@@ -134,8 +241,8 @@
     display: none;
   }
 
-  .ah-native-navigation {
-    flex-basis: 100%;
+  .ah-site-header-tools {
+    gap: .65rem;
   }
 }
 
@@ -149,10 +256,15 @@
     font-size: .5rem;
   }
 
-  .ah-site-header .ah-site-header-tools > .dropdown > a,
-  .ah-site-header .ah-site-header-tools > .dropdown > button {
+  .ah-login-header-button {
     min-width: auto;
-    padding: .5rem .7rem;
+    padding: .65rem .8rem;
+    font-size: .625rem;
+  }
+
+  .ah-user-header-button {
+    min-width: auto;
+    padding: .65rem .8rem;
     font-size: .625rem;
   }
 }
