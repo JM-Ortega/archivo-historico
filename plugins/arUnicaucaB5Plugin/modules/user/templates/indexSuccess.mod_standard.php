@@ -63,7 +63,21 @@
         <div class="ah-user-span">
           <dt><?php echo __('Grupos asignados'); ?></dt>
           <dd>
+            <?php /* OCULTO-019
+               SERVÍA PARA: listar todos los grupos del usuario, incluido «autenticado» (AtoM se lo
+               agrega a todos) y «contribuidor» u otros grupos si los tuviera.
+               MOTIVO: el archivo solo usa administrador y catalogador; los demás grupos no se muestran.
+               Para volver a mostrar uno, agrega su id a $visibleGroupIds.
+               Código original:
             <?php if (0 < count($groups = $resource->getAclGroups())) { ?>
+            */ ?>
+            <?php
+              $visibleGroupIds = [QubitAclGroup::ADMINISTRATOR_ID, QubitAclGroup::EDITOR_ID];
+              $groups = array_filter($resource->getAclGroups(), function ($group) use ($visibleGroupIds) {
+                  return in_array((int) $group->id, $visibleGroupIds, true);
+              });
+            ?>
+            <?php if (0 < count($groups)) { ?>
               <ul class="ah-user-chips">
                 <?php foreach ($groups as $group) { ?>
                   <li><?php echo render_title($group); ?></li>
