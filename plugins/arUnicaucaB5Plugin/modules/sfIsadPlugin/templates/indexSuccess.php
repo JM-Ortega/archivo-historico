@@ -69,7 +69,7 @@
       </strong>
     </div>
     <div class="ah-description-summary__item">
-      <span><?php echo __('Creator'); ?></span>
+      <span><?php echo __('Productor'); ?></span>
       <strong>
         <?php $summaryCreators = $resource->getCreators(); ?>
         <?php if (count($summaryCreators)) { ?>
@@ -108,6 +108,7 @@
         $headingsUrl,
         [
             'anchor' => 'identity-collapse',
+            'data-ah-area-toggle' => 'identityArea',
             'class' => 0 < count($resource->digitalObjectsRelatedByobjectId) ? '' : 'rounded-top',
         ]
     ); ?>
@@ -142,7 +143,7 @@
         __('Context area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'context-collapse']
+        ['anchor' => 'context-collapse', 'data-ah-area-toggle' => 'contextArea']
     ); ?>
   <?php } ?>
 
@@ -179,7 +180,7 @@
         __('Content and structure area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'content-collapse']
+        ['anchor' => 'content-collapse', 'data-ah-area-toggle' => 'contentAndStructureArea']
     ); ?>
   <?php } ?>
 
@@ -201,7 +202,7 @@
         __('Conditions of access and use area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'conditions-collapse']
+        ['anchor' => 'conditions-collapse', 'data-ah-area-toggle' => 'conditionsOfAccessAndUseArea']
     ); ?>
   <?php } ?>
 
@@ -244,7 +245,7 @@
         __('Allied materials area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'allied-collapse']
+        ['anchor' => 'allied-collapse', 'data-ah-area-toggle' => 'alliedMaterialsArea']
     ); ?>
   <?php } ?>
 
@@ -270,7 +271,7 @@
         __('Notes area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'notes-collapse']
+        ['anchor' => 'notes-collapse', 'data-ah-area-toggle' => 'notesArea']
     ); ?>
   <?php } ?>
 
@@ -292,7 +293,7 @@
         __('Access points'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'access-collapse']
+        ['anchor' => 'access-collapse', 'data-ah-area-toggle' => 'accessPointsArea']
     ); ?>
   <?php } ?>
 
@@ -320,7 +321,7 @@
         __('Description control area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'description-collapse']
+        ['anchor' => 'description-collapse', 'data-ah-area-toggle' => 'descriptionControlArea']
     ); ?>
   <?php } ?>
 
