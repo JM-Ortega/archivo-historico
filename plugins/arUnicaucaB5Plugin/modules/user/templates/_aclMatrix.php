@@ -3,8 +3,24 @@
   $rows = $sf_data->getRaw('rows');
 
   // Un grupo por columna (los ids de grupo vienen de la acción) y, al final, la configuración individual.
+  /* OCULTO-020
+     SERVÍA PARA: mostrar una columna por cada grupo del usuario en las pestañas de permisos
+     (descripciones, registros de autoridad, instituciones y términos), incluida «autenticado»,
+     que AtoM pone cuando el usuario no tiene grupos, y «contribuidor» u otros grupos.
+     MOTIVO: el archivo solo usa administrador y catalogador; los demás grupos no se muestran.
+     Sus permisos siguen aplicando aunque la columna no se vea.
+     Para volver a mostrar uno, agrega su id a $visibleGroupIds.
+     Código original:
   $columns = [];
   foreach ($sf_data->getRaw('columnIds') as $columnId) {
+      if (null !== $group = QubitAclGroup::getById($columnId)) {
+  */
+  $visibleGroupIds = [QubitAclGroup::ADMINISTRATOR_ID, QubitAclGroup::EDITOR_ID];
+  $columns = [];
+  foreach ($sf_data->getRaw('columnIds') as $columnId) {
+      if ($resource->username != $columnId && !in_array((int) $columnId, $visibleGroupIds, true)) {
+          continue;
+      }
       if (null !== $group = QubitAclGroup::getById($columnId)) {
           $columns[] = ['id' => $columnId, 'label' => $group->__toString(), 'individual' => false];
       } elseif ($resource->username == $columnId) {
