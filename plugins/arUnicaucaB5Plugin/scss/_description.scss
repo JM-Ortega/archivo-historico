@@ -241,13 +241,17 @@ body.sfIsadPlugin.index {
         color: $ah-blue-action;
         background: $ah-surface-soft;
         border-radius: 50%;
-        content: "⌃";
-        font-family: $ah-font-sans;
-        font-size: .8rem;
-        font-weight: 700;
-        line-height: 1.45rem;
+        content: "\f078";
+        font-family: "Font Awesome 6 Free";
+        font-size: .7rem;
+        font-weight: 900;
+        line-height: 1.25rem;
         text-align: center;
         transform: translateY(-50%);
+      }
+
+      &.ah-area-expanded::after {
+        transform: translateY(-50%) rotate(180deg);
       }
     }
 
