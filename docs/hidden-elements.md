@@ -12,6 +12,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-021 | 06/11/2026 | Rol «Usuario autenticado» en la lista de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/listSuccess.php` | Reemplazado |
 | OCULTO-022 | 06/11/2026 | Pestañas Registros de autoridad, Instituciones archivísticas y Taxonomías de los permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` | Oculto |
 | OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística, Término y Función del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
+| OCULTO-024 | 06/11/2026 | Panel «Traducir interfaz de usuario» al pie de la página | `plugins/arUnicaucaB5Plugin/templates/_footer.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -94,3 +95,13 @@ Una ficha por cada fila del índice.
 | Para qué servía | Consultar en el historial los registros de autoridad, las instituciones, los términos y las funciones creados o modificados. |
 | Motivo | El archivo no maneja registros de autoridad, instituciones ni funciones, y no gestiona taxonomías desde la interfaz. Limitación: la URL con `className=QubitActor`, `QubitRepository`, `QubitTerm` o `QubitFunctionObject` sigue respondiendo. En el mismo override, el filtro **Institución archivística** arranca en «Archivo Central del Cauca» si existe (no es un ocultamiento). |
 
+### OCULTO-024 - Panel «Traducir interfaz de usuario»
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-024 |
+| Tipo y método | Oculto (bloque comentado) |
+| Elemento y dónde se veía | La pestaña **Traducir interfaz de usuario** fija al pie de todas las páginas, visible para administradores y traductores. Al abrirla mostraba el panel con las columnas **Texto de la página**, **Fuente** y **Traducción** y el botón **Guardar traducción**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/templates/_footer.php` (llamada a `get_component('sfTranslatePlugin', 'translate')`, de `upstream/atom/plugins/sfTranslatePlugin`) |
+| Para qué servía | Traducir en vivo los textos de la interfaz de AtoM: listaba las cadenas de la página actual (en verde las ya traducidas) y permitía escribir y guardar su traducción al idioma activo. |
+| Motivo | Las traducciones guardadas desde ese panel quedan en la instalación, no en el repositorio, y se pueden perder al actualizar AtoM o desplegar en otro servidor. Los textos se traducen en el código del theme. Limitación: solo se oculta el panel; la ruta `sfTranslatePlugin/translate` y el permiso de traducir siguen habilitados. Para revertir, descomentar el bloque. |
