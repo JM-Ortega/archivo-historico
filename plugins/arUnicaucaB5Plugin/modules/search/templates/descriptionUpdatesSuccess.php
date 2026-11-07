@@ -13,6 +13,8 @@ $formatUpdateDate = function ($date) {
 };
 $dateColumnLabel = ('CREATED_AT' != $form->getValue('dateOf')) ? __('Updated') : __('Created');
 $hasResults = isset($pager) && $pager->getNbResults();
+// Filtros inválidos (p. ej. «Fin» anterior a «Inicio»): no se busca, el panel queda abierto y se explica el motivo.
+$hasFilterErrors = $form->hasErrors();
 ?>
 
 <?php slot('title'); ?>
@@ -44,7 +46,7 @@ $hasResults = isset($pager) && $pager->getNbResults();
 <?php slot('content'); ?>
   <?php echo get_partial('search/updatesSearch', [
       'form' => $form,
-      'show' => $showForm,
+      'show' => $showForm || $hasFilterErrors,
       'user' => $user,
   ]); ?>
 
@@ -206,8 +208,15 @@ $hasResults = isset($pager) && $pager->getNbResults();
         <circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="1.8"/>
         <path d="m15 15 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
-      <h2><?php echo __('No se encontraron incorporaciones'); ?></h2>
-      <p><?php echo __('Ajuste o elimine los filtros para consultar el historial.'); ?></p>
+      <?php if ($hasFilterErrors) { ?>
+        <h2><?php echo __('Revise los filtros'); ?></h2>
+        <?php foreach ($form->getErrorSchema()->getErrors() as $filterError) { ?>
+          <p><?php echo $filterError->getMessage(); // Ya escapado por escaping_strategy. ?></p>
+        <?php } ?>
+      <?php } else { ?>
+        <h2><?php echo __('No se encontraron incorporaciones'); ?></h2>
+        <p><?php echo __('Ajuste o elimine los filtros para consultar el historial.'); ?></p>
+      <?php } ?>
       <?php echo link_to(__('Limpiar filtros'), ['module' => 'search', 'action' => 'descriptionUpdates'], ['class' => 'ah-updates-btn ah-updates-btn-primary ah-updates-empty-action']); ?>
     </div>
 
@@ -215,5 +224,7 @@ $hasResults = isset($pager) && $pager->getNbResults();
 <?php end_slot(); ?>
 
 <?php slot('after-content'); ?>
-  <?php echo get_partial('default/pager', ['pager' => $pager]); ?>
+  <?php if (isset($pager)) { ?>
+    <?php echo get_partial('default/pager', ['pager' => $pager]); ?>
+  <?php } ?>
 <?php end_slot(); ?>
