@@ -4,7 +4,7 @@
  * Derived from AtoM v2.10.2 (upstream commit 02a70b8a4b23a805256abd0a14cd0f93e311a581),
  * apps/qubit/modules/search/actions/descriptionUpdatesAction.class.php (Administrador → Historial).
  * Cambios: el filtro «Tipo» solo ofrece Descripción archivística (OCULTO-023), y el filtro «Institución archivística» arranca en «Archivo Central del Cauca» si esa
- * institución existe.
+ * institución existe, y el rango de fechas se valida: «Fin» no puede ser anterior a «Inicio».
  *
  * This file is part of the Access to Memory (AtoM) software.
  *
@@ -58,6 +58,12 @@ class SearchDescriptionUpdatesAction extends sfAction
             $this->addField($name);
         }
 
+        // Rango de fechas: «Fin» no puede ser anterior a «Inicio». Sin esto AtoM busca igual y devuelve
+        // «No se han encontrado resultados» sin explicar por qué. El error queda en el campo «Fin».
+        $this->form->getValidatorSchema()->setPostValidator(new sfValidatorCallback([
+            'callback' => [$this, 'validateDateRange'],
+        ]));
+
         $defaults = [
             'className' => 'QubitInformationObject',
             'startDate' => date('Y-m-d', strtotime('-1 month')),
@@ -80,6 +86,27 @@ class SearchDescriptionUpdatesAction extends sfAction
         }
 
         $this->showForm = $this->request->getParameter('showForm');
+    }
+
+    /**
+     * Post-validador del rango de fechas. Solo compara cuando ambas fechas son válidas (sfValidatorDate las deja en
+     * Y-m-d, así que la comparación de cadenas equivale a la de fechas).
+     */
+    public function validateDateRange($validator, $values)
+    {
+        $start = $values['startDate'] ?? null;
+        $end = $values['endDate'] ?? null;
+
+        if (!empty($start) && !empty($end) && $end < $start) {
+            throw new sfValidatorErrorSchema($validator, [
+                'endDate' => new sfValidatorError(
+                    $validator,
+                    $this->context->i18n->__('La fecha de fin no puede ser anterior a la fecha de inicio.')
+                ),
+            ]);
+        }
+
+        return $values;
     }
 
     public function doAuditLogSearch()
