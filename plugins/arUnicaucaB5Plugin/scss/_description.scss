@@ -123,20 +123,32 @@ body.sfIsadPlugin.index {
     border-radius: $ah-radius-control;
 
     .btn.atom-btn-outline-light,
-    .btn.atom-btn-outline-danger {
+    .btn.atom-btn-outline-danger,
+    .btn.clipboard {
       --bs-btn-color: #{$ah-panel};
       --bs-btn-border-color: #{$ah-line-strong};
       --bs-btn-hover-color: #{$ah-blue-deep};
       --bs-btn-hover-bg: #{$ah-panel};
       --bs-btn-hover-border-color: #{$ah-panel};
       color: $ah-panel !important;
+      background-color: transparent !important;
       border-color: $ah-line-strong !important;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
 
       &:hover,
       &:focus {
         color: $ah-blue-deep !important;
         background-color: $ah-panel !important;
         border-color: $ah-panel !important;
+
+        i,
+        svg {
+          color: $ah-blue-deep !important;
+        }
       }
     }
   }
@@ -173,6 +185,165 @@ body.sfIsadPlugin.index {
         font-weight: 700;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+    }
+  }
+
+  .ah-description-hierarchy {
+    @include ah-paper;
+
+    margin-bottom: $ah-space-3;
+    overflow: hidden;
+    border: 1px solid $ah-line !important;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+
+    &__toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: $ah-space-3 $ah-space-4;
+      color: $ah-panel;
+      font-family: $ah-font-sans;
+      font-weight: 700;
+      text-align: left;
+      background: $ah-blue-deep;
+      border: 0;
+
+      span {
+        display: inline-flex;
+        align-items: center;
+        gap: $ah-space-2;
+      }
+
+      > .fa-chevron-down {
+        transition: transform .2s ease;
+      }
+
+      &:not(.collapsed) > .fa-chevron-down {
+        transform: rotate(180deg);
+      }
+
+      &:hover,
+      &:focus-visible {
+        background: $ah-blue-action;
+      }
+    }
+
+    #ah-description-hierarchy-content {
+      border-top: 1px solid $ah-line;
+    }
+
+    #treeview-menu {
+      padding: $ah-space-2 $ah-space-3 0;
+      background-color: $ah-surface-band;
+
+      .nav-item:last-child,
+      #treeview-search {
+        display: none;
+      }
+
+      .nav-link {
+        color: $ah-blue-deep;
+        font-family: $ah-font-sans;
+        font-weight: 700;
+        border-color: transparent;
+
+        &.active {
+          color: $ah-blue-deep;
+          background-color: $ah-panel;
+          border-color: $ah-line $ah-line $ah-panel;
+        }
+
+        &:hover,
+        &:focus-visible {
+          color: $ah-blue-action;
+        }
+      }
+    }
+
+    #treeview-content {
+      margin-bottom: 0 !important;
+      background-color: $ah-panel;
+    }
+
+    #treeview,
+    #treeview-search {
+      border-top: 1px solid $ah-line;
+    }
+
+    #treeview .list-group-item {
+      color: $ah-text;
+      border-color: $ah-line;
+      background-color: $ah-panel;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+        background-color: $ah-surface-soft;
+      }
+    }
+
+    #treeview-search form {
+      padding: $ah-space-3 !important;
+      background-color: $ah-panel !important;
+      border: 0 !important;
+    }
+  }
+
+  .ah-description-quick-search {
+    @include ah-paper;
+
+    margin-bottom: $ah-space-3;
+    padding: $ah-space-3 $ah-space-4;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: $ah-space-2;
+      margin: 0 0 $ah-space-2;
+      color: $ah-blue-deep;
+      font-family: $ah-font-sans;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    .form-control {
+      border-color: $ah-line;
+
+      &:focus {
+        border-color: $ah-blue-action;
+        box-shadow: 0 0 0 .2rem rgba($ah-blue-action, .15);
+      }
+    }
+
+    .btn {
+      color: $ah-panel;
+      background-color: $ah-blue-action;
+      border-color: $ah-blue-action;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+
+      &:hover,
+      &:focus-visible {
+        background-color: $ah-blue-deep;
+        border-color: $ah-blue-deep;
+
+        i,
+        svg {
+          color: $ah-panel !important;
+        }
       }
     }
   }

@@ -44,6 +44,13 @@ Cascada:
 @import "header";
 @import "footer";
 
+@include media-breakpoint-up(md) {
+  #sidebar {
+    position: relative;
+    left: -4rem;
+  }
+}
+
 /*
 
 Extend:
