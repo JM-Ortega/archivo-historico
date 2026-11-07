@@ -1,5 +1,6 @@
 <?php if (QubitAcl::check($resource, ['create', 'update', 'delete', 'translate'])) { ?>
   <ul class="actions mb-3 nav gap-2">
+    <li><?php echo get_component('clipboard', 'button', ['slug' => $resource->slug, 'wide' => true, 'type' => 'informationObject']); ?></li>
     <?php if (QubitAcl::check($resource, 'update') || QubitAcl::check($resource, 'translate')) { ?>
       <li><?php echo link_to(__('Edit'), [$resource, 'module' => 'informationobject', 'action' => 'edit'], ['class' => 'btn atom-btn-outline-light']); ?></li>
     <?php } ?>
@@ -8,10 +9,15 @@
     <?php } ?>
     <?php if (QubitAcl::check($resource, 'create')) { ?>
       <li><?php echo link_to(__('Add new'), ['module' => 'informationobject', 'action' => 'add', 'parent' => $resource->slug], ['class' => 'btn atom-btn-outline-light']); ?></li>
-      <li><?php echo link_to(__('Duplicate'), ['module' => 'informationobject', 'action' => 'copy', 'source' => $resource->id], ['class' => 'btn atom-btn-outline-light']); ?></li>
     <?php } ?>
     <?php if (QubitAcl::check($resource, 'update') || sfContext::getInstance()->getUser()->hasGroup(QubitAclGroup::EDITOR_ID)) { ?>
       <li><?php echo link_to(__('Move'), [$resource, 'module' => 'default', 'action' => 'move'], ['class' => 'btn atom-btn-outline-light']); ?></li>
+      <?php if (QubitAcl::check($resource, 'publish')) { ?>
+        <li><?php echo link_to(__('Update publication status'), [$resource, 'module' => 'informationobject', 'action' => 'updatePublicationStatus'], ['class' => 'btn atom-btn-outline-light']); ?></li>
+      <?php } ?>
+      <?php if (sfContext::getInstance()->getConfiguration()->isPluginEnabled('sfEadPlugin')) { ?>
+        <li><?php echo link_to(__('Exportar EAD'), [$resource, 'module' => 'informationobject', 'action' => 'exportEad'], ['class' => 'btn atom-btn-outline-light']); ?></li>
+      <?php } ?>
 
       <?php /*
        * OCULTO-003: botón «Más» del panel de acciones.

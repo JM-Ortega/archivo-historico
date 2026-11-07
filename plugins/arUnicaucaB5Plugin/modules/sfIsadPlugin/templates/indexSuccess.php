@@ -85,6 +85,51 @@
     </div>
   </div>
 
+  <section class="ah-description-hierarchy" aria-label="<?php echo __('Hierarchy'); ?>">
+    <button
+      class="ah-description-hierarchy__toggle collapsed"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#ah-description-hierarchy-content"
+      aria-controls="ah-description-hierarchy-content"
+      aria-expanded="false">
+      <span>
+        <i class="fas fa-sitemap" aria-hidden="true"></i>
+        <?php echo __('Hierarchy'); ?>
+      </span>
+      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+    </button>
+
+    <div class="collapse" id="ah-description-hierarchy-content">
+      <?php echo get_component('informationobject', 'treeView'); ?>
+    </div>
+  </section>
+
+  <section class="ah-description-quick-search" aria-labelledby="ah-description-quick-search-title">
+    <h2 id="ah-description-quick-search-title">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <?php echo __('Quick search'); ?>
+    </h2>
+    <form
+      method="get"
+      role="search"
+      action="<?php echo url_for(['module' => 'search', 'action' => 'index', 'collection' => $resource->getCollectionRoot()->id]); ?>">
+      <div class="input-group">
+        <input
+          type="text"
+          name="query"
+          class="form-control"
+          aria-label="<?php echo __('Search hierarchy'); ?>"
+          placeholder="<?php echo __('Search hierarchy'); ?>"
+          required>
+        <button class="btn atom-btn-white" type="submit">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <span class="visually-hidden"><?php echo __('Search'); ?></span>
+        </button>
+      </div>
+    </form>
+  </section>
+
   <?php echo get_component('digitalobject', 'imageflow', ['resource' => $resource]); ?>
 
 <?php end_slot(); ?>
