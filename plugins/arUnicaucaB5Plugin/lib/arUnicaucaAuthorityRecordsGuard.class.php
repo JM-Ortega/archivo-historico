@@ -1,17 +1,18 @@
 <?php
 
 /*
- * OCULTO-008 · Bloqueo de las direcciones de la sección «Registro de autoridad».
+ * OCULTO-008 y OCULTO-014 · Bloqueo de las direcciones de «Registro de autoridad» e «Institución archivística».
  *
  * Responde 404 a las páginas de registros de autoridad (listado, ficha, edición, borrado, renombrado, exportación EAC y
- * «registros de autoridad relacionados» de un término) para TODOS los usuarios, administradores incluidos: el archivo no
- * maneja esa información en este prototipo. Los menús y los enlaces se ocultan aparte (OCULTO-004 a 007).
+ * «registros de autoridad relacionados» de un término) y a las de instituciones archivísticas (módulos repository y
+ * sfIsdiahPlugin: listado, ficha, formulario, edición, borrado, colecciones, tema y límites) para TODOS los usuarios,
+ * administradores incluidos: el archivo no maneja esa información en este prototipo.
  *
- * Lo que NO se bloquea, porque los formularios de catalogación lo necesitan (nombres de Remitente y Destinatario):
+ * Lo que NO se bloquea, porque el formulario de catalogación lo necesita (nombres de Remitente y Destinatario):
  *  - actor/autocomplete: la lista de sugerencias del campo de nombre.
- *  - La creación de un registro nuevo desde ese campo: AtoM abre sfIsaarPlugin/edit en un iframe oculto (js/autocomplete.js)
- *    con linkExisting=true. Se permite solo para un registro nuevo y, si el navegador envía Sec-Fetch-Dest, solo dentro de un
- *    iframe; así, abrir /actor/add a mano sigue dando 404.
+ *  - La creación de un registro de autoridad nuevo desde ese campo: AtoM abre sfIsaarPlugin/edit en un iframe oculto
+ *    (js/autocomplete.js). Se permite solo para un registro nuevo y solo desde un iframe; abrir /actor/add a mano o desde un
+ *    enlace sigue dando 404.
  *
  * Se conecta en arUnicaucaB5PluginConfiguration::initialize() al evento controller.change_action.
  */
@@ -23,6 +24,9 @@ class arUnicaucaAuthorityRecordsGuard
         'sfIsaarPlugin' => ['index', 'actorEvents'],
         'sfEacPlugin' => ['*'],
         'term' => ['relatedAuthorities'],
+        // OCULTO-014: instituciones archivísticas.
+        'repository' => ['*'],
+        'sfIsdiahPlugin' => ['*'],
     ];
 
     public static function listen(sfEvent $event): void
@@ -31,7 +35,7 @@ class arUnicaucaAuthorityRecordsGuard
         $action = (string) $event['action'];
 
         if (self::isBlocked($module, $action, sfContext::getInstance()->getRequest())) {
-            throw new sfError404Exception(sprintf('Sección «Registro de autoridad» bloqueada (%s/%s).', $module, $action));
+            throw new sfError404Exception(sprintf('Sección bloqueada (%s/%s).', $module, $action));
         }
     }
 
@@ -42,6 +46,11 @@ class arUnicaucaAuthorityRecordsGuard
             return !self::isQuickAdd($request);
         }
 
+        // El campo «Institución archivística» sigue en el formulario de catalogación: su lista de sugerencias no se bloquea.
+        if ('repository' === $module && 'autocomplete' === $action) {
+            return false;
+        }
+
         $actions = self::BLOCKED[$module] ?? [];
 
         return in_array('*', $actions, true) || in_array($action, $actions, true);
@@ -50,14 +59,20 @@ class arUnicaucaAuthorityRecordsGuard
     private static function isQuickAdd($request): bool
     {
         $route = $request->getAttribute('sf_route');
-        $isNew = !(is_object($route) && isset($route->resource));
+        if (is_object($route) && isset($route->resource)) {
+            return false; // editar un registro que ya existe
+        }
 
-        $flag = $request->getParameter('linkExisting', $request->getPostParameter('linkExisting'));
-        $linkExisting = filter_var($flag, FILTER_VALIDATE_BOOLEAN);
-
-        // Sec-Fetch-Dest: «iframe» en el widget; «document» si alguien abre la dirección; vacío si el navegador no lo envía.
+        // Sec-Fetch-Dest: «iframe» desde el widget; «document» si alguien abre la dirección o sigue un enlace.
         $dest = strtolower((string) $request->getHttpHeader('Sec-Fetch-Dest'));
+        if ('' !== $dest) {
+            return 'iframe' === $dest;
+        }
 
-        return $isNew && $linkExisting && ('' === $dest || 'iframe' === $dest);
+        // Navegador antiguo o conexión sin TLS (no envía Sec-Fetch-Dest): solo si la petición viene de una página del propio sitio.
+        $referer = parse_url((string) $request->getHttpHeader('referer'), PHP_URL_HOST);
+        $host = explode(':', (string) $request->getHost())[0];
+
+        return is_string($referer) && '' !== $referer && 0 === strcasecmp($referer, $host);
     }
 }
