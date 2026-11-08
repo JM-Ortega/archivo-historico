@@ -31,6 +31,7 @@
 
       color: $ah-blue-deep;
       text-decoration: none;
+      white-space: normal; // KAN-138: el título largo pasa a la línea siguiente (la maqueta no lo trunca).
 
       &:hover,
       &:focus-visible {
@@ -76,6 +77,67 @@
       p {
         margin: 0;
       }
+    }
+
+    // KAN-138: código de referencia sobre el título (marcado propio en modules/search/templates/_searchResult.php).
+    .ah-result-code {
+      @include ah-type("small-strong");
+
+      color: $ah-blue;
+      overflow-wrap: anywhere; // Las signaturas largas no desbordan la ficha en móvil.
+    }
+
+    // KAN-138: etiquetas «Fechas:» y «Productor:».
+    .ah-result-label {
+      @include ah-type("small-strong");
+
+      margin-right: $ah-space-1;
+      color: $ah-blue-deep;
+    }
+
+    // KAN-138: término buscado. Tinte rosado de la maqueta (decorativo; el texto conserva su color) + trazo inferior,
+    // para que no dependa solo del color (accesibilidad). El rojo de identidad nunca se usa como color de texto.
+    mark.ah-hit {
+      padding: 0 0.125rem;
+      border-radius: 0.125rem;
+      background-color: rgba($ah-accent, 0.12);
+      box-shadow: inset 0 -2px 0 rgba($ah-accent, 0.55);
+      color: inherit;
+    }
+
+    // KAN-138 (maqueta de Figma «4. Resultados»): icono a la izquierda, chevron a la derecha, metadatos en una fila y ruta al pie.
+    &.ah-result-card {
+      align-items: flex-start;
+    }
+
+    .ah-result-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-right: $ah-space-4;
+      border-radius: $ah-radius-control;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-action;
+    }
+
+    .ah-result-chevron {
+      margin-left: $ah-space-3;
+      color: $ah-blue-action;
+      line-height: 2.5rem; // Alinea el chevron con la primera línea de la ficha.
+    }
+
+    .ah-result-meta {
+      margin-top: $ah-space-1;
+    }
+
+    .ah-result-path {
+      @include ah-type("small-strong");
+
+      margin-top: $ah-space-1;
+      color: $ah-text-muted;
+      overflow-wrap: anywhere;
     }
 
     // «Parte de …»: enlace discreto.
