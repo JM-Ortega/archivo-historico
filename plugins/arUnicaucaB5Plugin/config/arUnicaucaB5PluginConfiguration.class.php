@@ -27,6 +27,8 @@ require_once sfConfig::get('sf_plugins_dir')
 require_once __DIR__.'/../lib/arUnicaucaSearchInput.class.php';
 // Las clases de lib/ que usa una vista se cargan explícitamente: en prod el autoload de AtoM no las encuentra.
 require_once __DIR__.'/../lib/arUnicaucaPlacesBrowser.class.php';
+require_once __DIR__.'/../lib/arUnicaucaResultHighlight.class.php'; // KAN-138
+require_once __DIR__.'/../lib/arUnicaucaResultPath.class.php'; // KAN-138
 
 class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
 {
