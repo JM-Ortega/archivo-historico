@@ -20,7 +20,9 @@ $check('espacios colapsados y recortados', ['query' => 'a b c'], $s(['query' => 
 $check('byte NUL y controles', ['query' => 'a b'], $s(['query' => "a\0\x07b"]));
 $check('vacío se conserva vacío', ['query' => ''], $s(['query' => '   ']));
 $check('array se descarta', [], $s(['query' => ['x']]));
-$check('longitud acotada', 200, mb_strlen($s(['query' => str_repeat('á', 5000)])['query']));
+$check('longitud acotada (básica: 250)', 250, mb_strlen($s(['query' => str_repeat('á', 5000)])['query']));
+$check('250 exactos se conservan', 250, mb_strlen($s(['query' => str_repeat('á', 250)])['query']));
+$check('criterio avanzado acotado (200)', 200, mb_strlen($s(['sq0' => str_repeat('á', 5000)])['sq0']));
 $check('UTF-8 inválido se sustituye por ?', ['query' => 'a?b'], $s(['query' => "a\xC3b"]));
 $check('HTML se conserva (se escapa al mostrar)', ['query' => '<b>x</b>'], $s(['query' => '<b>x</b>']));
 $check('sintaxis de búsqueda se conserva', ['query' => '"cabildo" AND popayán*'], $s(['query' => '"cabildo" AND popayán*']));
