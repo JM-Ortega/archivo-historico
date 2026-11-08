@@ -92,3 +92,32 @@
     }
   }
 }
+
+// KAN-140: aviso de «máximo de caracteres» (js/search-limit.js). Lleva icono y texto, no solo color; no usa el acento rojo editorial.
+.ah-limit-warning {
+  @include ah-type("small-strong");
+
+  display: flex;
+  align-items: center;
+  gap: $ah-space-2;
+  margin-top: $ah-space-1;
+  padding: $ah-space-1 $ah-space-2;
+  border-left: 3px solid $ah-warning;
+  border-radius: $ah-radius-control;
+  background-color: $ah-warning-bg;
+  color: $ah-warning;
+
+  &::before {
+    content: "\26A0"; // ⚠
+    font-weight: 700;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+input[aria-invalid="true"][data-uc-over-limit] {
+  border-color: $ah-warning;
+  box-shadow: 0 0 0 0.15rem rgba($ah-warning, 0.25);
+}
