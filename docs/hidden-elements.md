@@ -14,6 +14,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-022 | 06/11/2026 | Pestañas Registros de autoridad, Instituciones archivísticas y Taxonomías de los permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` | Oculto |
 | OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística, Término y Función del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
 | OCULTO-024 | 06/11/2026 | Panel «Traducir interfaz de usuario» al pie de la página | `plugins/arUnicaucaB5Plugin/templates/_footer.php` | Oculto |
+| OCULTO-025 | 07/11/2026 | Línea «Parte de…» en cada resultado de búsqueda | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchResult.php` | Reemplazado |
 | OCULTO-026 | 07/11/2026 | Opciones del menú «Administrar» distintas de Proceso (Ingresos, Donadores, Unidad de almacenaje, Titulares de derechos, Taxonomías) | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` | Oculto |
 
 ## Fichas de detalle
@@ -133,6 +134,17 @@ Opciones que se conservan: **Usuarios** (`users`) e **Historial** (`descriptionU
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/templates/_footer.php` (llamada a `get_component('sfTranslatePlugin', 'translate')`, de `upstream/atom/plugins/sfTranslatePlugin`) |
 | Para qué servía | Traducir en vivo los textos de la interfaz de AtoM: listaba las cadenas de la página actual (en verde las ya traducidas) y permitía escribir y guardar su traducción al idioma activo. |
 | Motivo | Las traducciones guardadas desde ese panel quedan en la instalación, no en el repositorio, y se pueden perder al actualizar AtoM o desplegar en otro servidor. Los textos se traducen en el código del theme. Limitación: solo se oculta el panel; la ruta `sfTranslatePlugin/translate` y el permiso de traducir siguen habilitados. Para revertir, descomentar el bloque. |
+
+### OCULTO-025 - «Parte de…» en los resultados de búsqueda
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-025 |
+| Tipo y método | Reemplazado (bloque original eliminado del override; en su lugar, la ruta jerárquica) |
+| Elemento y dónde se veía | La línea **Parte de «Fondo…»** bajo el código y las fechas de cada resultado de la búsqueda de descripciones archivísticas. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchResult.php` (override de `upstream/atom/apps/qubit/modules/search/templates/_searchResult.php`); la ruta la arma `plugins/arUnicaucaB5Plugin/lib/arUnicaucaResultPath.class.php` |
+| Para qué servía | Mostrar solo el fondo (nivel superior) al que pertenece la descripción, con enlace. |
+| Motivo | La maqueta de Figma «4. Resultados» muestra la ruta jerárquica completa al pie de la ficha (Fondo / Serie / Subserie / Sección). Esa ruta incluye al fondo, así que «Parte de» queda redundante. Limitación: la ruta es texto sin enlaces. Para revertir, restaurar el bloque `isset($doc['partOf'])` del partial original. |
 
 ### OCULTO-026 - Opciones descartadas del menú «Administrar» (KAN-137)
 
