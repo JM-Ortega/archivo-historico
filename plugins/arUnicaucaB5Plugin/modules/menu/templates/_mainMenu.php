@@ -6,6 +6,14 @@
    intacto debajo; solo se le añadió el `continue` de la lista permitida). */
 $visibleAdminItems = ['users', 'descriptionUpdates'];
 
+/* OCULTO-026 (KAN-137): menú «Administrar» (en el código `manage`, el de la barra superior).
+   SERVÍA PARA: abrir Ingresos (accession/browse), Donadores (donor/browse), Unidad de almacenaje
+   (physicalobject/browse), Titulares de derechos (rightsholder/browse) y Taxonomías (taxonomy/browse).
+   MOTIVO: el archivo no gestiona esos registros desde la interfaz (propuesta a confirmar en el daily).
+   «Proceso» (jobs/browse) se conserva: muestra el avance de las importaciones.
+   Código original: el foreach de $menu->getChildren() sin filtro (sigue intacto; solo se añadió el filtro). */
+$visibleManageItems = ['jobs'];
+
 // Etiquetas propias del menú Administrador (el resto usa la de AtoM).
 // «Actualizaciones de descripción» se muestra como «Historial» para encontrarlo más fácil.
 $adminItemLabels = ['descriptionUpdates' => 'Historial'];
@@ -47,27 +55,38 @@ $adminItemLabels = ['descriptionUpdates' => 'Historial'];
         </li>
         <?php
           $children = $menu->getChildren();
-          if ('admin' === $menu->getName()) {
-              // Mismo orden que $visibleAdminItems: «Usuarios» y debajo «Historial».
+          // Lista de permitidos del menú actual (null = sin filtro: Agregar e Importar quedan como en AtoM).
+          $allowedItems = 'admin' === $menu->getName() ? $visibleAdminItems : ('manage' === $menu->getName() ? $visibleManageItems : null);
+          if (null !== $allowedItems) {
+              // Mismo orden que la lista de permitidos (p. ej. en Administrador: «Usuarios» y debajo «Historial»).
               $children = array_values(array_filter(
                   is_array($children) ? $children : iterator_to_array($children, false),
-                  function ($child) use ($visibleAdminItems) {
-                      return in_array($child->name, $visibleAdminItems, true);
+                  function ($child) use ($allowedItems) {
+                      return in_array($child->name, $allowedItems, true);
                   }
               ));
-              usort($children, function ($a, $b) use ($visibleAdminItems) {
-                  return array_search($a->name, $visibleAdminItems, true)
-                      <=> array_search($b->name, $visibleAdminItems, true);
+              usort($children, function ($a, $b) use ($allowedItems) {
+                  return array_search($a->name, $allowedItems, true)
+                      <=> array_search($b->name, $allowedItems, true);
               });
           }
         ?>
         <?php foreach ($children as $child) { ?>
           <?php
             // Menú Administrador: solo se muestran estos ítems.
-            // Ocultos a propósito (no borrados): groups, staticPages, menu, plugins,
-            // themes, settings, globalReplace, visibleElements.
+            // Ocultos a propósito (no borrados), con lo que hacía cada uno (detalle en docs/hidden-elements.md, OCULTO-010):
+            //   groups (grupos y permisos), staticPages (páginas de contenido), menu (editar menús),
+            //   plugins (activar plugins), themes (cambiar el tema), settings (ajustes globales),
+            //   globalReplace (buscar/reemplazar en masa), visibleElements (campos visibles al público).
             // Para volver a mostrar uno, agrega su `name` a este arreglo.
             if ('admin' === $menu->getName() && !in_array($child->name, $visibleAdminItems, true)) {
+                continue;
+            }
+            // Menú Administrar (manage): solo se muestra «Proceso» (OCULTO-026). Ocultos a propósito, no borrados:
+            //   accessions (ingresos), donors (donadores), browsePhysicalObjects (unidad de almacenaje),
+            //   rightsholders (titulares de derechos) y taxonomies (taxonomías).
+            // Para volver a mostrar uno, agrega su `name` a $visibleManageItems.
+            if ('manage' === $menu->getName() && !in_array($child->name, $visibleManageItems, true)) {
                 continue;
             }
             ?>

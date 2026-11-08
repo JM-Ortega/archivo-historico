@@ -6,6 +6,7 @@ Una fila por cambio, en orden de identificador.
 | --- | --- | --- | --- | --- |
 | OCULTO-001 | 13/10/2026 | Caja de búsqueda del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Reubicado |
 | OCULTO-002 | 25/10/2026 | Menú superior de importar del administrador | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` | Oculto |
+| OCULTO-010 | 02/11/2026 | Opciones del menú «Administrador» (engranaje) distintas de Usuarios e Historial | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` | Oculto |
 | OCULTO-018 | 05/11/2026 | Grupo «contribuidor» en el campo Grupos de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/actions/editAction.class.php` | Oculto |
 | OCULTO-019 | 06/11/2026 | Grupos distintos de administrador y catalogador en «Grupos asignados» de la ficha del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
 | OCULTO-020 | 06/11/2026 | Columnas de grupos distintos de administrador y catalogador en la matriz de permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMatrix.php` | Oculto |
@@ -13,6 +14,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-022 | 06/11/2026 | Pestañas Registros de autoridad, Instituciones archivísticas y Taxonomías de los permisos del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/_aclMenu.php` | Oculto |
 | OCULTO-023 | 06/11/2026 | Opciones Registro de autoridad, Institución archivística, Término y Función del filtro «Tipo» del historial | `plugins/arUnicaucaB5Plugin/modules/search/actions/descriptionUpdatesAction.class.php` | Oculto |
 | OCULTO-024 | 06/11/2026 | Panel «Traducir interfaz de usuario» al pie de la página | `plugins/arUnicaucaB5Plugin/templates/_footer.php` | Oculto |
+| OCULTO-026 | 07/11/2026 | Opciones del menú «Administrar» distintas de Proceso (Ingresos, Donadores, Unidad de almacenaje, Titulares de derechos, Taxonomías) | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -28,6 +30,32 @@ Una ficha por cada fila del índice.
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` (override de `upstream/atom/apps/qubit/modules/menu/templates/_mainMenu.php`) |
 | Para qué servía | Permitía a los administradores abrir las acciones de importación de registros XML y CSV. El enlace del botón usa `#` porque abre un menú desplegable, no porque sea un enlace a una página. |
 | Motivo | Se oculta el menú superior de importación para que esas operaciones no estén disponibles desde la interfaz. Se conserva la barra con los menús de añadir, gestionar y administración. |
+
+### OCULTO-010 - Opciones descartadas del menú «Administrador» (engranaje)
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-010 |
+| Tipo y método | Oculto (excluido por condición: lista `$visibleAdminItems`; el `foreach` original de `$menu->getChildren()` queda intacto) |
+| Elemento y dónde se veía | Ocho de las diez opciones del menú desplegable del engranaje (**Administrador**), visibles para el administrador. Solo quedan **Usuarios** e **Historial** (la opción «Actualizaciones de descripción» con otro nombre). |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` (override de `upstream/atom/apps/qubit/modules/menu/templates/_mainMenu.php`). Los nombres internos ocultos están comentados junto a la lista. |
+| Para qué servía | Ver el detalle por opción en la tabla siguiente. |
+| Motivo | El administrador del archivo solo gestiona usuarios y consulta el historial; el resto es configuración técnica de la instalación que no debe alterarse desde la interfaz. Limitación: las URL de cada opción siguen abriendo si se conocen; solo se quita el enlace del menú. Para revertir una, agregar su nombre interno a `$visibleAdminItems`. |
+
+Detalle de las opciones descartadas:
+
+| Opción (nombre interno) | Ruta | Para qué servía | Por qué se descarta |
+| --- | --- | --- | --- |
+| Grupos (`groups`) | `aclGroup/list` | Crear y editar grupos de usuarios y sus permisos. | Solo hay dos roles fijos (administrador y catalogador); ver OCULTO-018 a OCULTO-020. |
+| Páginas estáticas (`staticPages`) | `staticpage/list` | Editar las páginas de contenido (inicio, «Acerca de», política de privacidad). | Esas páginas las fija el reconcile del proyecto (`reconcile-about.php`, `reconcile-privacy-policy.php`); editarlas a mano se pierde al reconciliar. |
+| Menús (`menu`) | `menu/list` | Reordenar, renombrar o añadir entradas de los menús. | El menú lo define el theme del plugin; cambiarlo en la base lo desalinea del código. |
+| Plugins (`plugins`) | `sfPluginAdminPlugin/plugins` | Activar o desactivar plugins de AtoM. | Los plugins requeridos los habilita el reconcile (`reconcile-plugins.sh`); apagar uno rompe el theme o la búsqueda. |
+| Temas (`themes`) | `sfPluginAdminPlugin/themes` | Elegir el tema visual. | El tema es `arUnicaucaB5Plugin`; cambiarlo elimina la identidad visual. |
+| Configuraciones (`settings`) | `settings/global` | Ajustes globales (idioma, correo, reglas de identificadores, seguridad). | Valores como contraseñas fuertes o código de referencia los fija el reconcile; un cambio manual se pisa. |
+| Buscar/reemplazar global (`globalReplace`) | `search/globalReplace` | Reemplazar texto en masa en las descripciones. | Operación masiva sin vuelta atrás (solo se deshace con otra); el catálogo se corrige desde el CSV de migración o ficha a ficha. |
+| Elementos visibles (`visibleElements`) | `settings/visibleElements` | Mostrar u ocultar campos de la ficha para el público. | La visibilidad de campos se controla en el código del plugin y queda documentada en este archivo. |
+
+Opciones que se conservan: **Usuarios** (`users`) e **Historial** (`descriptionUpdates`). El menú «Administrar» (el de Ingresos, Donadores, Proceso…) es otro y se documenta en OCULTO-026.
 
 ### OCULTO-018 - Grupo «contribuidor» en el formulario de usuario
 
@@ -105,3 +133,24 @@ Una ficha por cada fila del índice.
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/templates/_footer.php` (llamada a `get_component('sfTranslatePlugin', 'translate')`, de `upstream/atom/plugins/sfTranslatePlugin`) |
 | Para qué servía | Traducir en vivo los textos de la interfaz de AtoM: listaba las cadenas de la página actual (en verde las ya traducidas) y permitía escribir y guardar su traducción al idioma activo. |
 | Motivo | Las traducciones guardadas desde ese panel quedan en la instalación, no en el repositorio, y se pueden perder al actualizar AtoM o desplegar en otro servidor. Los textos se traducen en el código del theme. Limitación: solo se oculta el panel; la ruta `sfTranslatePlugin/translate` y el permiso de traducir siguen habilitados. Para revertir, descomentar el bloque. |
+
+### OCULTO-026 - Opciones descartadas del menú «Administrar» (KAN-137)
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-026 |
+| Tipo y método | Oculto (excluido por condición: lista `$visibleManageItems`; el `foreach` original de `$menu->getChildren()` queda intacto) |
+| Elemento y dónde se veía | Cinco de las seis opciones del menú desplegable **Administrar** de la barra superior (nombre interno `manage`), visibles para Administrador y Catalogador. Solo queda **Proceso**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` (override de `upstream/atom/apps/qubit/modules/menu/templates/_mainMenu.php`) |
+| Para qué servía | Ver la tabla siguiente. |
+| Motivo | El archivo no gestiona estos registros desde la interfaz (coherente con OCULTO-022 y OCULTO-023). **Propuesta a confirmar en el daily.** Limitación: las URL siguen abriendo si se conocen (para el Catalogador, `rightsholder/browse` ya responde 403 por permisos). Para revertir una, agregar su nombre interno a `$visibleManageItems`. |
+
+| Opción (nombre interno) | Ruta | Para qué servía | Por qué se descarta |
+| --- | --- | --- | --- |
+| Ingresos (`accessions`) | `accession/browse` | Registrar y consultar los ingresos de documentos al archivo (transferencias, donaciones). | El Archivo no lleva esa gestión en la aplicación. |
+| Donadores (`donors`) | `donor/browse` | Registro de personas o entidades que donan documentos. | Depende de Ingresos; no se usa. |
+| Unidad de almacenaje (`browsePhysicalObjects`) | `physicalobject/browse` | Describir y ubicar los contenedores físicos (cajas, estantes). | La ubicación topográfica ya va en la signatura (p. ej. `Ind. C II -24 mn`). |
+| Titulares de derechos (`rightsholders`) | `rightsholder/browse` | Gestionar titulares de derechos de autor sobre los documentos. | No se usa; el Catalogador ya no tenía acceso (403). |
+| Taxonomías (`taxonomies`) | `taxonomy/browse` | Editar los vocabularios controlados (niveles, tipos de evento, lugares, materias). | Los términos del proyecto los fija el reconcile; no se gestionan taxonomías desde la interfaz. |
+
+Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las importaciones.
