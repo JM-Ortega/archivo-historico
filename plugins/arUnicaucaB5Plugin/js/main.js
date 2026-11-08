@@ -3,6 +3,7 @@ import "./help";
 import "./cataloging-form";
 import "./places";
 import "./description-updates";
+import "./search-limit";
 
 const initializeLoginControls = () => {
   const forgot = document.querySelector("[data-ah-login-forgot]");

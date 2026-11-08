@@ -12,7 +12,11 @@
  */
 class arUnicaucaSearchInput
 {
-    // Longitud máxima, en caracteres, de un término de búsqueda (caja básica y criterios avanzados).
+    // Longitud máxima, en caracteres, de la caja básica (`query`). KAN-140: 250, como pide el planning del Sprint 2.
+    // Debe coincidir con js/search-limit.js (hay una prueba que lo comprueba).
+    public const MAX_QUERY_LENGTH = 250;
+
+    // Longitud máxima de cada criterio de la búsqueda avanzada (sqN). Valor provisional: el máximo por campo está por acordar.
     public const MAX_TERM_LENGTH = 200;
 
     // Máximo de criterios avanzados (sq0..sqN) que se conservan.
@@ -43,7 +47,7 @@ class arUnicaucaSearchInput
                     continue;
                 }
 
-                $params[$key] = self::term($value);
+                $params[$key] = self::term($value, 'query' === $key ? self::MAX_QUERY_LENGTH : self::MAX_TERM_LENGTH);
             } elseif (1 === preg_match('/^so(\d+)$/', $key)) {
                 $params[$key] = self::choice($value, self::OPERATORS);
             } elseif (1 === preg_match('/^sf(\d+)$/', $key)) {
@@ -65,7 +69,7 @@ class arUnicaucaSearchInput
     }
 
     // Texto libre: solo escalares, sin caracteres de control ni UTF-8 inválido, espacios colapsados y longitud acotada.
-    public static function term($value): ?string
+    public static function term($value, int $max = self::MAX_TERM_LENGTH): ?string
     {
         if (!is_scalar($value)) {
             return null;
@@ -80,8 +84,8 @@ class arUnicaucaSearchInput
         $value = preg_replace('/[\p{Cc}\x{2028}\x{2029}]+/u', ' ', $value) ?? '';
         $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
 
-        if (mb_strlen($value) > self::MAX_TERM_LENGTH) {
-            $value = rtrim(mb_substr($value, 0, self::MAX_TERM_LENGTH));
+        if (mb_strlen($value) > $max) {
+            $value = rtrim(mb_substr($value, 0, $max));
         }
 
         return $value;
