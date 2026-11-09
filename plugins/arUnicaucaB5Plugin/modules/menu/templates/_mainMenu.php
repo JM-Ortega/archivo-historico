@@ -50,11 +50,17 @@ $visibleAdminItems = ['users', 'descriptionUpdates'];
             }
             ?>
             <?php /* OCULTO-005
-                SERVÍA PARA: crear un registro de autoridad nuevo desde el botón «Agregar».
-                MOTIVO: el archivo no maneja información de registros de autoridad en este prototipo.
-                Código original:
-                <?php if ($child->checkUserAccess()) { ?>
-              */ ?>
+              SERVÍA PARA: crear un registro de autoridad nuevo desde el botón «Agregar».
+              MOTIVO: el archivo no maneja información de registros de autoridad en este prototipo.
+              Código original:
+              <?php if ($child->checkUserAccess()) { ?>
+            */ ?>
+            <?php /* OCULTO-028
+              SERVÍA PARA: crear un registro de ingreso (donación o transferencia de material) desde el botón «Agregar».
+              MOTIVO: el archivo histórico no registra ingresos de material en este sistema.
+              Código original: ninguno; el ítem se mostraba a todo usuario con permiso de creación (no había condición que lo excluyera).
+            */ ?>
+            <?php if ('add' === $menu->getName() && 'addAccessionRecord' === $child->getName()) { continue; } ?>
             <?php /* OCULTO-012
              SERVÍA PARA: crear una institución archivística nueva desde el botón «Agregar».
              MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
