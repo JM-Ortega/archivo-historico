@@ -82,5 +82,125 @@
     .text-muted a {
       color: $ah-blue-action;
     }
+
+    .clipboard {
+      flex: 0 0 auto;
+      width: 3rem;
+      min-width: 3rem;
+      height: 3rem;
+      margin-left: auto;
+      padding: 0;
+      color: $ah-panel !important;
+      background-color: $ah-clipboard !important;
+      border-color: $ah-clipboard !important;
+      border-radius: $ah-radius-control;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        color: $ah-panel !important;
+        background-color: darken($ah-clipboard, 7%) !important;
+        border-color: darken($ah-clipboard, 7%) !important;
+        box-shadow: none;
+
+        i,
+        svg {
+          color: $ah-panel !important;
+        }
+      }
+    }
+  }
+}
+
+.ah-clipboard-header {
+  .fa-paperclip {
+    color: $ah-blue-deep;
+  }
+
+  h1 {
+    @include ah-type("page-title");
+
+    color: $ah-blue-deep;
+  }
+
+  .small {
+    color: $ah-text-muted;
+    font-family: $ah-font-sans;
+  }
+}
+
+.ah-clipboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ah-space-2;
+  margin: $ah-space-3 0 $ah-space-5;
+  padding: $ah-space-3;
+  background-color: $ah-blue-deep;
+  border-radius: $ah-radius-control;
+
+  li {
+    margin: 0;
+  }
+
+  .btn {
+    color: $ah-panel !important;
+    background-color: transparent !important;
+    border-color: $ah-line-strong !important;
+
+    &:hover,
+    &:focus-visible {
+      color: $ah-blue-deep !important;
+      background-color: $ah-panel !important;
+      border-color: $ah-panel !important;
+    }
+  }
+
+  .ah-clipboard-load {
+    &__notice {
+      display: flex;
+      gap: $ah-space-3;
+      align-items: flex-start;
+      margin-bottom: $ah-space-4;
+      padding: $ah-space-3 $ah-space-4;
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      border-left: 3px solid $ah-blue-action;
+      border-radius: $ah-radius-control;
+
+      > i {
+        flex: 0 0 auto;
+        margin-top: .15rem;
+        color: $ah-blue-action;
+      }
+
+      > div {
+        flex: 1 1 auto;
+      }
+
+      p {
+        margin: 0;
+
+        + p {
+          margin-top: $ah-space-2;
+        }
+      }
+    }
+
+    .ah-action-page__panel {
+      margin-bottom: $ah-space-4;
+
+      .field {
+        margin-bottom: $ah-space-3;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
   }
 }
