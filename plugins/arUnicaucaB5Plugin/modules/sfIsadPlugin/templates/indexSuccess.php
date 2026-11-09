@@ -1,6 +1,7 @@
 <?php decorate_with('layout_3col'); ?>
 
 <?php slot('sidebar'); ?>
+  <?php include_component('informationobject', 'contextMenu'); ?>
   <?php echo get_partial('search/searchOptions', ['active' => 'basic']); ?>
 <?php end_slot(); ?>
 
@@ -204,9 +205,37 @@
     <?php } ?>
   </div>
 
+<?php /* OCULTO-016
+     SERVÍA PARA: mostrar la institución archivística de la descripción como un enlace a su ficha.
+     MOTIVO: las fichas de instituciones ya no son accesibles (OCULTO-014); el nombre se sigue mostrando, pero como texto.
+     Código original:
+
   <div class="repository">
     <?php echo render_show_repository(__('Repository'), $resource); ?>
   </div>
+
+*/ ?>
+
+<?php
+    // Igual que render_show_repository(), sin enlace: la institución propia o, si no la tiene, la del ancestro más cercano.
+    $repositoryName = null;
+    if (isset($resource->repository)) {
+        $repositoryName = render_title($resource->repository);
+    } else {
+        foreach ($resource->ancestors->orderBy('rgt') as $item) {
+            if (isset($item->repository)) {
+                $repositoryName = '<span title="'.__('Inherited from %1%', ['%1%' => $item]).'">'.render_title($item->repository).'</span>';
+
+                break;
+            }
+        }
+    }
+  ?>
+  <?php if (null !== $repositoryName) { ?>
+    <div class="repository">
+      <?php echo render_show(__('Repository'), $repositoryName); ?>
+    </div>
+  <?php } ?>
 
   <?php if (check_field_visibility('app_element_visibility_isad_archival_history')) { ?>
     <?php echo render_show(__('Archival history'), render_value($resource->getArchivalHistory(['cultureFallback' => true])), ['fieldLabel' => 'archivalHistory']); ?>
