@@ -2,8 +2,9 @@
 
 /*
  * Derived from AtoM v2.10.2 (upstream commit 02a70b8a4b23a805256abd0a14cd0f93e311a581),
- * apps/qubit/modules/user/actions/editAction.class.php. Único cambio: el validador del campo
- * email se restringe a @unicauca.edu.co (arUnicaucaEmailDomainPolicy).
+ * apps/qubit/modules/user/actions/editAction.class.php. Cambios: el validador del campo
+ * email se restringe a @unicauca.edu.co (arUnicaucaEmailDomainPolicy), y el campo «Grupos
+ * de usuarios» solo ofrece administrador y catalogador (OCULTO-018).
  *
  * This file is part of the Access to Memory (AtoM) software.
  *
@@ -231,9 +232,24 @@ class UserEditAction extends DefaultEditAction
                     $values[] = $item->groupId;
                 }
 
+                /* OCULTO-018
+                   SERVÍA PARA: ofrecer en «Grupos de usuarios» todos los grupos con id > 99
+                   (administrador, editor —hoy «catalogador»—, contribuidor y cualquier grupo nuevo).
+                   MOTIVO: el archivo solo usa dos roles: administrador (100) y catalogador
+                   (101, el grupo «editor» de AtoM renombrado por config/atom/reconcile-group-names.php). Contribuidor (102) y los grupos que se creen
+                   después ya no se ofrecen. Anónimo (98) y autenticado (99) nunca salían:
+                   AtoM los excluye de fábrica.
+                   Para volver a mostrar uno, agrega su id a $visibleGroupIds.
+                   Código original:
                 $choices = [];
                 $criteria = new Criteria();
                 $criteria->add(QubitAclGroup::ID, 99, Criteria::GREATER_THAN);
+                foreach (QubitAclGroup::get($criteria) as $item) {
+                */
+                $visibleGroupIds = [QubitAclGroup::ADMINISTRATOR_ID, QubitAclGroup::EDITOR_ID];
+                $choices = [];
+                $criteria = new Criteria();
+                $criteria->add(QubitAclGroup::ID, $visibleGroupIds, Criteria::IN);
                 foreach (QubitAclGroup::get($criteria) as $item) {
                     $choices[$item->id] = $item->getName(['cultureFallback' => true]);
                 }

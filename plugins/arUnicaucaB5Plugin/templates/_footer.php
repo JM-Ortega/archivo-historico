@@ -1,7 +1,14 @@
 <footer class="d-print-none ah-site-footer">
+  <?php /* OCULTO-024
+     SERVÍA PARA: abrir el panel «Traducir interfaz de usuario» (sfTranslatePlugin) y traducir en vivo
+     los textos de la página; visible para administradores y traductores.
+     MOTIVO: las traducciones guardadas desde ese panel quedan en la instalación y no en el repositorio;
+     los textos se traducen en el código del theme.
+     Limitación: solo se oculta el panel; la ruta sfTranslatePlugin/translate sigue habilitada.
   <?php if (QubitAcl::check('userInterface', 'translate')) { ?>
     <?php echo get_component('sfTranslatePlugin', 'translate'); ?>
   <?php } ?>
+  */ ?>
 
   <?php echo get_component_slot('footer'); ?>
 

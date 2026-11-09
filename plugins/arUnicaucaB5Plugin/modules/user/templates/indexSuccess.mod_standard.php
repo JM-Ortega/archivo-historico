@@ -63,7 +63,25 @@
         <div class="ah-user-span">
           <dt><?php echo __('Grupos asignados'); ?></dt>
           <dd>
+            <?php /* OCULTO-019
+               SERVÍA PARA: listar todos los grupos del usuario, incluido «autenticado» (AtoM se lo
+               agrega a todos) y «contribuidor» u otros grupos si los tuviera.
+               MOTIVO: el archivo solo usa administrador y catalogador; los demás grupos no se muestran.
+               Para volver a mostrar uno, agrega su id a $visibleGroupIds.
+               Código original:
             <?php if (0 < count($groups = $resource->getAclGroups())) { ?>
+            */ ?>
+            <?php
+              $visibleGroupIds = [QubitAclGroup::ADMINISTRATOR_ID, QubitAclGroup::EDITOR_ID];
+              // getAclGroups() llega envuelto por el escaper de Symfony (no es un array): se recorre con foreach.
+              $groups = [];
+              foreach ($resource->getAclGroups() as $group) {
+                  if (in_array((int) $group->id, $visibleGroupIds, true)) {
+                      $groups[] = $group;
+                  }
+              }
+            ?>
+            <?php if (0 < count($groups)) { ?>
               <ul class="ah-user-chips">
                 <?php foreach ($groups as $group) { ?>
                   <li><?php echo render_title($group); ?></li>

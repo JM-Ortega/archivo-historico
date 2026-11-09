@@ -1,0 +1,112 @@
+.ah-action-page {
+  color: $ah-text;
+
+  &__header {
+    margin-bottom: $ah-space-4;
+
+    h1 {
+      margin: 0;
+      color: $ah-blue-deep;
+      @include ah-type("page-title");
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  &__kicker {
+    margin: 0 0 $ah-space-1;
+    color: $ah-blue-action;
+    @include ah-type("kicker");
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+
+  &__resource {
+    margin: $ah-space-2 0 0;
+    color: $ah-text-muted;
+    font-family: $ah-font-serif;
+    font-size: 1.1rem;
+  }
+
+  &__panel {
+    @include ah-paper;
+
+    margin-bottom: $ah-space-4;
+    padding: $ah-space-4;
+
+    h2 {
+      margin: 0 0 $ah-space-4;
+      color: $ah-blue-deep;
+      font-family: $ah-font-serif;
+      font-size: 1.35rem;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    margin-top: $ah-space-4;
+    margin-bottom: $ah-space-4 !important;
+    padding: $ah-space-3;
+    background-color: $ah-blue-deep;
+    border-radius: $ah-radius-control;
+
+    .btn {
+      color: $ah-panel;
+      border-color: $ah-line-strong;
+
+      &:hover,
+      &:focus-visible {
+        color: $ah-blue-deep;
+        background-color: $ah-panel;
+        border-color: $ah-panel;
+      }
+
+      &:focus-visible {
+        @include ah-focus-ring;
+      }
+    }
+
+    .atom-btn-outline-danger {
+      --bs-btn-color: #{$ah-panel};
+      --bs-btn-border-color: #{$ah-line-strong};
+      --bs-btn-hover-color: #{$ah-blue-deep};
+      --bs-btn-hover-bg: #{$ah-panel};
+      --bs-btn-hover-border-color: #{$ah-panel};
+    }
+
+    .atom-btn-outline-success {
+      --bs-btn-color: #{$ah-panel};
+      --bs-btn-border-color: #{$ah-line-strong};
+      --bs-btn-hover-color: #{$ah-blue-deep};
+      --bs-btn-hover-bg: #{$ah-panel};
+      --bs-btn-hover-border-color: #{$ah-panel};
+    }
+  }
+
+  &--move {
+    .ah-action-page__search {
+      margin-bottom: $ah-space-3;
+    }
+
+    .breadcrumb {
+      margin-bottom: $ah-space-4;
+    }
+
+    .table {
+      --bs-table-bg: transparent;
+      --bs-border-color: #{$ah-line};
+      margin-bottom: 0;
+
+      th {
+        color: $ah-blue-deep;
+        background-color: $ah-surface-band;
+        font-family: $ah-font-sans;
+        font-weight: 700;
+      }
+
+      td {
+        color: $ah-text;
+      }
+    }
+  }
+}
