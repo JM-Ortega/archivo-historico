@@ -67,12 +67,18 @@ $visibleAdminItems = ['users', 'descriptionUpdates'];
               Código original: ninguno; el ítem se mostraba a todo usuario con permiso de creación (no había condición que lo excluyera).
             */ ?>
             <?php if ('add' === $menu->getName() && 'addTerm' === $child->getName()) { continue; } ?>
+            <?php /* OCULTO-030
+              SERVÍA PARA: crear una función (norma ISDF) desde el botón «Agregar».
+              MOTIVO: el archivo histórico no maneja funciones; no las usa.
+              Código original: ninguno; el ítem se mostraba a todo usuario con permiso de creación (no había condición que lo excluyera).
+            */ ?>
+            <?php if ('add' === $menu->getName() && 'addFunction' === $child->getName()) { continue; } ?>
             <?php /* OCULTO-012
              SERVÍA PARA: crear una institución archivística nueva desde el botón «Agregar».
              MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
              Código original:
              <?php if ($child->checkUserAccess() && 'addActor' != $child->getName()) { ?>
-          */ ?>
+            */ ?>
             <?php if ($child->checkUserAccess() && 'addActor' != $child->getName() && 'addRepository' != $child->getName()) { ?>
             <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
               <?php echo link_to(
