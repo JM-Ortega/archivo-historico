@@ -61,6 +61,12 @@ $visibleAdminItems = ['users', 'descriptionUpdates'];
               Código original: ninguno; el ítem se mostraba a todo usuario con permiso de creación (no había condición que lo excluyera).
             */ ?>
             <?php if ('add' === $menu->getName() && 'addAccessionRecord' === $child->getName()) { continue; } ?>
+            <?php /* OCULTO-029
+              SERVÍA PARA: crear un término de un vocabulario controlado (materias, lugares, géneros) desde el botón «Agregar».
+              MOTIVO: los términos se crean al catalogar o al importar; no se administran por separado.
+              Código original: ninguno; el ítem se mostraba a todo usuario con permiso de creación (no había condición que lo excluyera).
+            */ ?>
+            <?php if ('add' === $menu->getName() && 'addTerm' === $child->getName()) { continue; } ?>
             <?php /* OCULTO-012
              SERVÍA PARA: crear una institución archivística nueva desde el botón «Agregar».
              MOTIVO: el archivo es una sola institución y no maneja este módulo; confunde y satura las opciones.
