@@ -57,38 +57,126 @@
 
 // --- Menú «Opciones de búsqueda» ------------------------------------------------------------------------------------------
 
-.ah-search-options {
-  @include ah-paper;
-
+.ah-search-navigation {
   margin-bottom: $ah-space-4;
-  overflow: hidden;
-  border-radius: $ah-radius-feature;
+  padding: $ah-space-4;
+  background-color: $ah-panel;
+  border: $border-width solid $ah-line;
 
   &__title {
-    @include ah-type("subsection-title");
+    @include ah-type("kicker");
 
-    margin: 0;
-    padding: $ah-space-4;
-    color: $ah-blue;
-  }
+    position: relative;
+    margin: 0 0 $ah-space-4;
+    padding-bottom: $ah-space-3;
+    color: $ah-blue-action;
+    letter-spacing: 0.18em;
+    border-bottom: $border-width solid $ah-line;
 
-  .list-group {
-    --bs-list-group-color: #{$ah-text};
-    --bs-list-group-border-color: #{$ah-line};
-    --bs-list-group-active-bg: #{$ah-blue};
-    --bs-list-group-active-border-color: #{$ah-blue};
-    --bs-list-group-active-color: #{$ah-panel};
-    --bs-list-group-action-hover-bg: #{$ah-surface-soft};
-    --bs-list-group-action-hover-color: #{$ah-blue};
-    --bs-list-group-action-active-bg: #{$ah-surface-soft};
-    --bs-list-group-action-active-color: #{$ah-blue};
-  }
-
-  .list-group-item {
-    @include ah-type("small");
-
-    &.active {
-      font-weight: 700;
+    &::after {
+      position: absolute;
+      bottom: -$border-width;
+      left: 0;
+      width: 3rem;
+      height: 2px;
+      background-color: $ah-accent;
+      content: "";
     }
   }
+
+  &__items {
+    display: flex;
+    flex-direction: column;
+    gap: $ah-space-2;
+  }
+
+  &__item {
+    @include ah-type("body-strong");
+
+    display: flex;
+    align-items: center;
+    min-height: 3.75rem;
+    padding: $ah-space-3 $ah-space-4;
+    color: $ah-text;
+    text-decoration: none;
+    border: $border-width solid transparent;
+    border-radius: $ah-radius-control;
+
+    i {
+      width: 1.5rem;
+      margin-right: $ah-space-3;
+      color: $ah-blue-secondary;
+      text-align: center;
+    }
+
+    &:hover,
+    &:focus-visible {
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      border-color: $ah-line;
+    }
+
+    &.is-active {
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      border-color: $ah-line;
+      box-shadow: inset 3px 0 0 $ah-accent, $ah-shadow-panel;
+
+      span {
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+      }
+    }
+  }
+
+  &__footer {
+    margin-top: $ah-space-5;
+    padding-top: $ah-space-5;
+    border-top: $border-width solid $ah-line;
+
+    h3 {
+      @include ah-type("section-title");
+
+      margin: 0 0 $ah-space-3;
+      color: $ah-blue;
+    }
+
+    p {
+      @include ah-type("small");
+
+      margin: 0;
+      color: $ah-text-muted;
+      line-height: 1.7;
+    }
+  }
+}
+
+// KAN-140: aviso de «máximo de caracteres» (js/search-limit.js). Lleva icono y texto, no solo color; no usa el acento rojo editorial.
+.ah-limit-warning {
+  @include ah-type("small-strong");
+
+  display: flex;
+  align-items: center;
+  gap: $ah-space-2;
+  margin-top: $ah-space-1;
+  padding: $ah-space-1 $ah-space-2;
+  border-left: 3px solid $ah-warning;
+  border-radius: $ah-radius-control;
+  background-color: $ah-warning-bg;
+  color: $ah-warning;
+
+  &::before {
+    content: "\26A0"; // ⚠
+    font-weight: 700;
+  }
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+input[aria-invalid="true"][data-uc-over-limit] {
+  border-color: $ah-warning;
+  box-shadow: 0 0 0 0.15rem rgba($ah-warning, 0.25);
 }
