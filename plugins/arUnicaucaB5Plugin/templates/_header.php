@@ -36,22 +36,9 @@
         <strong>Programa Memoria del Mundo - UNESCO</strong>
       </div>
       <?php echo get_component('menu', 'userMenu'); ?>
-      <button class="navbar-toggler atom-btn-secondary ah-site-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content" aria-controls="navbar-content" aria-expanded="false">
-        <i class="fas fa-bars" aria-hidden="true"></i>
-        <span class="visually-hidden"><?php echo __('Toggle navigation'); ?></span>
-      </button>
-    </div>
-
-    <div class="collapse navbar-collapse ah-native-navigation" id="navbar-content">
-      <div class="d-flex flex-wrap flex-lg-nowrap flex-grow-1">
-        <?php echo get_component('menu', 'browseMenu', ['sf_cache_key' => 'dominion-b5'.$sf_user->getCulture().$sf_user->getUserID()]); ?>
-      </div>
-      <ul class="navbar-nav mx-lg-2">
-        <?php echo get_component('menu', 'mainMenu', ['sf_cache_key' => 'dominion-b5'.$sf_user->getCulture().$sf_user->getUserID()]); ?>
+      <ul class="ah-header-utilities">
         <?php echo get_component('menu', 'clipboardMenu'); ?>
-        <?php if (sfConfig::get('app_toggleLanguageMenu')) { ?>
-          <?php echo get_component('menu', 'changeLanguageMenu'); ?>
-        <?php } ?>
+        <?php echo get_component('menu', 'changeLanguageMenu'); ?>
         <?php echo get_component('menu', 'quickLinksMenu'); ?>
       </ul>
     </div>

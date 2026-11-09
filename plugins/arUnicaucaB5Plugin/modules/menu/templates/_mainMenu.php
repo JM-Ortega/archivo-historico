@@ -20,9 +20,12 @@ $adminItemLabels = ['descriptionUpdates' => 'Historial'];
 ?>
 <?php foreach ([$addMenu, $manageMenu, $importMenu, $adminMenu] as $menu) { ?>
   <?php if (
-      $menu && ('add' == $menu->getName()
-      || 'manage' == $menu->getName())
-      || $sf_user->isAdministrator()
+      $menu
+      && (
+          'add' === $menu->getName()
+          || 'manage' === $menu->getName()
+          || $sf_user->isAdministrator()
+      )
   ) { ?>
     <li class="nav-item dropdown d-flex flex-column">
       <a

@@ -16,6 +16,11 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-024 | 06/11/2026 | Panel «Traducir interfaz de usuario» al pie de la página | `plugins/arUnicaucaB5Plugin/templates/_footer.php` | Oculto |
 | OCULTO-025 | 07/11/2026 | Línea «Parte de…» en cada resultado de búsqueda | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchResult.php` | Reemplazado |
 | OCULTO-026 | 07/11/2026 | Opciones del menú «Administrar» distintas de Proceso (Ingresos, Donadores, Unidad de almacenaje, Titulares de derechos, Taxonomías) | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_mainMenu.php` | Oculto |
+| OCULTO-031 | 03/11/2026 | Botón «Más» de acciones de la descripción archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
+| OCULTO-032 | 05/11/2026 | Enlace de documentación oficial de AtoM | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_quickLinksMenu.php` | Oculto |
+| OCULTO-033 | 05/11/2026 | Botón «Navegar» y navegación principal del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Oculto |
+| OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
+| OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
 
 ## Fichas de detalle
 
@@ -166,3 +171,57 @@ Opciones que se conservan: **Usuarios** (`users`) e **Historial** (`descriptionU
 | Taxonomías (`taxonomies`) | `taxonomy/browse` | Editar los vocabularios controlados (niveles, tipos de evento, lugares, materias). | Los términos del proyecto los fija el reconcile; no se gestionan taxonomías desde la interfaz. |
 
 Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las importaciones.
+### OCULTO-031 - Botón «Más» de acciones de la descripción archivística
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-031 |
+| Tipo y método | Oculto (bloque comentado) |
+| Elemento y dónde se veía | Botón «Más» de la barra de acciones al pie de una descripción archivística. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` (override de `upstream/atom/apps/qubit/modules/informationobject/templates/_actions.php`) |
+| Para qué servía | Abría acciones avanzadas como renombrar, publicar, gestionar almacenamiento físico, objetos digitales, derechos e historial de modificaciones. |
+| Motivo | Se ocultan las acciones avanzadas de la interfaz pública, conservando Editar, Borrar, Agregar nuevo y Mover según los permisos del usuario. «Actualizar estado de publicación» y «EAD 2002 XML» se muestran ahora en el panel principal de acciones cuando corresponde. |
+
+### OCULTO-032 - Enlace de documentación oficial de AtoM
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-032 |
+| Tipo y método | Oculto (condición de exclusión) |
+| Elemento y dónde se veía | Enlace **Documentation** del menú desplegable **Enlaces rápidos**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/menu/templates/_quickLinksMenu.php` |
+| Para qué servía | Abría la documentación oficial de AtoM en `docs.accesstomemory.org`. |
+| Motivo | Se oculta porque el archivo utiliza su propia información contextual y no requiere enlazar a la documentación externa en inglés. |
+
+### OCULTO-033 - Botón «Navegar» y navegación principal del encabezado
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-033 |
+| Tipo y método | Oculto (componentes no renderizados) |
+| Elemento y dónde se veía | Botón **Navegar**, menú principal de navegación y botón móvil para abrirlo, en el encabezado global. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/templates/_header.php` |
+| Para qué servía | Permitía abrir la navegación principal, explorar las secciones del sistema y acceder al menú Navegar en pantallas pequeñas. |
+| Motivo | Se simplifica el encabezado para mostrar únicamente Portapapeles, Idioma, Enlaces rápidos y el control de sesión, manteniendo las utilidades solicitadas para todos los roles. |
+
+### OCULTO-034 - Botón «Duplicar» de la ficha archivística
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-034 |
+| Tipo y método | Oculto (elemento no renderizado) |
+| Elemento y dónde se veía | Botón **Duplicar** del panel de acciones situado al final de la ficha archivística. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` |
+| Para qué servía | Permitía crear una nueva descripción archivística copiando la descripción actual. |
+| Motivo | Se oculta temporalmente para evitar duplicaciones desde la interfaz pública y liberar espacio en el panel de acciones. |
+
+### OCULTO-035 - Panel lateral de opciones de la ficha archivística
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-035 |
+| Tipo y método | Oculto (regla CSS) |
+| Elemento y dónde se veía | Panel derecho de la ficha archivística, con opciones de exploración, importación y exportación. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/scss/_description.scss` y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/indexSuccess.php` |
+| Para qué servía | Reunía acciones como informes, inventario, navegación como lista, importación XML/CSV y exportaciones, incluida **EAD 2002 XML**. |
+| Motivo | Se oculta el panel lateral para simplificar la ficha; **Añadir al portapapeles** y **EAD 2002 XML** se reubican temporalmente en el panel principal de acciones. |
