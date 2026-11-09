@@ -6,7 +6,7 @@
  * el filtro de institución de «Actualizaciones de descripciones» y las opciones por institución de la ficha de usuario.
  * Se ejecuta con `php symfony tools:run` desde config/atom/reconcile.sh. Escribe solo si difiere.
  *
- * Exit: 0 éxito; 97 el ajuste no existe; 98 la escritura falló; 99 postcondición no satisfecha.
+ * Exit: 0 éxito; 101 el ajuste no existe; 102 la escritura falló; 103 postcondición no satisfecha.
  */
 (static function (): void {
     $name = 'multi_repository';
@@ -29,7 +29,7 @@
 
     $current = $read();
     if (null === $current) {
-        $fail(97, "no existe el ajuste '{$name}'");
+        $fail(101, "no existe el ajuste '{$name}'");
     }
     if ($desired === $current) {
         $log("ya está en {$desired}; sin escritura");
@@ -43,11 +43,11 @@
         $setting->setValue($desired, ['sourceCulture' => true]);
         $setting->save();
     } catch (Throwable $e) {
-        $fail(98, 'la escritura falló ('.get_class($e).')');
+        $fail(102, 'la escritura falló ('.get_class($e).')');
     }
 
     if ($desired !== $read()) {
-        $fail(99, 'POSTCONDICIÓN NO SATISFECHA: el valor releído no coincide');
+        $fail(103, 'POSTCONDICIÓN NO SATISFECHA: el valor releído no coincide');
     }
 
     // AtoM guarda los ajustes en caché (settings:i18n:<cultura>); la pantalla de ajustes la invalida al guardar y aquí también.
