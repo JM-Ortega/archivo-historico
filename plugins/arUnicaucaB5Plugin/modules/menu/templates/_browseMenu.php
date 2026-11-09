@@ -21,6 +21,12 @@
          <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName()) { ?>
       */ ?>
     <?php foreach ($browseMenu->getChildren() as $child) { ?>
+      <?php /* OCULTO-025
+        SERVÍA PARA: abrir el listado de funciones (norma ISDF) desde el botón «Navegar».
+        MOTIVO: el archivo histórico no maneja funciones; no las usa.
+        Código original: ninguno; el ítem se mostraba a todo usuario con acceso (no había condición que lo excluyera).
+      */ ?>
+      <?php if ('browseFunctions' === $child->getName()) { continue; } ?>
       <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName() && 'browseRepositories' != $child->getName()) { ?>
         <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
           <?php echo link_to(
