@@ -4,7 +4,7 @@
 
 <?php
 // Fecha con el formato del diseño: "25 de octubre de 2026 a las 10:10 p. m."
-$formatUpdateDate = function ($date) {
+$formatUpdateDate  = function ($date) {
     if (empty($date)) {
         return '';
     }

@@ -1,11 +1,7 @@
 <?php decorate_with('layout_2col'); ?>
 
 <?php slot('sidebar'); ?>
-  <?php echo get_partial('informationobject/searchOptions', [
-      'advancedSearch' => false,
-      'navigationTitle' => __('Navegación'),
-      'usersSection' => true,
-  ]); ?>
+  <?php echo get_partial('search/searchOptions', ['active' => 'users']); ?>
 <?php end_slot(); ?>
 
 <?php slot('content'); ?>
