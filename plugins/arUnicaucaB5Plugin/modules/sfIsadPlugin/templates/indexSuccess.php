@@ -2,9 +2,17 @@
 
 <?php slot('sidebar'); ?>
   <?php include_component('informationobject', 'contextMenu'); ?>
+  <?php echo get_partial('search/searchOptions', ['active' => 'basic']); ?>
 <?php end_slot(); ?>
 
 <?php slot('title'); ?>
+
+  <div class="ah-description-back">
+    <a href="<?php echo url_for(['module' => 'informationobject', 'action' => 'browse']); ?>">
+      <i class="fas fa-chevron-left" aria-hidden="true"></i>
+      <?php echo __('Volver a resultados'); ?>
+    </a>
+  </div>
 
   <?php echo get_component('informationobject', 'descriptionHeader', ['resource' => $resource, 'title' => (string) $isad]); ?>
 
@@ -50,6 +58,78 @@
 <?php end_slot(); ?>
 
 <?php slot('before-content'); ?>
+  <div class="ah-description-summary" aria-label="<?php echo __('Description summary'); ?>">
+    <div class="ah-description-summary__item">
+      <span><?php echo __('Dates'); ?></span>
+      <strong>
+        <?php $summaryDates = []; ?>
+        <?php foreach ($resource->getDates() as $item) { ?>
+          <?php $summaryDates[] = Qubit::renderDateStartEnd($item->getDate(['cultureFallback' => true]), $item->startDate, $item->endDate); ?>
+        <?php } ?>
+        <?php echo esc_entities(implode(' - ', $summaryDates)); ?>
+      </strong>
+    </div>
+    <div class="ah-description-summary__item">
+      <span><?php echo __('Productor'); ?></span>
+      <strong>
+        <?php $summaryCreators = $resource->getCreators(); ?>
+        <?php if (count($summaryCreators)) { ?>
+          <?php echo render_title($summaryCreators[0]->getAuthorizedFormOfName(['cultureFallback' => true])); ?>
+        <?php } else { ?>
+          <?php echo __('Not specified'); ?>
+        <?php } ?>
+      </strong>
+    </div>
+    <div class="ah-description-summary__item">
+      <span><?php echo __('Level'); ?></span>
+      <strong><?php echo render_value_inline($resource->levelOfDescription); ?></strong>
+    </div>
+  </div>
+
+  <section class="ah-description-hierarchy" aria-label="<?php echo __('Hierarchy'); ?>">
+    <button
+      class="ah-description-hierarchy__toggle collapsed"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#ah-description-hierarchy-content"
+      aria-controls="ah-description-hierarchy-content"
+      aria-expanded="false">
+      <span>
+        <i class="fas fa-sitemap" aria-hidden="true"></i>
+        <?php echo __('Hierarchy'); ?>
+      </span>
+      <i class="fas fa-chevron-down" aria-hidden="true"></i>
+    </button>
+
+    <div class="collapse" id="ah-description-hierarchy-content">
+      <?php echo get_component('informationobject', 'treeView'); ?>
+    </div>
+  </section>
+
+  <section class="ah-description-quick-search" aria-labelledby="ah-description-quick-search-title">
+    <h2 id="ah-description-quick-search-title">
+      <i class="fas fa-search" aria-hidden="true"></i>
+      <?php echo __('Quick search'); ?>
+    </h2>
+    <form
+      method="get"
+      role="search"
+      action="<?php echo url_for(['module' => 'search', 'action' => 'index', 'collection' => $resource->getCollectionRoot()->id]); ?>">
+      <div class="input-group">
+        <input
+          type="text"
+          name="query"
+          class="form-control"
+          aria-label="<?php echo __('Search hierarchy'); ?>"
+          placeholder="<?php echo __('Search hierarchy'); ?>"
+          required>
+        <button class="btn atom-btn-white" type="submit">
+          <i class="fas fa-search" aria-hidden="true"></i>
+          <span class="visually-hidden"><?php echo __('Search'); ?></span>
+        </button>
+      </div>
+    </form>
+  </section>
 
   <?php echo get_component('digitalobject', 'imageflow', ['resource' => $resource]); ?>
 
@@ -74,6 +154,7 @@
         $headingsUrl,
         [
             'anchor' => 'identity-collapse',
+            'data-ah-area-toggle' => 'identityArea',
             'class' => 0 < count($resource->digitalObjectsRelatedByobjectId) ? '' : 'rounded-top',
         ]
     ); ?>
@@ -108,7 +189,7 @@
         __('Context area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'context-collapse']
+        ['anchor' => 'context-collapse', 'data-ah-area-toggle' => 'contextArea']
     ); ?>
   <?php } ?>
 
@@ -173,7 +254,7 @@
         __('Content and structure area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'content-collapse']
+        ['anchor' => 'content-collapse', 'data-ah-area-toggle' => 'contentAndStructureArea']
     ); ?>
   <?php } ?>
 
@@ -195,7 +276,7 @@
         __('Conditions of access and use area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'conditions-collapse']
+        ['anchor' => 'conditions-collapse', 'data-ah-area-toggle' => 'conditionsOfAccessAndUseArea']
     ); ?>
   <?php } ?>
 
@@ -238,7 +319,7 @@
         __('Allied materials area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'allied-collapse']
+        ['anchor' => 'allied-collapse', 'data-ah-area-toggle' => 'alliedMaterialsArea']
     ); ?>
   <?php } ?>
 
@@ -264,7 +345,7 @@
         __('Notes area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'notes-collapse']
+        ['anchor' => 'notes-collapse', 'data-ah-area-toggle' => 'notesArea']
     ); ?>
   <?php } ?>
 
@@ -286,7 +367,7 @@
         __('Access points'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'access-collapse']
+        ['anchor' => 'access-collapse', 'data-ah-area-toggle' => 'accessPointsArea']
     ); ?>
   <?php } ?>
 
@@ -314,7 +395,7 @@
         __('Description control area'),
         $headingsCondition,
         $headingsUrl,
-        ['anchor' => 'description-collapse']
+        ['anchor' => 'description-collapse', 'data-ah-area-toggle' => 'descriptionControlArea']
     ); ?>
   <?php } ?>
 

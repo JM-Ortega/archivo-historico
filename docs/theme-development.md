@@ -89,6 +89,18 @@ La vista `browseSuccess.php` del plugin conserva el flujo de resultados y reempl
 el panel de facetas nativo se sustituye por `informationobject/_searchOptions.php` para todos los roles. No se oculta con
 CSS ni depende del estado de autenticación; el formulario principal y los resultados mantienen sus acciones existentes.
 
+### Navegación temática «Lugares»
+
+`Navegar → Lugares` (`taxonomy/index` de la taxonomía de lugares) usa el override
+`plugins/arUnicaucaB5Plugin/modules/taxonomy/templates/indexSuccess.php`, que reproduce el prototipo de Figma
+(`features/places/PlacesBrowser.tsx`): encabezado «Navegación temática», panel lateral «Navegar lugares» con todos los
+lugares y su número de descripciones, barra de búsqueda/orden y tabla (fichas en pantallas estrechas) con paginación propia.
+Solo presentación: la consulta, el orden y la paginación siguen siendo los de `TaxonomyIndexAction` (parámetros GET
+`subquery`, `sort`, `sortDir`, `page`). «Ordenar por» ofrece los dos órdenes que soporta AtoM (`alphabetic`, `lastUpdated`).
+El panel lateral sale de `lib/arUnicaucaPlacesBrowser.class.php` (índice `QubitTerm`, máximo 250 términos, mismo conteo que
+la tabla). Materias, géneros y demás taxonomías incluyen la vista nativa sin cambios. Estilos en `scss/_places.scss`
+(`.ah-places`), envío automático de los selects en `js/places.js`.
+
 No hay Node/npm ni PHP en el host: Webpack y Node ya están en la imagen AtoM.
 
 ## Arrancar

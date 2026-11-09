@@ -1,6 +1,9 @@
 import "../../arDominionB5Plugin/js/main";
 import "./help";
 import "./cataloging-form";
+import "./places";
+import "./description-updates";
+import "./search-limit";
 
 const initializeLoginControls = () => {
   const forgot = document.querySelector("[data-ah-login-forgot]");
@@ -31,10 +34,48 @@ const initializeLoginControls = () => {
   }
 };
 
+const initializeDescriptionAreas = () => {
+  document.querySelectorAll("[data-ah-area-toggle]").forEach((toggle) => {
+    const area = document.getElementById(toggle.dataset.ahAreaToggle);
+    if (!area) {
+      return;
+    }
+
+    const setExpanded = (expanded) => {
+      Array.from(area.children)
+        .filter((child) => !child.classList.contains("atom-section-header"))
+        .forEach((child) => {
+          child.hidden = !expanded;
+        });
+      toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      toggle.classList.toggle("ah-area-expanded", expanded);
+      toggle.parentElement.classList.toggle("ah-area-expanded", expanded);
+      toggle.title = expanded
+        ? toggle.dataset.ahCollapseTitle
+        : toggle.dataset.ahExpandTitle;
+    };
+
+    toggle.dataset.ahCollapseTitle = toggle.title.replace(/^Editar\b/, "Ocultar");
+    toggle.dataset.ahExpandTitle = toggle.title.replace(/^Editar\b/, "Mostrar");
+    toggle.setAttribute("role", "button");
+    toggle.setAttribute("aria-controls", area.id);
+    toggle.setAttribute("aria-expanded", "true");
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      setExpanded("true" !== toggle.getAttribute("aria-expanded"));
+    });
+    setExpanded("true" === toggle.getAttribute("aria-expanded"));
+  });
+};
+
 if ("loading" === document.readyState) {
-  document.addEventListener("DOMContentLoaded", initializeLoginControls);
+  document.addEventListener("DOMContentLoaded", () => {
+    initializeLoginControls();
+    initializeDescriptionAreas();
+  });
 } else {
   initializeLoginControls();
+  initializeDescriptionAreas();
 }
 
 /*

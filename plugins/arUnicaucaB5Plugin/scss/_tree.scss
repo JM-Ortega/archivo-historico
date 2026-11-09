@@ -1,0 +1,162 @@
+// Árbol jerárquico «Fondos» de la barra lateral (KAN-139): resumen por nivel e insignias con el número de hijos por rama.
+//
+// Se aplica solo a `.ah-tree-summary` (bloque propio de modules/informationobject/templates/_treeView.php) y a `#treeview`, el
+// contenedor nativo del árbol de AtoM. No cambia el marcado ni el comportamiento de AtoM (el JS de despliegue sigue igual): solo
+// añade estilos sobre sus clases y la insignia `.ah-tree-count` que arUnicaucaTreeCounts agrega al final de cada <li>.
+// Solo usa tokens de _tokens.scss. Contrastes: texto secundario sobre la banda (4,7:1), azul profundo sobre superficie suave (>9:1).
+
+// Resumen de toda la colección: una banda suave con los números en azul profundo (sin separadores: al partirse en dos líneas no deben quedar huérfanos).
+.ah-tree-summary {
+  margin-bottom: $ah-space-3;
+  padding: $ah-space-3 $ah-space-4;
+  background: $ah-surface-band;
+  border: $border-width solid $ah-line;
+  border-radius: $ah-radius-panel;
+}
+
+.ah-tree-summary-title {
+  @include ah-type("kicker");
+
+  margin: 0 0 $ah-space-2;
+  color: $ah-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ah-tree-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ah-space-1 $ah-space-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: $ah-font-sans;
+  font-size: $ah-font-size-small;
+  color: $ah-text;
+
+  strong {
+    color: $ah-blue-deep;
+    font-weight: 700;
+  }
+}
+
+#treeview {
+  border: $border-width solid $ah-line;
+  border-radius: $ah-radius-panel;
+  background: $ah-panel;
+
+  .list-group {
+    border-top: 0;
+    border-radius: 0;
+  }
+
+  .list-group-item {
+    padding: $ah-space-2 $ah-space-3;
+    border-color: $ah-line;
+    background: transparent;
+    font-family: $ah-font-sans;
+    font-size: $ah-font-size-small;
+    color: $ah-text;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: $ah-surface-soft;
+    }
+
+    .text {
+      flex: 1 1 auto;
+      min-width: 0; // Permite truncar el título largo en lugar de empujar la insignia fuera.
+    }
+
+    // Nivel de descripción: etiqueta pequeña y apagada antes del título (el título es el protagonista de la fila).
+    .text > span:first-child:not(:last-child) {
+      margin-right: $ah-space-2 !important;
+      color: $ah-text-muted !important;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .text a {
+      color: $ah-blue-action;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        @include ah-focus-ring;
+
+        border-radius: $ah-radius-control;
+      }
+    }
+  }
+
+  // Ramas por las que se llegó al elemento actual: banda suave para leerlas como «camino».
+  .ancestor {
+    background: $ah-surface-band;
+  }
+
+  // Elemento actual: fondo de papel, trazo rojo corto a la izquierda (acento editorial) y título más fuerte.
+  .list-group-item.active {
+    position: relative;
+    background: $ah-panel;
+    color: $ah-text;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0.4rem;
+      bottom: 0.4rem;
+      left: 0;
+      width: 3px;
+      border-radius: 0 3px 3px 0;
+      background: $ah-accent;
+    }
+
+    .text a {
+      color: $ah-blue-deep;
+      font-weight: 700;
+    }
+  }
+
+  // Insignia con el número de hijos directos de la rama: «5 subseries». Cápsula suave a la derecha de la fila.
+  .ah-tree-count {
+    flex: none;
+    margin-left: $ah-space-2;
+    padding: 0.05rem 0.5rem;
+    border-radius: 999px;
+    background: $ah-surface-soft;
+    color: $ah-blue-deep;
+    font-size: 0.75rem;
+    line-height: 1.5;
+    white-space: nowrap;
+  }
+
+  .ah-tree-count-n {
+    font-weight: 700;
+  }
+
+  .ancestor .ah-tree-count {
+    background: $ah-panel;
+    box-shadow: inset 0 0 0 $border-width $ah-line;
+  }
+
+  // Con el asa de ordenar visible (usuarios con permiso), la insignia no debe pegarse a ella.
+  .grip {
+    margin-left: $ah-space-2;
+  }
+  .ah-tree-count + .grip {
+    margin-left: $ah-space-2;
+  }
+}
+
+// Pantallas estrechas: la insignia muestra solo el número (la palabra queda en el título flotante).
+@include media-breakpoint-down(sm) {
+  #treeview .ah-tree-count-t {
+    @include visually-hidden;
+  }
+}

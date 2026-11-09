@@ -1,11 +1,7 @@
 <?php decorate_with('layout_2col'); ?>
 
 <?php slot('sidebar'); ?>
-  <?php echo get_partial('informationobject/searchOptions', [
-      'advancedSearch' => false,
-      'navigationTitle' => __('Navegación'),
-      'usersSection' => true,
-  ]); ?>
+  <?php echo get_partial('search/searchOptions', ['active' => 'users']); ?>
 <?php end_slot(); ?>
 
 <?php slot('content'); ?>
@@ -139,9 +135,16 @@
                 if ($item->hasGroup(QubitAclGroup::ADMINISTRATOR_ID)) {
                     $role = 'Administrador';
                 } elseif ($item->hasGroup(QubitAclGroup::EDITOR_ID)) {
-                    $role = 'Editor';
+                    $role = 'Catalogador';
                 } else {
+                    /* OCULTO-021
+                       SERVÍA PARA: mostrar «Usuario autenticado» (nombre del grupo autenticado de AtoM) como rol
+                       de las cuentas que no son administrador ni catalogador.
+                       MOTIVO: el archivo solo usa administrador y catalogador; el grupo autenticado no se muestra.
+                       Código original:
                     $role = 'Usuario autenticado';
+                    */
+                    $role = 'Sin rol asignado';
                 }
                 $name = trim((string) $item->username);
                 $initials = strtoupper(substr($name, 0, 2));
