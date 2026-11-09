@@ -35,6 +35,7 @@ Cascada:
 @import "search-results"; // Listado de resultados de descripciones (.ah-results).
 @import "tree"; // Árbol «Fondos» de la barra lateral: resumen por nivel e insignias de hijos (.ah-tree-*, KAN-139).
 @import "places"; // Navegación temática «Lugares» (.ah-places, taxonomy/index).
+@import "description"; // Fichas públicas de descripciones archivísticas (sfIsadPlugin/index).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.
@@ -43,8 +44,16 @@ Cascada:
 @import "user-admin"; // Crear, editar, detalle y permisos de usuario, todo bajo .ah-user-admin.
 @import "advanced-search";
 @import "description-updates"; // Historial de descripciones del administrador (search/descriptionUpdates), .ah-updates-*.
+@import "action-pages";
 @import "header";
 @import "footer";
+
+@include media-breakpoint-up(md) {
+  #sidebar {
+    position: relative;
+    left: -4rem;
+  }
+}
 
 /*
 

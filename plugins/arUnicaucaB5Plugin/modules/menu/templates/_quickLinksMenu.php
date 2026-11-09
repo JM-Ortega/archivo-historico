@@ -27,16 +27,6 @@
         <?php echo __('Quick links'); ?>
       </h6>
     </li>
-    <?php /* OCULTO-004
-       SERVÍA PARA: abrir la documentación oficial de AtoM (docs.accesstomemory.org), externa al sistema y en inglés.
-       MOTIVO: el archivo no usa esa documentación; el sistema tendrá su propia información (p. ej. «Acerca de»).
-       Código original:
-       <?php if (
-           'login' != $child->getName()
-           && 'logout' != $child->getName()
-           && 'myProfile' != $child->getName()
-       ) { ?>
-    */ ?>
     <?php foreach ($quickLinks as $child) { ?>
       <?php if (
           'login' != $child->getName()
@@ -44,9 +34,19 @@
           && 'myProfile' != $child->getName()
           && 'help' != $child->getName()
       ) { ?>
+        <?php
+        $quickLinkLabels = [
+            'about' => 'About',
+            'home' => 'Home',
+            'homepage' => 'Home',
+            'privacyPolicy' => 'Privacy Policy',
+        ];
+        $quickLinkName = $child->getName();
+        $quickLinkLabel = $quickLinkLabels[$quickLinkName] ?? $child->getLabel(['cultureFallback' => true]);
+        ?>
         <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
           <?php echo link_to(
-              $child->getLabel(['cultureFallback' => true]),
+              __($quickLinkLabel),
               $child->getPath(['getUrl' => true, 'resolveAlias' => true]),
               ['class' => 'dropdown-item']
           ); ?>

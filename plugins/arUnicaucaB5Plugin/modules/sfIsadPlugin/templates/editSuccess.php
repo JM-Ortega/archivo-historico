@@ -22,6 +22,7 @@
 
 <?php slot('sidebar'); ?>
 
+  <?php echo get_partial('search/searchOptions', ['active' => 'cataloging']); ?>
   <?php include_component('repository', 'contextMenu'); ?>
 
 <?php end_slot(); ?>
