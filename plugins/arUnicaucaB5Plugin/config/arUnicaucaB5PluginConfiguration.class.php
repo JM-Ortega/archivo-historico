@@ -59,5 +59,8 @@ class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
             unset($plugins[$key]);
         }
         $this->configuration->setPlugins(array_merge([$this->name], $plugins));
+        // OCULTO-008 y OCULTO-014: bloquea con 404 las páginas de registros de autoridad e instituciones archivísticas
+        // (arUnicaucaAuthorityRecordsGuard). Sin esta línea el bloqueo no se activa.
+        $this->dispatcher->connect('controller.change_action', ['arUnicaucaAuthorityRecordsGuard', 'listen']);
     }
 }

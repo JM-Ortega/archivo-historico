@@ -277,6 +277,7 @@ services:
       - ./config/atom/content/privacy-policy.es.md:/project/content/privacy-policy.es.md:ro
       - ./config/atom/reconcile-about.php:/project/scripts/reconcile-about.php:ro
       - ./config/atom/content/about-platform.es.md:/project/content/about-platform.es.md:ro
+      - ./config/atom/reconcile-multi-repository.php:/project/scripts/reconcile-multi-repository.php:ro
       - ./config/atom/reconcile-group-names.php:/project/scripts/reconcile-group-names.php:ro
     depends_on:
       bootstrap:
