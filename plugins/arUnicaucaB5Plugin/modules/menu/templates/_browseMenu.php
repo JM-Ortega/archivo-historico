@@ -27,12 +27,18 @@
         Código original: ninguno; el ítem se mostraba a todo usuario con acceso (no había condición que lo excluyera).
       */ ?>
       <?php if ('browseFunctions' === $child->getName()) { continue; } ?>
-            <?php /* OCULTO-026
-         SERVÍA PARA: abrir la lista de materias (temas) desde el botón «Navegar».
-         MOTIVO: el archivo histórico no maneja materias; no las usa.
-         Código original: ninguno; el ítem se mostraba a todo usuario con acceso (no había condición que lo excluyera).
+      <?php /* OCULTO-026
+        SERVÍA PARA: abrir la lista de materias (temas) desde el botón «Navegar».
+        MOTIVO: el archivo histórico no maneja materias; no las usa.
+        Código original: ninguno; el ítem se mostraba a todo usuario con acceso (no había condición que lo excluyera).
       */ ?>
       <?php if ('browseSubjects' === $child->getName()) { continue; } ?>
+      <?php /* OCULTO-027
+        SERVÍA PARA: abrir el listado de objetos digitales desde el botón «Navegar».
+        MOTIVO: el sistema solo guarda descripciones, no los documentos digitalizados.
+        Código original: ninguno; el ítem se mostraba a todo usuario con acceso (no había condición que lo excluyera).
+      */ ?>
+      <?php if ('browseDigitalObjects' === $child->getName()) { continue; } ?>
       <?php if ($child->checkUserAccess() && 'browseActors' != $child->getName() && 'browseRepositories' != $child->getName()) { ?>
         <li <?php echo isset($child->name) ? 'id="node_'.$child->name.'"' : ''; ?>>
           <?php echo link_to(
