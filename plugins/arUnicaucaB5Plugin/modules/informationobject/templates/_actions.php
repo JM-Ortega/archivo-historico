@@ -20,7 +20,7 @@
       <?php } ?>
 
       <?php /*
-       * OCULTO-003: botón «Más» del panel de acciones.
+       * OCULTO-031: botón «Más» del panel de acciones.
        * Se conserva el bloque original para poder restaurarlo cuando las acciones avanzadas
        * vuelvan a estar disponibles desde la interfaz pública.
       <li>
