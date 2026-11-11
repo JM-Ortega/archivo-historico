@@ -246,11 +246,16 @@
         </div>
       <?php } ?>
 
+      <?php /* OCULTO-017
+         SERVÍA PARA: crear un lugar nuevo (término de la taxonomía Lugares) desde Navegar → Lugares.
+         MOTIVO: fuera de alcance; el prototipo no gestiona el vocabulario de lugares desde la interfaz.
+         Código original (upstream/atom/apps/qubit/modules/taxonomy/templates/indexSuccess.php, slot after-content):
       <?php if (QubitAcl::check($resource, 'createTerm')) { ?>
         <section class="actions ah-places-actions">
           <?php echo link_to(__('Add new'), ['module' => 'term', 'action' => 'add', 'taxonomy' => url_for([$resource, 'module' => 'taxonomy'])], ['class' => 'btn atom-btn-outline-light']); ?>
         </section>
       <?php } ?>
+      */ ?>
     </div>
   </div>
 </section>
