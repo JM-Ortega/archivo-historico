@@ -1,0 +1,251 @@
+// Administrar trabajos (jobs/browse), maqueta de Figma «Exportaciones» (ExportJobs.tsx).
+//
+// Se aplica solo dentro de `.ah-jobs`, que modules/jobs/templates/browseSuccess.php pone en su contenedor. Reutiliza de
+// _action-pages.scss el kicker, el encabezado y la barra de acciones (.ah-action-page__kicker, __header y __actions).
+// Solo usa tokens de _tokens.scss.
+
+.ah-jobs {
+  color: $ah-text;
+  font-family: $ah-font-sans;
+
+  // Encabezado: kicker, título con trazo rojo, texto introductorio y botón «Nueva búsqueda».
+  .ah-jobs__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: $ah-space-4;
+    margin-bottom: $ah-space-5;
+
+    .ah-action-page__header {
+      margin-bottom: 0;
+
+      &::after {
+        @include ah-accent-rule(5rem);
+
+        margin-top: $ah-space-2;
+      }
+    }
+  }
+
+  .ah-jobs__lead {
+    max-width: 48rem;
+    margin: $ah-space-3 0 0;
+    color: $ah-text;
+    font-size: $ah-font-size-small;
+  }
+
+  .ah-jobs__new-search {
+    flex: none;
+    color: $ah-blue-deep;
+    border: 1px solid $ah-line-strong;
+    border-radius: $ah-radius-control;
+    background-color: $ah-panel;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+
+    &:hover,
+    &:focus {
+      color: #fff;
+      border-color: $ah-blue;
+      background-color: $ah-blue;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  // Filtros en píldora (sustituyen el naranja nativo de Dominion) con su contador.
+  .nav-pills .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    color: $ah-blue-deep;
+    border: 1px solid $ah-line;
+    border-radius: 999px;
+    background-color: $ah-panel;
+    font-size: $ah-font-size-xsmall;
+    font-weight: 700;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      border-color: $ah-line-strong;
+      background-color: $ah-surface-soft;
+    }
+
+    &.active,
+    &.active:hover,
+    &.active:focus {
+      color: #fff;
+      border-color: $ah-blue-deep;
+      background-color: $ah-blue-deep;
+    }
+
+    &:focus-visible {
+      @include ah-focus-ring;
+    }
+  }
+
+  .ah-jobs__count {
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background-color: $ah-surface-soft;
+    color: $ah-blue;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  .nav-pills .btn.active .ah-jobs__count {
+    background-color: rgba(#fff, 0.15);
+    color: #fff;
+  }
+
+  // Tarjeta de la tabla.
+  .ah-jobs__card {
+    @include ah-paper;
+  }
+
+  .ah-jobs__table {
+    --bs-table-bg: transparent;
+
+    margin: 0;
+    color: $ah-text;
+    font-size: $ah-font-size-xsmall;
+
+    th,
+    td {
+      border-width: 0 0 1px;
+      border-style: solid;
+      border-color: $ah-line;
+      vertical-align: top;
+    }
+
+    th {
+      padding: 0.6rem 0.75rem;
+      color: $ah-blue-deep;
+      background-color: $ah-surface-band;
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 0.7rem 0.75rem;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tbody tr:hover td {
+      background-color: $ah-surface-soft;
+    }
+  }
+
+  // Estado del proceso: píldora con el icono nativo dentro.
+  .ah-jobs__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background-color: $ah-surface-soft;
+    color: $ah-blue-deep;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    white-space: nowrap;
+
+    i {
+      margin: 0 !important; // El me-1 nativo; el espacio lo da el gap.
+      color: inherit !important; // Anula text-success/text-danger/text-secondary: el color lo da la píldora.
+    }
+  }
+
+  .ah-jobs__status--completed {
+    background-color: rgba($ah-blue, 0.1);
+    color: $ah-blue;
+  }
+
+  // El rojo de identidad no se usa como color de texto: solo tinte de fondo e icono.
+  .ah-jobs__status--failed {
+    background-color: rgba($ah-accent, 0.12);
+
+    i {
+      color: $ah-accent !important;
+    }
+  }
+
+  // Enlaces de la columna Información.
+  .ah-jobs__download {
+    color: $ah-blue;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: rgba($ah-accent, 0.6);
+    text-underline-offset: 0.25rem;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+    }
+  }
+
+  .ah-jobs__link {
+    color: $ah-blue-action;
+    font-weight: 700;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      text-decoration: underline;
+    }
+  }
+
+  // Avisos nativos (alert-info): superficie suave de la identidad.
+  .alert-info {
+    --bs-alert-color: #{$ah-blue-deep};
+    --bs-alert-bg: #{$ah-surface-soft};
+    --bs-alert-border-color: #{$ah-line};
+
+    border-radius: $ah-radius-control;
+  }
+
+  // Estado vacío: panel centrado con icono (sustituye al aviso celeste cuando no hay procesos).
+  .ah-jobs__empty {
+    @include ah-paper;
+
+    padding: $ah-space-5 $ah-space-4;
+    color: $ah-text-muted;
+    text-align: center;
+
+    .ah-jobs__empty-icon {
+      display: inline-grid;
+      width: 3.5rem;
+      height: 3.5rem;
+      margin-bottom: $ah-space-3;
+      place-items: center;
+      border-radius: 50%;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-action;
+      font-size: 1.25rem;
+    }
+
+    li:first-child {
+      color: $ah-blue-deep;
+      font-family: $ah-font-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .ah-jobs__empty-hint {
+      margin-top: $ah-space-2;
+      font-size: $ah-font-size-small;
+    }
+  }
+}
