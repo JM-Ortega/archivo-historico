@@ -116,6 +116,31 @@
     --bs-border-color: #{$ah-line};
     --bs-heading-color: #{$ah-blue-deep};
 
+    // Resumen informativo: la exportación es siempre de descripciones archivísticas en CSV (Tipo y Formato están ocultos).
+    .ah-export-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: $ah-space-2 $ah-space-5;
+      margin: 0 0 $ah-space-4;
+      padding: $ah-space-3 $ah-space-4;
+      border-left: 2px solid $ah-blue-action;
+      border-radius: 0 $ah-radius-control $ah-radius-control 0;
+      background-color: $ah-surface-band;
+
+      dt {
+        color: $ah-text-muted;
+        font-size: $ah-font-size-xsmall;
+        font-weight: 700;
+      }
+
+      dd {
+        margin: 0;
+        color: $ah-blue-deep;
+        font-size: $ah-font-size-small;
+        font-weight: 700;
+      }
+    }
+
     .accordion {
       --bs-accordion-bg: #{$ah-panel};
       --bs-accordion-border-color: #{$ah-line};
