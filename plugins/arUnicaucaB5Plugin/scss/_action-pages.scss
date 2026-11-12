@@ -109,4 +109,88 @@
       }
     }
   }
+  
+  // Exportación del portapapeles (clipboard/exportSuccess.php): el formulario nativo en su acordeón, con los controles del theme.
+  &--export {
+    --bs-body-color: #{$ah-text};
+    --bs-border-color: #{$ah-line};
+    --bs-heading-color: #{$ah-blue-deep};
+
+    .accordion {
+      --bs-accordion-bg: #{$ah-panel};
+      --bs-accordion-border-color: #{$ah-line};
+      --bs-accordion-border-radius: #{$ah-radius-panel};
+      --bs-accordion-inner-border-radius: #{calc($ah-radius-panel - 1px)};
+    }
+
+    .accordion-item {
+      box-shadow: $ah-shadow-panel;
+    }
+
+    // Dominion redefine las variables del acordeón sobre el propio botón: se reasignan en el mismo nivel.
+    .accordion-button {
+      --bs-accordion-btn-bg: #{$ah-panel};
+      --bs-accordion-btn-color: #{$ah-blue-deep};
+      --bs-accordion-active-color: #{$ah-blue-deep};
+      --bs-accordion-active-bg: #{$ah-surface-band};
+      --bs-accordion-btn-focus-box-shadow: #{$ah-focus-ring};
+
+      color: $ah-blue-deep;
+
+      &:hover,
+      &:focus {
+        background-color: $ah-surface-soft;
+      }
+    }
+
+    .form-label,
+    .form-check-label {
+      color: $ah-blue-deep;
+      font-weight: 700;
+    }
+
+    .form-control,
+    .form-select {
+      border-color: $ah-line-control;
+      border-radius: $ah-radius-control;
+      color: $ah-text;
+
+      &:focus {
+        border-color: $ah-focus-color;
+        box-shadow: $ah-focus-ring;
+      }
+    }
+
+    .form-check-input {
+      border-color: $ah-line-control;
+
+      &:checked {
+        border-color: $ah-blue;
+        background-color: $ah-blue;
+      }
+
+      &:focus {
+        border-color: $ah-focus-color;
+        box-shadow: $ah-focus-ring;
+      }
+    }
+
+    // Icono «?» que abre la ayuda y mensaje de ayuda.
+    .generic-help-icon {
+      color: $ah-blue-action;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+      }
+    }
+
+    .alert-info {
+      --bs-alert-color: #{$ah-blue-deep};
+      --bs-alert-bg: #{$ah-surface-soft};
+      --bs-alert-border-color: #{$ah-line};
+
+      border-radius: $ah-radius-control;
+    }
+  }
 }
