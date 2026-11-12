@@ -57,6 +57,11 @@
 </nav>
 
 <div class="tab-content">
+<?php /* OCULTO-036
+       SERVÍA PARA: mostrar la tabla con sus encabezados aunque no hubiera procesos.
+       MOTIVO: con la lista vacía solo se muestra el estado vacío del diseño.
+       Código original: la tabla se mostraba siempre, sin condición.
+    */ ?>
 <?php if ($jobs->count()) { ?>
   <div class="table-responsive mb-3 ah-jobs__card">
     <table class="table table-bordered mb-0 ah-jobs__table">
@@ -177,20 +182,30 @@
       <?php echo __('Refresh'); ?>
     </a>
   </li>
-  <li>
-    <a class="btn atom-btn-outline-light" href="<?php echo url_for(
-        ['module' => 'jobs', 'action' => 'browse', 'autoRefresh' => !$autoRefresh]
-        + $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()
-    ); ?>">
-      <i class="fas <?php echo $autoRefresh ? 'fa-check-circle' : 'fa-circle'; ?> me-1" aria-hidden="true"></i>
-      <?php echo __('Auto refresh'); ?>
-    </a>
-  </li>
+  <?php /* OCULTO-037
+         SERVÍA PARA: recargar la lista automáticamente cada 10 segundos para ver el avance de los procesos.
+         MOTIVO: no se considera necesario en este prototipo; la lista se actualiza con el botón «Actualizar».
+         Código original:
+          <li>
+            <a class="btn atom-btn-outline-light" href="<?php echo url_for(
+                ['module' => 'jobs', 'action' => 'browse', 'autoRefresh' => !$autoRefresh]
+                + $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()
+            ); ?>">
+              <i class="fas <?php echo $autoRefresh ? 'fa-check-circle' : 'fa-circle'; ?> me-1" aria-hidden="true"></i>
+              <?php echo __('Auto refresh'); ?>
+            </a>
+          </li>
+      */ ?>
   <?php if ($jobs->count()) { ?>
-    <li>
-      <?php echo link_to(__('Export history CSV'), ['module' => 'jobs', 'action' => 'export'],
-        ['class' => 'btn atom-btn-outline-light']); ?>
-    </li>
+    <?php /* OCULTO-038
+           SERVÍA PARA: descargar un CSV con el historial de los procesos (trabajos) que aparecen en la tabla.
+           MOTIVO: no se considera necesario para el archivo en este prototipo.
+           Código original:
+            <li>
+              <?php echo link_to(__('Export history CSV'), ['module' => 'jobs', 'action' => 'export'],
+                ['class' => 'btn atom-btn-outline-light']); ?>
+            </li>
+        */ ?>
     <li>
       <?php echo link_to(__('Clear inactive jobs'), ['module' => 'jobs', 'action' => 'delete'],
         ['class' => 'btn atom-btn-outline-danger']); ?>
