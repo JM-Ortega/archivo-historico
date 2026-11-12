@@ -45,3 +45,25 @@ function uc_jobs_counts(): array
         'failed' => $count(['job.status_id = ?'], [QubitTerm::JOB_STATUS_ERROR_ID]),
     ];
 }
+
+
+/**
+ * Texto en español del estado de un trabajo. QubitJob::getStatusString() (upstream) depende del catálogo de AtoM, que no
+ * trae «Running» en español; aquí están los cuatro estados posibles. La píldora de estado de jobs/browse y de jobs/report lo usa.
+ */
+function uc_job_status_label($job): string
+{
+    switch ($job->statusId) {
+        case QubitTerm::JOB_STATUS_COMPLETED_ID:
+            return __('Completado');
+
+        case QubitTerm::JOB_STATUS_IN_PROGRESS_ID:
+            return __('En proceso');
+
+        case QubitTerm::JOB_STATUS_ERROR_ID:
+            return __('Error');
+
+        default:
+            return __('Desconocido');
+    }
+}

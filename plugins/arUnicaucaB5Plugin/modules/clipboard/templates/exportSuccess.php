@@ -1,21 +1,26 @@
 <?php decorate_with('layout_1col.php'); ?>
 
 <?php slot('title'); ?>
-  <?php if (isset($resource)) { ?>
-    <div class="multiline-header d-flex flex-column mb-3">
-      <h1 class="mb-0" aria-describedby="heading-label">
-        <?php echo $title; ?>
-      </h1>
-      <span class="small" id="heading-label">
-        <?php echo render_title($resource); ?>
-      </span>
-    </div>
-  <?php } else { ?>
-    <h1><?php echo $title; ?></h1>
-  <?php } ?>
+  <header class="ah-action-page__header">
+    <p class="ah-action-page__kicker"><?php echo __('Gestión de exportaciones'); ?></p>
+    <?php if (isset($resource)) { ?>
+      <div class="multiline-header d-flex flex-column mb-3">
+        <h1 class="mb-0" aria-describedby="heading-label">
+          <?php echo $title; ?>
+        </h1>
+        <span class="small" id="heading-label">
+          <?php echo render_title($resource); ?>
+        </span>
+      </div>
+    <?php } else { ?>
+      <h1><?php echo $title; ?></h1>
+    <?php } ?>
+  </header>
 <?php end_slot(); ?>
 
 <?php slot('content'); ?>
+
+  <div class="ah-action-page ah-action-page--export">
 
   <?php echo $form->renderFormTag(url_for(['module' => 'clipboard', 'action' => 'export']), ['id' => 'clipboard-export-form']); ?>
 
@@ -79,11 +84,13 @@
       </div>
     </div>
 
-    <ul class="actions mb-3 nav gap-2">
+    <ul class="actions ah-action-page__actions mb-3 nav gap-2">
       <li><input class="btn atom-btn-outline-success" type="submit" id="exportSubmit" value="<?php echo __('Export'); ?>"></li>
       <li><?php echo link_to(__('Cancel'), !empty($sf_request->getReferer()) ? $sf_request->getReferer() : ['module' => 'clipboard', 'action' => 'view'], ['class' => 'btn atom-btn-outline-light', 'role' => 'button']); ?></li>
     </ul>
 
   </form>
+
+  </div>
 
 <?php end_slot(); ?>

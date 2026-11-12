@@ -108,7 +108,7 @@
                 <i aria-hidden="true" class="fa fa-cogs me-1 text-secondary"></i>
               <?php } ?>
 
-              <?php echo $job->getStatusString(); ?>
+              <?php echo uc_job_status_label($job); ?>
             </span>
 
             <?php if ($job->getObjectModule() && $job->getObjectSlug()) { ?>

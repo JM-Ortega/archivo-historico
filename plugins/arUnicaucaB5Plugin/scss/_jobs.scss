@@ -249,3 +249,68 @@
     }
   }
 }
+
+// Informe del trabajo (jobs/reportSuccess.php). El contenedor lleva también .ah-jobs para reutilizar la píldora de estado.
+.ah-job-report {
+  @include ah-paper;
+
+  margin-bottom: $ah-space-4;
+  --bs-primary-rgb: #{to-rgb($ah-blue-deep)};
+  --bs-border-color: #{$ah-line};
+
+  // Los títulos de sección (naranja en Dominion) toman el azul del Archivo.
+  .atom-section-header,
+  .atom-section-header * {
+    color: $ah-blue-deep !important;
+  }
+
+  // La última sección no repite el borde del panel.
+  > section:last-of-type {
+    border-bottom: 0 !important;
+  }
+
+  // Etiqueta y valor de cada fila (render_show).
+  .field > h3 {
+    color: $ah-text-muted;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+  }
+
+  .field > div {
+    color: $ah-blue-deep;
+    font-size: $ah-font-size-small;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .field a {
+    color: $ah-blue-action;
+  }
+
+  // Registro del trabajo: panel navy con texto monoespaciado que se ajusta al ancho.
+  .bg-secondary {
+    border-radius: $ah-radius-control;
+    background-color: $ah-blue-deep !important;
+  }
+
+  // Registro: una línea por entrada, sin ajustar al ancho; si es más larga que el panel, scroll horizontal.
+  #job-log-output,
+  #job-log-error-output {
+    margin: 0;
+    color: inherit;
+    font-size: $ah-font-size-xsmall;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  #job-log-output-empty {
+    margin: 0;
+  }
+
+  .alert-danger {
+    border-color: rgba($ah-error, 0.3);
+    color: $ah-error;
+    background-color: rgba($ah-error, 0.05);
+  }
+}

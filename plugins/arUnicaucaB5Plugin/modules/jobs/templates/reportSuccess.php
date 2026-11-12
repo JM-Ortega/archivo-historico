@@ -1,11 +1,16 @@
 <?php decorate_with('layout_1col'); ?>
+<?php use_helper('UcJobs'); ?>
 
 <?php slot('title'); ?>
-  <h1><?php echo __('Job report'); ?></h1>
+  <header class="ah-action-page__header">
+    <p class="ah-action-page__kicker"><?php echo __('Gestión de exportaciones'); ?></p>
+    <h1><?php echo __('Job report'); ?></h1>
+  </header>
 <?php end_slot(); ?>
 
+<div class="ah-jobs ah-job-report">
 <section id="report-overview-area" class="border-bottom">
-  <?php echo render_b5_section_heading(__('Overview')); ?>
+  <?php echo render_b5_section_heading(__('Resumen')); ?>
 
   <?php echo render_show(__('Name'), render_value_inline($job->name)); ?>
 
@@ -17,14 +22,18 @@
 
   <?php
       $icon = '';
+      $statusModifier = 'unknown';
       if (QubitTerm::JOB_STATUS_COMPLETED_ID == $job->statusId) {
           $icon = '<i aria-hidden="true" class="fa fa-check-square ms-2 text-success"></i>';
+          $statusModifier = 'completed';
       } elseif (QubitTerm::JOB_STATUS_ERROR_ID == $job->statusId) {
           $icon = '<i aria-hidden="true" class="fa fa-exclamation-triangle ms-2 text-danger"></i>';
+          $statusModifier = 'failed';
       } elseif (QubitTerm::JOB_STATUS_IN_PROGRESS_ID == $job->statusId) {
           $icon = '<i aria-hidden="true" class="fa fa-cogs ms-2 text-secondary"></i>';
+          $statusModifier = 'active';
       }
-      $status = render_value_inline($job->getStatusString()).$icon;
+      $status = '<span class="ah-jobs__status ah-jobs__status--'.$statusModifier.'">'.render_value_inline(uc_job_status_label($job)).$icon.'</span>';
       echo render_show(__('Status'), $status);
   ?>
 
@@ -59,9 +68,10 @@
     <?php } ?>
   </div>
 </section>
+</div>
 
 <?php slot('after-content'); ?>
-  <section class="actions mb-3">
-    <?php echo link_to(__('Return to jobs management page'), ['module' => 'jobs', 'action' => 'browse'], ['class' => 'btn atom-btn-outline-light']); ?>
+  <section class="actions ah-action-page__actions mb-3">
+    <?php echo link_to(__('Volver'), ['module' => 'jobs', 'action' => 'browse'], ['class' => 'btn atom-btn-outline-light']); ?>
   </section>
 <?php end_slot(); ?>
