@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xliff PUBLIC "-//XLIFF//DTD XLIFF//EN" "http://www.oasis-open.org/committees/xliff/documents/xliff.dtd">
+<xliff version="1.0">
+  <file source-language="en" target-language="es" datatype="plaintext" original="messages" date="2026-11-11T00:00:00Z" product-name="messages">
+    <header/>
+    <body>
+      <trans-unit id="1">
+        <source>Include non-visible elements</source>
+        <target>Incluir elementos no visibles</target>
+      </trans-unit>
+      <trans-unit id="2">
+        <source>Choosing "Include descendants" will include all lower-level records beneath those currently on the clipboard in the export.</source>
+        <target>Al elegir «Incluir descendientes», la exportación incluirá todos los registros de nivel inferior que dependen de los que están en el portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="3">
+        <source>Choosing "Include draft records" will include those marked with a Draft publication status in the export. Note: if you do NOT choose this option, any descendants of a draft record will also be excluded, even if they are published.</source>
+        <target>Al elegir «Incluir borradores de registros», la exportación incluirá los registros con estado de publicación «Borrador». Nota: si NO elige esta opción, también se excluirán los descendientes de un registro en borrador, aunque estén publicados.</target>
+      </trans-unit>
+      <trans-unit id="4">
+        <source>Choosing "Include non-visible elements" will include those not marked as Visible Elements.</source>
+        <target>Al elegir «Incluir elementos no visibles», la exportación incluirá los elementos que no están marcados como elementos visibles.</target>
+      </trans-unit>
+      <trans-unit id="5">
+        <source>Select levels of descendant descriptions for inclusion</source>
+        <target>Seleccione los niveles de las descripciones descendientes que se incluirán</target>
+      </trans-unit>
+      <trans-unit id="6">
+        <source>If no levels are selected, the export will fail. You can use the control (Mac ⌘) and/or shift keys to multi-select values from the Levels of description menu. It is necessary to include the level(s) above the desired export level, up to and including the level contained in the clipboard. Otherwise, no records will be included in the export.</source>
+        <target>Si no se selecciona ningún nivel, la exportación fallará. Puede usar las teclas Control (⌘ en Mac) y/o Mayús para seleccionar varios valores del menú de niveles de descripción. Es necesario incluir los niveles que están por encima del nivel que desea exportar, hasta el nivel del registro que está en el portapapeles inclusive. De lo contrario, no se incluirá ningún registro en la exportación.</target>
+      </trans-unit>
+      <trans-unit id="7">
+        <source>Error: You must have at least one %1%Level of description%2% selected or choose %1%Include all descendant levels of description%2% to proceed.</source>
+        <target>Error: debe seleccionar al menos un %1%nivel de descripción%2% o elegir %1%Incluir todos los niveles de descripción de los descendientes%2% para continuar.</target>
+      </trans-unit>
+      <trans-unit id="8">
+        <source>Your %entity_type% export package is being built.</source>
+        <target>Su paquete de exportación de %entity_type% se está generando.</target>
+      </trans-unit>
+      <trans-unit id="9">
+        <source>The %open_link%job management page%close_link% will show progress and a download link when complete.</source>
+        <target>La %open_link%página de administración de procesos%close_link% mostrará el avance y un enlace de descarga cuando termine.</target>
+      </trans-unit>
+      <trans-unit id="10">
+        <source>Please %open_link%refresh the page%close_link% to see progress and a download link when complete.</source>
+        <target>Por favor, %open_link%actualice la página%close_link% para ver el avance y un enlace de descarga cuando termine.</target>
+      </trans-unit>
+      <trans-unit id="11">
+        <source>%open_strong_tag%Note:%close_strong_tag% AtoM may remove export packages after a period of time to free up storage space. When your export is ready you should download it as soon as possible.</source>
+        <target>%open_strong_tag%Nota:%close_strong_tag% AtoM puede eliminar los paquetes de exportación pasado cierto tiempo para liberar espacio de almacenamiento. Cuando su exportación esté lista, descárguela lo antes posible.</target>
+      </trans-unit>
+      <trans-unit id="12">
+        <source>No records were exported for your current selection. Please %open_link%refresh the page and choose different export options %close_link%.</source>
+        <target>No se exportó ningún registro con su selección actual. Por favor, %open_link%actualice la página y elija otras opciones de exportación%close_link%.</target>
+      </trans-unit>
+      <trans-unit id="13">
+        <source>Invalid export options.</source>
+        <target>Opciones de exportación no válidas.</target>
+      </trans-unit>
+      <trans-unit id="14">
+        <source>The clipboard is empty for this entity type.</source>
+        <target>El portapapeles está vacío para este tipo de entidad.</target>
+      </trans-unit>
+      <trans-unit id="15">
+        <source>You are not allowed to export this entity type.</source>
+        <target>No tiene permiso para exportar este tipo de entidad.</target>
+      </trans-unit>
+      <trans-unit id="16">
+        <source>CSV export</source>
+        <target>Exportación CSV</target>
+      </trans-unit>
+      <trans-unit id="17">
+        <source>XML export</source>
+        <target>Exportación XML</target>
+      </trans-unit>
+      <trans-unit id="18">
+        <source>Include digital objects</source>
+        <target>Incluir objetos digitales</target>
+      </trans-unit>
+      <trans-unit id="19">
+        <source>It is not possible to select both digital objects and descendants for export at the same time. Digital objects can only be exported for records that are on the clipboard.</source>
+        <target>No es posible exportar a la vez objetos digitales y descendientes. Los objetos digitales solo se pueden exportar para los registros que están en el portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="20">
+        <source>Digital objects with restricted access or copyright will not be exported.</source>
+        <target>No se exportarán los objetos digitales con acceso restringido o derechos de autor.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
