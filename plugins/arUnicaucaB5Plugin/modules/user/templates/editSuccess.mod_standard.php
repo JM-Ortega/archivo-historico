@@ -129,11 +129,19 @@
         </div>
       </div>
       <div class="ah-user-panel-body">
+        <?php /* OCULTO-050
+           SERVÍA PARA: avisar que los permisos también pueden tener configuraciones individuales que se
+           consultan en la vista de permisos del usuario.
+           MOTIVO: el archivo no usará configuraciones individuales de permisos y la vista de permisos del
+           usuario está oculta (OCULTO-048); la nota queda solo con «Aquí solo se asignan grupos.».
+           Código original:
         <p class="ah-user-note">
           <?php echo $resourceAlreadyExists
               ? __('Aquí solo se asignan grupos. Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; consúltelas en la vista de permisos del usuario.')
               : __('Aquí solo se asignan grupos. Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; tras crear la cuenta podrá consultarlas en la vista de permisos del usuario.'); ?>
         </p>
+        */ ?>
+        <p class="ah-user-note"><?php echo __('Aquí solo se asignan grupos.'); ?></p>
 
         <?php echo render_field(
             $form->groups->label(__('User groups')),
