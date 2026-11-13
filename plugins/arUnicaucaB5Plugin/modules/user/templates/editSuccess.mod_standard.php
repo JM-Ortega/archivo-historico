@@ -141,11 +141,19 @@
             ['class' => 'form-autocomplete']
         ); ?>
 
-        <?php echo render_field(
-            $form->translate->label(__('Allowed languages for translation')),
-            null,
-            ['class' => 'form-autocomplete']
-        ); ?>
+        <?php /* OCULTO-049
+           SERVÍA PARA: elegir los idiomas en los que el usuario puede traducir la interfaz.
+           MOTIVO: el archivo no usa la traducción de la interfaz. El campo se oculta con «hidden» pero sigue
+           en el formulario, para que al guardar se envíen sus valores actuales y no se borren los permisos
+           de traducción que ya tenga la cuenta. Para volver a mostrarlo, quita el <div hidden> que lo envuelve.
+        */ ?>
+        <div hidden>
+          <?php echo render_field(
+              $form->translate->label(__('Allowed languages for translation')),
+              null,
+              ['class' => 'form-autocomplete']
+          ); ?>
+        </div>
 
         <?php if ($restEnabled) { ?>
           <?php echo render_field($form->restApiKey->label(
