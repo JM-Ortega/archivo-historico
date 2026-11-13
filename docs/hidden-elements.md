@@ -21,6 +21,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-033 | 05/11/2026 | Botón «Navegar» y navegación principal del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Oculto |
 | OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
+| OCULTO-036 | 12/11/2026 | Sección «Permisos» y acciones del pie en los detalles del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -225,3 +226,14 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/scss/_description.scss` y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/indexSuccess.php` |
 | Para qué servía | Reunía acciones como informes, inventario, navegación como lista, importación XML/CSV y exportaciones, incluida **EAD 2002 XML**. |
 | Motivo | Se oculta el panel lateral para simplificar la ficha; **Añadir al portapapeles** y **EAD 2002 XML** se reubican temporalmente en el panel principal de acciones. |
+
+### OCULTO-036 - Sección «Permisos» y acciones del pie en los detalles del usuario
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-036 |
+| Tipo y método | Oculto (comentado) |
+| Elemento y dónde se veía | Sección **Permisos** (nota y pestaña **Descripciones archivísticas**), historial de edición y botones **Eliminar**, **Crear nuevo usuario** y **Volver a la lista de usuarios**, debajo de los datos de la cuenta en **Detalles de usuario**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` |
+| Para qué servía | Permitía consultar las configuraciones de permisos por grupo e individuales del usuario, ver su historial de edición y, desde el pie, eliminar el usuario, crear uno nuevo o volver a la lista. |
+| Motivo | Al abrir un usuario desde **Listar usuarios** (enlace en su nombre) la ficha debe mostrar solo la información de la cuenta. |
