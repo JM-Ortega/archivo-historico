@@ -29,7 +29,7 @@
  *     presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
  *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
- *     arUnicaucaCatalogingParents::chosen().
+ *     arUnicaucaCatalogingContext::chosenParent().
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
  * @author     Jesús García Crespo <correo@sevein.com>
@@ -104,7 +104,7 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
         // arUnicaucaB5Plugin: cascada Fondo → Sección → Serie → Subserie para elegir dónde queda la descripción nueva.
         // Sin propiedad declarada a propósito: así `parentCascade` llega a la plantilla (variable de la action, como
         // levelProfiles). Null en edición, en duplicado o si no hay descripciones con esos niveles.
-        $this->parentCascade = $this->isNewDescription() ? arUnicaucaCatalogingParents::data() : null;
+        $this->parentCascade = $this->isNewDescription() ? arUnicaucaCatalogingContext::parentCascade() : null;
 
         $title = $this->context->i18n->__('Add new archival description');
         if (isset($this->getRoute()->resource)) {
@@ -288,7 +288,7 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                 if (!$this->isNewDescription()) {
                     return parent::processField($field);
                 }
-                $this->resource->parent = arUnicaucaCatalogingParents::chosen((string) $this->form->getValue('parent'), $this->parent);
+                $this->resource->parent = arUnicaucaCatalogingContext::chosenParent((string) $this->form->getValue('parent'), $this->parent);
 
                 break;
 
