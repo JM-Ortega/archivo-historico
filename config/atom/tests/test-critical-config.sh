@@ -22,7 +22,7 @@ URL="http://127.0.0.1:$PORT"
 DC=(docker compose -p "$PROJECT")
 IMG=archivo-historico/atom:2.10.2
 SINK="$PROJECT-sink"
-ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}"
+ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@unicauca.edu.co}"
 ADMIN_PASSWORD="${ATOM_ADMIN_PASSWORD:-admin_dev_12345}"
 SECRET_FILE_IN=/run/atom-secrets/csrf_secret
 TMP="$(mktemp -d)"
@@ -342,7 +342,7 @@ expect "E. escribió (estaba en 1)" "1" "$(grep -c 'check_for_updates: escrito 0
 expect "E. settings ajenos preservados" "$SETH" "$(setting_hash)"
 CK1="$(q 'CHECKSUM TABLE setting, setting_i18n' | tr '\t\n' ' ~')"
 "${DC[@]}" run --rm --no-deps -T reconcile >"$TMP/rec3.log" 2>&1
-expect "E. repetición: sin escritura" "1" "$(grep -c 'ya es 0 en la BD; sin escritura' "$TMP/rec3.log" || true)"
+expect "E. repetición: sin escritura" "1" "$(grep -c 'check_for_updates: ya es 0 en la BD; sin escritura' "$TMP/rec3.log" || true)"
 expect "E. repetición: tablas de settings idénticas (no-op)" "$CK1" "$(q 'CHECKSUM TABLE setting, setting_i18n' | tr '\t\n' ' ~')"
 
 # ------------------------------------------------------------------------------------------------------------------

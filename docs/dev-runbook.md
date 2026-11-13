@@ -120,7 +120,7 @@ instalación nueva aparece `BD FRESH: ejecutando tools:install (una sola vez)` s
 
 ## Configuración crítica de AtoM: cultura, timezone, secreto CSRF y updates
 
-Cuatro propiedades, cada una con su dueño. Ninguna convierte `settings.yml` ni la tabla `setting` en estado autoritativo: lo autoritativo es
+Seis propiedades, cada una con su dueño. Ninguna convierte `settings.yml` ni la tabla `setting` en estado autoritativo: lo autoritativo es
 *defaults del proyecto + entorno + secreto*, y los ficheros runtime se **derivan** en cada arranque.
 
 | Propiedad | Ownership | Dónde se declara | Cómo se aplica |
@@ -129,6 +129,8 @@ Cuatro propiedades, cada una con su dueño. Ninguna convierte `settings.yml` ni 
 | timezone (DEV: `America/Bogota`) | ENVIRONMENT-MANAGED | variable de host `ATOM_TIMEZONE` (default DEV en `compose.yaml`) → `ATOM_PHP_DATE_TIMEZONE` en los contenedores | entrypoint: `php.ini` (upstream) **y** `default_timezone` de Symfony (proyecto), de la misma variable |
 | `csrf_secret` | ENVIRONMENT-MANAGED SECRET | **fichero** `ATOM_CSRF_SECRET_FILE` (`/run/atom-secrets/csrf_secret`); en DEV lo genera `dev_secrets` | entrypoint: se vuelca en el `settings.yml` efímero del contenedor |
 | `check_for_updates = 0` | PROJECT-MANAGED (tabla `setting`) | `config/atom/reconcile-check-for-updates.php` | `reconcile` (pre-start), con verificación de postcondición |
+| `require_strong_passwords = 1` | PROJECT-MANAGED (tabla `setting`) | `config/atom/reconcile-strong-passwords.php` | `reconcile` (pre-start), con verificación de postcondición |
+| `inherit_code_informationobject = 0` | PROJECT-MANAGED (tabla `setting`) | `config/atom/reconcile-reference-codes.php` | `reconcile` (pre-start), con verificación de postcondición |
 
 **Entrypoint del proyecto** (`config/atom/runtime-config.sh`, en `bootstrap`, `reconcile`, `atom` y `atom_worker`; lo demás lo sigue haciendo el entrypoint upstream, al que
 delega con `exec`): escribe exactamente tres claves (`default_culture`, `default_timezone`, `csrf_secret`) en `settings.yml` **y** en su `settings.yml.tmpl`. El `.tmpl` es la copia del
@@ -158,6 +160,10 @@ servidor no responde, el render puede bloquearse. Lo aplica el segundo paso del 
 de AtoM): `tools:settings set` cambia la BD pero **no** invalida la caché, y las requests seguirían viendo `1` hasta ~24 h. No usa `flush_all` (destruiría las sesiones). Postcondición: BD en `0`, valor efectivo recalculado en `0`,
 ninguna entrada de caché con otro valor. Solo esa fila: los demás settings no se gestionan.
 
+**`require_strong_passwords = 1`.** Activa la opción nativa «Require strong passwords» (default upstream `0`): `QubitValidatorPassword` exige mínimo 8 caracteres y al menos 3 de 4 clases (mayúsculas, minúsculas, números, símbolos) al crear o editar usuarios. Lo aplica el cuarto paso del `reconcile` con el mismo mecanismo que `check_for_updates` (escribe solo si difiere, invalida solo `settings:i18n:*`, exige la postcondición en BD y caché). Solo esa fila. Aplica a contraseñas que se fijan desde la interfaz; no cambia contraseñas existentes. Un administrador puede volver a desactivarla en Configuración → Seguridad, pero el siguiente `reconcile` la reactiva.
+
+**`inherit_code_informationobject = 0`.** Con el default upstream (1) AtoM calcula el código de referencia uniendo los `identifier` de todos los ancestros (más país y repositorio) con `separator_character`. El Archivo guarda la **Signatura completa** en `identifier` (p. ej. `5640 (Ind. C II -24 mn)`), así que el código heredado la duplicaría con los códigos de los niveles superiores. Con `0`, el código de referencia es el `identifier` tal cual en la ficha ISAD, los listados y resultados de búsqueda y el `<unitid>` del EAD. No toca la jerarquía ni los datos. Mismo mecanismo que `check_for_updates` (solo esa fila, invalida solo `settings:i18n:*`, postcondición en BD y caché). **Límite:** el campo `referenceCode` de Elasticsearch se indexa siempre con la cadena heredada (lo calcula `arElasticSearchInformationObjectPdo`, sin mirar este ajuste); con `0` no se muestra, pero sí lo usan la búsqueda por texto y la ordenación «Reference code», así que ahí la Signatura aparece dentro de la cadena heredada.
+
 Verificación de la configuración (sin imprimir el secreto):
 
 ```bash
@@ -167,20 +173,24 @@ docker compose logs reconcile | grep check_for_updates
 
 Prueba de integración (proyecto aislado, no toca la DEV; ~4 min): `config/atom/tests/test-critical-config.sh`.
 
-## Reconcile de plugins (desired state)
+## Reconcile de AtoM (desired state)
 
-`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en dos pasos que corren en orden
-(`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado** y (2) `check_for_updates = 0` (ver
-[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)). No es un reconciliador genérico. Vive en `config/atom/`:
+`reconcile` (one-shot, como `bootstrap` y `theme_build`) alinea el estado PROJECT-MANAGED de AtoM que el proyecto gestiona hoy, en cinco pasos que corren en orden
+(`config/atom/reconcile.sh`; el primero que falla corta): (1) `arUnicaucaB5Plugin` **debe estar habilitado**, (2) `check_for_updates = 0` (ver
+[arriba](#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates)), (3) los [términos propios del proyecto](#términos-project-managed-de-taxonomías) existen, (4) `require_strong_passwords = 1`, (5) `inherit_code_informationobject = 0` y, después de la política de privacidad y la página «Acerca de», (8) el grupo `editor` (101) se llama «catalogador». No es un reconciliador genérico. Vive en `config/atom/`:
 
 | Fichero | Papel |
 | --- | --- |
 | `config/atom/required-plugins.conf` | Desired state: un plugin por línea (`#` comenta). Hoy solo `arUnicaucaB5Plugin` |
-| `config/atom/reconcile.sh` | Orquesta los pasos del reconcile (plugins → `check_for_updates`) |
+| `config/atom/reconcile.sh` | Orquesta los pasos del reconcile (plugins → `check_for_updates` → términos → `require_strong_passwords` → `inherit_code_informationobject`) |
 | `config/atom/reconcile-plugins.sh` | Paso 1: plugins (corre dentro de la imagen AtoM; sin dependencias nuevas en el host) |
 | `config/atom/reconcile-check-for-updates.php` | Paso 2: `check_for_updates = 0` (vía `php symfony tools:run`) |
+| `config/atom/reconcile-strong-passwords.php` | Paso 4: `require_strong_passwords = 1` (vía `php symfony tools:run`) |
+| `config/atom/reconcile-reference-codes.php` | Paso 5: `inherit_code_informationobject = 0` (vía `php symfony tools:run`) |
+| `config/atom/reconcile-group-names.php` | Paso 8: el grupo `editor` de AtoM (id 101) se llama «catalogador» en `es` (vía `php symfony tools:run`). Solo ese nombre; nunca permisos, miembros ni el nombre `en`. Si alguien le puso otro nombre, o si otro grupo ya se llama «catalogador», es STOP (100) sin escribir |
+| `config/atom/reconcile-terms.php` | Paso 3: términos PROJECT-MANAGED de taxonomías (vía `php symfony tools:run`); el desired state está en el propio script |
 | `config/atom/runtime-config.sh`, `config/atom/dev-secrets.sh` | Entrypoint del proyecto y proveedor del secreto DEV (ver arriba) |
-| `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
+| `config/atom/tests/test-reconcile-plugins.sh`, `config/atom/tests/test-reconcile-terms.sh`, `config/atom/tests/test-reconcile-strong-passwords.sh`, `config/atom/tests/test-reconcile-reference-codes.sh`, `config/atom/tests/test-critical-config.sh` | Pruebas de integración (ver [Pruebas](../README.md#pruebas)) |
 
 Semántica: por cada plugin requerido → valida el formato del `.conf` → valida su **source mínimo** (existe `plugins/<nombre>/config/<nombre>Configuration.class.php`,
 declara la clase y es PHP válido) → observa `tools:atom-plugins list` → si **falta**, `tools:atom-plugins add` → **vuelve a observar** y exige que el
@@ -197,12 +207,40 @@ docker compose logs reconcile
 Exit de `reconcile` (plugins): 0 éxito; 64 entrada inválida (`.conf` ausente, vacío o con una línea que no es un nombre de plugin); 65 source mínimo del
 plugin inválido (nada se escribe: todo el `.conf` se valida antes de escribir); 70 no se pudo observar la lista; 71 `tools:atom-plugins add` falló;
 72 postcondición no satisfecha tras añadir. Paso `check_for_updates`: 73 no se pudo observar; 74 la escritura falló; 75 no se pudo invalidar la caché;
-76 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
+76 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Paso `require_strong_passwords`: 81 no se pudo observar; 82 la escritura falló; 83 no se pudo invalidar la caché; 84 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Paso `inherit_code_informationobject`: 85 no se pudo observar; 86 la escritura falló; 87 no se pudo invalidar la caché; 88 estado no reconciliable por override en otra cultura o postcondición no satisfecha. Paso términos: 77 no se pudo observar; 78 no reconciliable (conflicto
+detectado antes de escribir); 79 la escritura falló; 80 postcondición no satisfecha. Con cualquier valor distinto de 0, `atom`, `atom_worker` y `nginx` no arrancan.
 
 Límites (deliberados): supone un **único writer** durante el gate pre-start (sin locking); **no** se asume hot-reconcile sobre un AtoM ya iniciado:
 si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_worker` solo si su configuración cambió) y, si hiciera falta, reiniciando
 `atom`/`atom_worker`; un `run --rm reconcile` manual sobre un AtoM en marcha no garantiza que lo vea sin reiniciarlo. Los plugins ajenos (Dominion, los
 `sf*Plugin`, etc.) siguen gestionándose fuera de este reconcile.
+
+### Términos PROJECT-MANAGED de taxonomías
+
+El proyecto es dueño de **sus** términos, no de las taxonomías: los términos estándar de AtoM y los que creen los usuarios (lugares, etc.) no se gestionan.
+
+| Taxonomía | `code` (identidad) | es | en |
+| --- | --- | --- | --- |
+| Nivel de descripción (34) | `archivo-historico:seccion` | Sección | Section |
+| Tipo de evento (40) | `archivo-historico:remitente` | Remitente | Remitente |
+| Tipo de evento (40) | `archivo-historico:destinatario` | Destinatario | Destinatario |
+
+El nombre `en` existe porque AtoM lo usa técnicamente (exportación), no como traducción: Remitente y Destinatario son categorías locales del
+Archivo, no equivalentes demostrados de *sender*/*recipient*, y conservan el nombre local.
+
+Se identifican por taxonomía + `code`, nunca por id ni por nombre; el código del proyecto que los necesite debe buscarlos igual. Semántica (paso 3,
+`config/atom/reconcile-terms.php`): todo se comprueba antes de escribir. Si falta y **no** hay homónimo, se crea (cultura fuente `es`, bajo la raíz). Si falta y
+existe un término ajeno con el mismo nombre en esa taxonomía (cualquier cultura; sin distinguir mayúsculas ni acentos) es **STOP (78)**: no se adopta ni
+se duplica. Si ya existe con su estado canónico (nombres es/en, bajo la raíz, cultura fuente `es`), no se escribe. Si existe pero alguien cambió sus nombres,
+su padre o su cultura fuente, o el `code` está repetido o en otra taxonomía, es **STOP (78)** antes de escribir: es estado propio alterado y no se autocorrige.
+Un homónimo ajeno aparecido después (con el nuestro correcto) solo se **avisa** en el log (`AVISO`): la identidad del nuestro sigue siendo inequívoca.
+Nunca borra. Si se borra uno, el siguiente reconcile lo recrea con otro id (no distingue "nunca creado" de "borrado"), pero **recrear no recupera lo perdido**:
+borrar el nivel deja en NULL el nivel de las descripciones que lo usaban, y borrar un tipo de evento **elimina en cascada todos sus eventos** (p. ej. todos los
+Remitente). Hoy el grupo catalogador (el `editor` de AtoM, id 101) puede borrar términos; impedirlo es un requisito pendiente antes de entregar cuentas reales de catalogación.
+
+Ojo: el import CSV/EAD de AtoM resuelve el nivel de descripción **por nombre en la cultura del usuario** y, si no lo encuentra, crea un término nuevo; el export
+CSV usa siempre el nombre `en`. Un CSV exportado (`Section`) e importado en `es` crea un `Section` duplicado sin `code` (lo mismo pasa con los niveles estándar,
+p. ej. `Fonds`). El reconcile lo reportará como homónimo.
 
 ## Estados problemáticos conocidos
 
@@ -215,7 +253,7 @@ si cambia el desired state, aplica con `up -d --wait` (que recrea `atom`/`atom_w
 | `DB_UNREACHABLE` (30) | No se conectó a la BD tras los reintentos (30 × 2 s) | `ps -a` y `logs percona`. Recuerda que Percona solo aplica `MYSQL_*` al **inicializar** el volumen: cambiar la contraseña en el entorno después no cambia la de un volumen ya creado |
 | `DB_COMPATIBLE` + `INSTALL_INCOMPLETE` (43) | Schema correcto pero sin administrador: un `tools:install` interrumpido | STOP: **no se reinstala ni se repara automáticamente.** Si es una instalación DEV desechable: [RESET DEV](#reset-dev-destructivo). Si hay datos que conservar: no hagas RESET; investiga y recupera de forma explícita (p. ej. inspecciona la BD y restaura el administrador o la instalación a mano) |
 
-Los fallos del `reconcile` (exits 64/65/70/71/72 y 73-76) se describen en [Reconcile de plugins](#reconcile-de-plugins-desired-state).
+Los fallos del `reconcile` (exits 64/65/70/71/72, 73-76, 77-80, 81-84 y 85-88) se describen en [Reconcile de AtoM](#reconcile-de-atom-desired-state).
 
 Otros exits de `bootstrap`: 40 `tools:install` falló; 41 el probe posterior no dio `DB_COMPATIBLE`; 42 Elasticsearch o
 Memcached no disponibles (solo al instalar); 64/70 configuración inválida o error inesperado. Empieza siempre por

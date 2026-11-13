@@ -1,0 +1,268 @@
+// Resultados de búsqueda de descripciones (KAN-102): cada resultado se lee como una ficha.
+//
+// Se aplica solo dentro de `.ah-results`, que el listado de informationobject/browse pone en su contenedor. No cambia el
+// marcado de AtoM (search/_searchResult): solo estilos sobre sus clases nativas, así que el resto de listados no se afecta.
+// Solo usa tokens de _tokens.scss.
+
+.ah-results {
+  display: flex;
+  flex-direction: column;
+  gap: $ah-space-3;
+  margin-top: $ah-space-4; // Separa la primera ficha de la barra de herramientas del listado.
+  margin-bottom: $ah-space-5;
+
+  .search-result {
+    @include ah-paper;
+
+    margin: 0;
+    padding: $ah-space-4 !important; // Sustituye el p-3 nativo para dar aire a la ficha.
+    border-bottom: $border-width solid $ah-line !important; // El border-bottom nativo es solo una línea; aquí es el borde de la ficha.
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover,
+    &:focus-within {
+      border-color: $ah-line-strong;
+      box-shadow: $ah-shadow-overlay;
+    }
+
+    // Título: serif de identidad, azul profundo; se subraya solo al interactuar.
+    .h5 {
+      @include ah-type("subsection-title");
+
+      color: $ah-blue-deep;
+      text-decoration: none;
+      white-space: normal; // KAN-138: el título largo pasa a la línea siguiente (la maqueta no lo trunca).
+
+      &:hover,
+      &:focus-visible {
+        color: $ah-blue-action;
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        @include ah-focus-ring;
+
+        border-radius: $ah-radius-control;
+      }
+    }
+
+    // Línea de referencia: código, nivel y fechas.
+    .text-primary {
+      @include ah-type("small-strong");
+
+      color: $ah-blue !important; // Sustituye el text-primary nativo por el azul de la identidad.
+    }
+
+    .text-muted {
+      @include ah-type("small");
+
+      color: $ah-text-muted !important;
+    }
+
+    // Miniatura del objeto digital, si lo hay.
+    .img-thumbnail {
+      border-color: $ah-line;
+      border-radius: $ah-radius-control;
+      background-color: $ah-panel;
+    }
+
+    // Extracto del contenido (frame «Resultados»): AtoM lo trae con d-none; la ficha lo muestra con el trazo rojo de identidad.
+    .text-block {
+      display: block !important; // Anula el d-none nativo.
+      margin-top: $ah-space-2;
+      padding-left: $ah-space-4;
+      border-left: 3px solid $ah-accent;
+      color: $ah-text;
+
+      p {
+        margin: 0;
+      }
+    }
+
+    // KAN-138: código de referencia sobre el título (marcado propio en modules/search/templates/_searchResult.php).
+    .ah-result-code {
+      @include ah-type("small-strong");
+
+      color: $ah-blue;
+      overflow-wrap: anywhere; // Las signaturas largas no desbordan la ficha en móvil.
+    }
+
+    // KAN-138: etiquetas «Fechas:» y «Productor:».
+    .ah-result-label {
+      @include ah-type("small-strong");
+
+      margin-right: $ah-space-1;
+      color: $ah-blue-deep;
+    }
+
+    // KAN-138: término buscado. Tinte rosado de la maqueta (decorativo; el texto conserva su color) + trazo inferior,
+    // para que no dependa solo del color (accesibilidad). El rojo de identidad nunca se usa como color de texto.
+    mark.ah-hit {
+      padding: 0 0.125rem;
+      border-radius: 0.125rem;
+      background-color: rgba($ah-accent, 0.12);
+      box-shadow: inset 0 -2px 0 rgba($ah-accent, 0.55);
+      color: inherit;
+    }
+
+    // KAN-138 (maqueta de Figma «4. Resultados»): icono a la izquierda, chevron a la derecha, metadatos en una fila y ruta al pie.
+    &.ah-result-card {
+      align-items: flex-start;
+    }
+
+    .ah-result-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      margin-right: $ah-space-4;
+      border-radius: $ah-radius-control;
+      background-color: $ah-surface-soft;
+      color: $ah-blue-action;
+    }
+
+    .ah-result-chevron {
+      margin-left: $ah-space-3;
+      color: $ah-blue-action;
+      line-height: 2.5rem; // Alinea el chevron con la primera línea de la ficha.
+    }
+
+    .ah-result-meta {
+      margin-top: $ah-space-1;
+    }
+
+    .ah-result-path {
+      @include ah-type("small-strong");
+
+      margin-top: $ah-space-1;
+      color: $ah-text-muted;
+      overflow-wrap: anywhere;
+    }
+
+    // «Parte de …»: enlace discreto.
+    .text-muted a {
+      color: $ah-blue-action;
+    }
+
+    .clipboard {
+      flex: 0 0 auto;
+      width: 3rem;
+      min-width: 3rem;
+      height: 3rem;
+      margin-left: auto;
+      padding: 0;
+      color: $ah-panel !important;
+      background-color: $ah-clipboard !important;
+      border-color: $ah-clipboard !important;
+      border-radius: $ah-radius-control;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        color: $ah-panel !important;
+        background-color: darken($ah-clipboard, 7%) !important;
+        border-color: darken($ah-clipboard, 7%) !important;
+        box-shadow: none;
+
+        i,
+        svg {
+          color: $ah-panel !important;
+        }
+      }
+    }
+  }
+}
+
+.ah-clipboard-header {
+  .fa-paperclip {
+    color: $ah-blue-deep;
+  }
+
+  h1 {
+    @include ah-type("page-title");
+
+    color: $ah-blue-deep;
+  }
+
+  .small {
+    color: $ah-text-muted;
+    font-family: $ah-font-sans;
+  }
+}
+
+.ah-clipboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ah-space-2;
+  margin: $ah-space-3 0 $ah-space-5;
+  padding: $ah-space-3;
+  background-color: $ah-blue-deep;
+  border-radius: $ah-radius-control;
+
+  li {
+    margin: 0;
+  }
+
+  .btn {
+    color: $ah-panel !important;
+    background-color: transparent !important;
+    border-color: $ah-line-strong !important;
+
+    &:hover,
+    &:focus-visible {
+      color: $ah-blue-deep !important;
+      background-color: $ah-panel !important;
+      border-color: $ah-panel !important;
+    }
+  }
+
+  .ah-clipboard-load {
+    &__notice {
+      display: flex;
+      gap: $ah-space-3;
+      align-items: flex-start;
+      margin-bottom: $ah-space-4;
+      padding: $ah-space-3 $ah-space-4;
+      color: $ah-blue-deep;
+      background-color: $ah-surface-soft;
+      border-left: 3px solid $ah-blue-action;
+      border-radius: $ah-radius-control;
+
+      > i {
+        flex: 0 0 auto;
+        margin-top: .15rem;
+        color: $ah-blue-action;
+      }
+
+      > div {
+        flex: 1 1 auto;
+      }
+
+      p {
+        margin: 0;
+
+        + p {
+          margin-top: $ah-space-2;
+        }
+      }
+    }
+
+    .ah-action-page__panel {
+      margin-bottom: $ah-space-4;
+
+      .field {
+        margin-bottom: $ah-space-3;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}

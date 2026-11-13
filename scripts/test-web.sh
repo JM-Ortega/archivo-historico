@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 COMPOSE=(docker compose --progress quiet)
 PORT="${ATOM_WEB_PORT:-8080}"
 URL="${ATOM_WEB_URL:-http://localhost:$PORT}"
-ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@example.com}"
+ADMIN_EMAIL="${ATOM_ADMIN_EMAIL:-admin@unicauca.edu.co}"
 ADMIN_PASSWORD="${ATOM_ADMIN_PASSWORD:-admin_dev_12345}"
 RUN="$(head -c6 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 MARK="web-test-$RUN"

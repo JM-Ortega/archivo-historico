@@ -1,0 +1,24 @@
+// Fundamentos globales del theme: SOLO tipografía y legibilidad. Se importa ANTES que el main.scss de Dominion: como allí todo
+// es `!default`, estos valores ganan y Bootstrap genera con ellos sus custom properties y estilos de encabezados.
+//
+// Frontera visual: colores, fondos, bordes, radios, foco y componentes siguen siendo los nativos de Dominion/Bootstrap en todo
+// AtoM. La identidad cromática del Archivo (_tokens.scss) solo la aplican las vistas personalizadas, desde sus propios selectores
+// (p. ej. .ah-cataloging-form en _cataloging-form.scss).
+
+// Lato para la interfaz. Dominion vuelve a fijar --bs-font-sans-serif a Open Sans en su _typography.scss; _base.scss lo reasigna.
+$font-family-sans-serif: $ah-font-sans;
+
+// Merriweather para encabezados y títulos. Escala algo más contenida que la de Dominion (Merriweather es más ancha que Open Sans)
+// y en negrita, para que los títulos se distingan del cuerpo en Lato.
+$headings-font-family: $ah-font-serif;
+$headings-font-weight: 700;
+$headings-line-height: 1.3;
+$h1-font-size: 1.875rem;
+$h2-font-size: 1.5rem;
+$h3-font-size: 1.3rem;
+$h4-font-size: 1.15rem;
+$h5-font-size: 1.0625rem;
+$h6-font-size: 0.9375rem;
+
+// Lato se sirve en 400 y 700: un semibold (600) se sintetizaría a partir de la 400; se usa la 700 real.
+$font-weight-semibold: 700;
