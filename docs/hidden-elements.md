@@ -22,6 +22,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
 | OCULTO-048 | 12/11/2026 | Sección «Permisos», historial de edición y botón «Eliminar» en los detalles del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
+| OCULTO-049 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» al crear y editar usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -237,3 +238,14 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` |
 | Para qué servía | Consultar las configuraciones de permisos por grupo e individuales del usuario, ver su historial de edición y eliminar la cuenta. |
 | Motivo | La ficha del usuario solo debe mostrar la información de la cuenta. **Crear nuevo usuario** y **Volver a la lista de usuarios** se mantienen al pie, ahora como botones azules iguales a los de la cabecera. Cómo restaurar: descomentar los bloques OCULTO-048. |
+
+### OCULTO-049 - Campo «Idiomas permitidos para la traducción» al crear y editar usuarios
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-049 |
+| Tipo y método | Oculto (campo envuelto en un bloque con el atributo hidden) |
+| Elemento y dónde se veía | Campo **Idiomas permitidos para la traducción**, debajo de **Grupos de usuarios** en la sección **Control de acceso** de Administrador → Usuarios → **Crear nuevo usuario** y **Editar usuario**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
+| Para qué servía | Elegir los idiomas en los que el usuario puede traducir la interfaz de AtoM. |
+| Motivo | El archivo no usa la traducción de la interfaz. El campo sigue en el formulario (oculto) para que al guardar no se borren los permisos de traducción que ya tenga la cuenta. Cómo restaurar: quitar el `<div hidden>` que lo envuelve. |
