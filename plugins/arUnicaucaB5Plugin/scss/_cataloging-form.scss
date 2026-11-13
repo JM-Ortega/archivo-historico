@@ -258,6 +258,41 @@
     }
   }
 
+  // Cascada "Pertenece a" (js/cataloging-parent.js): un select por paso, en fila; cada paso nuevo aparece a la derecha.
+  .ah-parent-cascade {
+    min-width: 0;
+    margin: 0 0 $ah-space-3;
+    padding: 0 0 $ah-space-3;
+    border: 0;
+    border-bottom: $border-width solid $ah-line;
+  }
+
+  .ah-parent-legend {
+    float: none;
+    width: auto;
+    margin-bottom: $ah-space-1;
+    @include ah-type("label");
+  }
+
+  .ah-parent-hint {
+    margin-bottom: $ah-space-2;
+    color: $ah-text-muted;
+    @include ah-type("small");
+  }
+
+  .ah-parent-step {
+    margin-bottom: $ah-space-2;
+
+    .form-label {
+      margin-bottom: $ah-space-1;
+      @include ah-type("small-strong");
+    }
+
+    .form-select {
+      background-color: $white;
+    }
+  }
+
   .ah-no-level-hint {
     margin: 0;
     color: $ah-text-muted;

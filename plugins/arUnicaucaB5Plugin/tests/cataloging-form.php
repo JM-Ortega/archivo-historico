@@ -744,6 +744,72 @@
             $r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [$child]), $i18n($child, 'scope_and_content'),
         ]);
 
+        echo "== Jerarquía: cascada «Pertenece a» (Fondo → Sección → Serie → Subserie) ==\n";
+        // Fondo y Sección de prueba creados con el modelo; la cascada solo cambia el hidden nativo `parent`.
+        $fondsId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Fonds']
+        );
+        $newIo = static function (int $parentId, int $levelId, string $identifier) use (&$created): int {
+            $o = new QubitInformationObject();
+            $o->parentId = $parentId;
+            $o->levelOfDescriptionId = $levelId;
+            $o->sourceCulture = 'es';
+            $o->identifier = $identifier;
+            $o->setTitle("Título {$identifier}", ['culture' => 'es']);
+            $o->save();
+            $created['io'][] = $o->id;
+
+            return (int) $o->id;
+        };
+        $fondo = $newIo(QubitInformationObject::ROOT_ID, $fondsId, "FONDO-{$run}");
+        $seccion = $newIo($fondo, $seccionId, "SECCION-{$run}");
+        $xq = static function (string $html, string $query) {
+            $d = new DOMDocument();
+            libxml_use_internal_errors(true);
+            $d->loadHTML('<?xml encoding="utf-8"?>'.$html);
+            libxml_clear_errors();
+
+            return [(new DOMXPath($d))->query($query), $d];
+        };
+        $slugOf = static fn (int $id) => $one('SELECT slug FROM slug WHERE object_id = ?', [$id]);
+
+        $page = $request('/index.php/informationobject/add')['body'];
+        [$cascade] = $xq($page, '//fieldset[@data-ah-parent-cascade]');
+        $data = 1 === $cascade->length ? json_decode($cascade->item(0)->getAttribute('data-ah-parent-cascade'), true) : null;
+        $byId = array_column($data['items'] ?? [], null, 'id');
+        $check('cascada: el alta la trae oculta (sin JavaScript no se ve)', [1, true], [$cascade->length, 1 === $cascade->length && $cascade->item(0)->hasAttribute('hidden')]);
+        $check('cascada: el fondo y la sección de prueba están, con su padre y su nivel (0 Fondo, 1 Sección)', [[0, QubitInformationObject::ROOT_ID], [1, $fondo]], [
+            [$byId[$fondo]['level'] ?? null, $byId[$fondo]['parent'] ?? null], [$byId[$seccion]['level'] ?? null, $byId[$seccion]['parent'] ?? null],
+        ]);
+        $check('cascada: los selects no tienen name (no añaden nada al POST)', 0, $xq($page, "//fieldset[@data-ah-parent-cascade]//select[@name]")[0]->length);
+
+        // Lo que haría el script al elegir Fondo → Sección: poner la URL de la sección en `parent`.
+        $form = $serialize($page);
+        $form = $set($form, 'parent', [$byId[$seccion]['url'] ?? '']);
+        $form = $set($form, 'identifier', ["CASCADA-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: el alta queda dentro de la sección elegida', [302, $seccion], [$r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']])]);
+
+        // Solo el fondo, por slug (como llega con ?parent=).
+        $form = $set($serialize($page), 'parent', [$slugOf($fondo)]);
+        $form = $set($form, 'identifier', ["CASCADA-F-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: elegir solo el fondo deja el alta dentro del fondo', $fondo, (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']]));
+
+        // Valor manipulado: no es una descripción → se usa el padre con el que se abrió el formulario (nivel superior).
+        $form = $set($serialize($page), 'parent', ["/index.php/no-existe-{$run}"]);
+        $form = $set($form, 'identifier', ["CASCADA-X-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: un parent que no es una descripción cae al nivel superior', [302, QubitInformationObject::ROOT_ID], [
+            $r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']]),
+        ]);
+
+        $check('cascada: no aparece al editar', 0, $xq($request($editPath($seccion))['body'], '//fieldset[@data-ah-parent-cascade]')[0]->length);
+
         echo "== Ficha adaptable (CAT-03): perfiles, contexto y preservación ==\n";
         $attr = static fn (string $html, string $name) => preg_match('/<div class="ah-cataloging-form"[^>]*?\s'.$name.'="([^"]*)"/s', $html, $m) ? html_entity_decode($m[1]) : null;
         $nodes = static function (string $html, string $query) {
