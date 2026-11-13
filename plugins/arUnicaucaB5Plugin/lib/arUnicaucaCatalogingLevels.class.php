@@ -115,6 +115,19 @@ class arUnicaucaCatalogingLevels
      */
     public static function visibleTerms(iterable $terms): array
     {
+        return array_values(self::archiveTerms($terms));
+    }
+
+    /**
+     * Los cuatro niveles del archivo por su posición jerárquica (0 Fondo, 1 Sección, 2 Serie, 3 Subserie). Un nivel que no
+     * exista en la instalación simplemente no aparece; las posiciones de los demás no cambian.
+     *
+     * @param iterable $terms términos de la taxonomía de niveles (QubitTerm::getLevelsOfDescription())
+     *
+     * @return QubitTerm[] posición → término
+     */
+    public static function archiveTerms(iterable $terms): array
+    {
         $archive = array_fill(0, self::NEW_RECORD_LEVELS, null);
         foreach ($terms as $term) {
             $position = $term instanceof QubitTerm ? self::position($term) : null;
@@ -123,7 +136,7 @@ class arUnicaucaCatalogingLevels
             }
         }
 
-        return array_values(array_filter($archive));
+        return array_filter($archive);
     }
 
     /**
