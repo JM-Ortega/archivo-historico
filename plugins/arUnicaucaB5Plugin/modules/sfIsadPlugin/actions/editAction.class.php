@@ -27,7 +27,9 @@
  *   - campos `remitentes` y `destinatarios` (arUnicaucaCatalogingRoleEvents);
  *   - opciones de levelOfDescription limitadas a Fondo, Sección, Serie y Subserie (OCULTO-051) y mapa nivel → perfil de
  *     presentación (arUnicaucaCatalogingLevels);
- *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit).
+ *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
+ *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
+ *     arUnicaucaCatalogingParents::chosen().
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
  * @author     Jesús García Crespo <correo@sevein.com>
@@ -98,6 +100,11 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
         parent::earlyExecute();
 
         $this->isad = new sfIsadPlugin($this->resource);
+
+        // arUnicaucaB5Plugin: cascada Fondo → Sección → Serie → Subserie para elegir dónde queda la descripción nueva.
+        // Sin propiedad declarada a propósito: así `parentCascade` llega a la plantilla (variable de la action, como
+        // levelProfiles). Null en edición, en duplicado o si no hay descripciones con esos niveles.
+        $this->parentCascade = $this->isNewDescription() ? arUnicaucaCatalogingParents::data() : null;
 
         $title = $this->context->i18n->__('Add new archival description');
         if (isset($this->getRoute()->resource)) {
@@ -275,9 +282,25 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            // arUnicaucaB5Plugin: en un alta, el `parent` lo puede cambiar la cascada "Pertenece a"; se valida antes de
+            // usarlo. En edición y duplicado sigue el comportamiento nativo.
+            case 'parent':
+                if (!$this->isNewDescription()) {
+                    return parent::processField($field);
+                }
+                $this->resource->parent = arUnicaucaCatalogingParents::chosen((string) $this->form->getValue('parent'), $this->parent);
+
+                break;
+
             default:
                 return parent::processField($field);
         }
+    }
+
+    // arUnicaucaB5Plugin: alta de una descripción nueva (ni edición ni duplicado).
+    protected function isNewDescription(): bool
+    {
+        return !isset($this->getRoute()->resource) && !isset($this->request->source);
     }
 
     protected function processForm()
