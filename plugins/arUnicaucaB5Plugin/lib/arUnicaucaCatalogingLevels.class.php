@@ -24,6 +24,9 @@ class arUnicaucaCatalogingLevels
         ['en' => 'Item'],
     ];
 
+    /** OCULTO-051: niveles que se ofrecen al catalogar: las 4 primeras posiciones de ARCHIVE_LEVELS (Fondo a Subserie). */
+    private const NEW_RECORD_LEVELS = 4;
+
     /**
      * @param array $choices opciones nativas del widget: URL del término → QubitTerm (más la opción vacía)
      *
@@ -62,6 +65,65 @@ class arUnicaucaCatalogingLevels
         }
 
         return $result;
+    }
+
+    /**
+     * OCULTO-051: opciones del selector "Nivel de descripción" limitadas a los niveles que maneja el Archivo: Fondo, Sección,
+     * Serie y Subserie (las cuatro primeras posiciones de ARCHIVE_LEVELS), en ese orden y sin optgroups. El resto de niveles
+     * de AtoM no se ofrece. Solo cambia lo que se muestra: la taxonomía, los términos y el validador no cambian.
+     *
+     * Excepción: si la descripción ya tiene otro nivel ($keep, p. ej. al editar una ficha antigua), esa opción se conserva
+     * al final para que al guardar no se pierda el nivel.
+     *
+     * Cómo restaurar: en sfIsadPlugin/actions/editAction.class.php volver a llamar a group() (bloque OCULTO-051).
+     *
+     * @param array       $choices opciones nativas del widget: URL del término → QubitTerm (más la opción vacía)
+     * @param null|string $keep    valor actual del campo, que se conserva aunque no sea uno de los cuatro niveles
+     */
+    public static function visible(array $choices, ?string $keep = null): array
+    {
+        $archive = array_fill(0, self::NEW_RECORD_LEVELS, null);
+        $result = $kept = [];
+        foreach ($choices as $value => $term) {
+            if (!$term instanceof QubitTerm) {
+                $result[$value] = $term;
+
+                continue;
+            }
+
+            $position = self::position($term);
+            if (null !== $position && $position < self::NEW_RECORD_LEVELS && null === $archive[$position]) {
+                $archive[$position] = [$value, $term];
+            } elseif (null !== $keep && '' !== $keep && (string) $value === $keep) {
+                $kept[$value] = $term;
+            }
+        }
+
+        foreach (array_filter($archive) as [$value, $term]) {
+            $result[$value] = $term;
+        }
+
+        return $result + $kept;
+    }
+
+    /**
+     * OCULTO-051: los mismos cuatro niveles para la tabla "Agregar nuevos niveles inferiores", en orden jerárquico.
+     *
+     * @param iterable $terms términos de la taxonomía de niveles (QubitTerm::getLevelsOfDescription())
+     *
+     * @return QubitTerm[]
+     */
+    public static function visibleTerms(iterable $terms): array
+    {
+        $archive = array_fill(0, self::NEW_RECORD_LEVELS, null);
+        foreach ($terms as $term) {
+            $position = $term instanceof QubitTerm ? self::position($term) : null;
+            if (null !== $position && $position < self::NEW_RECORD_LEVELS && null === $archive[$position]) {
+                $archive[$position] = $term;
+            }
+        }
+
+        return array_values(array_filter($archive));
     }
 
     /**

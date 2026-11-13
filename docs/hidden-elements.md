@@ -24,6 +24,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-048 | 12/11/2026 | Sección «Permisos», historial de edición y botón «Eliminar» en los detalles del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
 | OCULTO-049 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» al crear y editar usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
 | OCULTO-050 | 12/11/2026 | Texto sobre configuraciones individuales de permisos en la nota de «Control de acceso» | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
+| OCULTO-051 | 13/11/2026 | Niveles de descripción distintos de Fondo, Sección, Serie y Subserie en el campo «Nivel de descripción» de la ficha de catalogación | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/actions/editAction.class.php` y `plugins/arUnicaucaB5Plugin/lib/arUnicaucaCatalogingLevels.class.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -261,3 +262,14 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
 | Para qué servía | Avisar que, además de los grupos, la cuenta podía tener permisos individuales y dónde consultarlos. |
 | Motivo | El archivo no usará configuraciones individuales de permisos por ahora y la vista de permisos del usuario está oculta (OCULTO-048). La nota queda solo con «Aquí solo se asignan grupos.». Cómo restaurar: descomentar el párrafo original del bloque OCULTO-050 y quitar el nuevo. |
+
+### OCULTO-051 - Niveles de descripción no usados en «Nivel de descripción» de la ficha de catalogación
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-051 |
+| Tipo y método | Oculto (excluido por condición: la lista solo ofrece los cuatro niveles del archivo; el código original queda comentado) |
+| Elemento y dónde se veía | Opciones del campo **Nivel de descripción** en Agregar → **Nueva descripción archivística** y al editar una descripción: grupo «Niveles principales» con **Unidad documental compuesta** y **Unidad documental simple**, y todo el grupo «Otros niveles» (**Colección**, **Fonds**, **Parte**, **Record group**, **Series**, **Subfondo**, **Subfonds**, **Subseries**, etc.). También en la columna **Nivel** de la tabla **Agregar nuevos niveles inferiores**. Visible para administrador y catalogador. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/actions/editAction.class.php` (case `levelOfDescription`), `plugins/arUnicaucaB5Plugin/lib/arUnicaucaCatalogingLevels.class.php` (métodos `visible()` y `visibleTerms()`) y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/_catalogingChildLevels.php`. La ayuda del campo en `editSuccess.php` ya no explica las unidades documentales. |
+| Para qué servía | Elegir cualquier nivel de la taxonomía de AtoM para la descripción que se crea o se edita. |
+| Motivo | Por ahora el archivo solo maneja Fondo, Sección, Serie y Subserie; el resto de niveles confunde y satura la lista. Si una ficha ya tiene otro nivel, ese nivel se sigue mostrando al editarla para no perderlo al guardar. Limitación: solo se ocultan las opciones; los términos siguen en la taxonomía y el servidor acepta cualquier nivel enviado. Cómo restaurar: en `editAction.class.php` volver a llamar a `group()` (bloque OCULTO-051) y en `_catalogingChildLevels.php` usar de nuevo `QubitTerm::getLevelsOfDescription()`. |
