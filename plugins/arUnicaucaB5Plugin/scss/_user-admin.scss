@@ -221,6 +221,17 @@ body:has(.ah-user-admin) {
     font-size: $ah-font-size-xsmall;
   }
 
+  // Correo que no es @unicauca.edu.co: el aviso pasa a rojo (js/user-email.js).
+  .ah-user-hint--error {
+    color: $ah-error;
+    font-weight: 700;
+  }
+
+  .ah-required-mark {
+    color: $ah-error;
+    font-weight: 700;
+  }
+
   .ah-user-muted {
     color: $ah-text-muted;
     font-style: italic;
