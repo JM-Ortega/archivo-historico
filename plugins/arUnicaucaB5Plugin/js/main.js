@@ -1,6 +1,7 @@
 import "../../arDominionB5Plugin/js/main";
 import "./help";
 import "./cataloging-form";
+import "./cataloging-parent";
 import "./places";
 import "./description-updates";
 import "./search-limit";

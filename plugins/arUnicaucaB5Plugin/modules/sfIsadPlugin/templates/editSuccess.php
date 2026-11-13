@@ -179,6 +179,27 @@
         </ol>
       </nav>
 
+      <?php // Cascada "Pertenece a" (solo en un alta): la arma js/cataloging-parent.js y solo cambia el hidden nativo `parent`.
+            // Sin JavaScript queda oculta y el alta usa el padre con el que se abrió el formulario. ?>
+      <?php $parentCascade = $sf_data->getRaw('parentCascade'); ?>
+      <?php if (!$isEdit && null !== $parentCascade) { ?>
+        <?php $parentCascade['texts'] = [
+            'topLevel' => __('Nivel superior (sin descripción superior)'),
+            'newDescription' => __('[Nueva descripción]'),
+            'noFonds' => __('Ninguno (nivel superior)'),
+            'none' => __('Ninguna'),
+            'or' => __('o'),
+        ]; ?>
+        <fieldset class="ah-parent-cascade" hidden
+          data-ah-parent-cascade="<?php echo htmlspecialchars(json_encode($parentCascade, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES); ?>">
+          <legend class="ah-parent-legend"><?php echo __('Pertenece a'); ?></legend>
+          <p id="ah-parent-hint" class="ah-parent-hint">
+            <?php echo __('Elige el fondo y, si aplica, la sección, la serie y la subserie. Ninguno es obligatorio: la descripción queda dentro del último que elijas.'); ?>
+          </p>
+          <div class="row ah-row ah-parent-steps" data-ah-parent-steps></div>
+        </fieldset>
+      <?php } ?>
+
       <div class="row ah-row ah-level-row">
         <div class="col-lg-6">
           <?php echo $dailyField(
