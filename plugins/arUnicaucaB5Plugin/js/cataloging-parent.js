@@ -3,7 +3,7 @@
 // queda dentro del último elegido o, si no se elige nada, en el nivel superior.
 //
 // No añade nada al POST: los selects no tienen `name` y lo único que cambia es el valor del hidden nativo `parent`, que AtoM
-// ya usa en el alta (el servidor lo valida en arUnicaucaCatalogingParents::chosen). Sin JavaScript el bloque sigue oculto.
+// ya usa en el alta (el servidor lo valida en arUnicaucaCatalogingContext::chosenParent). Sin JavaScript el bloque sigue oculto.
 (() => {
   "use strict";
 
