@@ -23,6 +23,7 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
 | OCULTO-048 | 12/11/2026 | Sección «Permisos», historial de edición y botón «Eliminar» en los detalles del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
 | OCULTO-049 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» al crear y editar usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
+| OCULTO-050 | 12/11/2026 | Texto sobre configuraciones individuales de permisos en la nota de «Control de acceso» | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -249,3 +250,14 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
 | Para qué servía | Elegir los idiomas en los que el usuario puede traducir la interfaz de AtoM. |
 | Motivo | El archivo no usa la traducción de la interfaz. El campo sigue en el formulario (oculto) para que al guardar no se borren los permisos de traducción que ya tenga la cuenta. Cómo restaurar: quitar el `<div hidden>` que lo envuelve. |
+
+### OCULTO-050 - Texto sobre configuraciones individuales de permisos en «Control de acceso»
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-050 |
+| Tipo y método | Oculto (comentado y reemplazado por un texto más corto) |
+| Elemento y dónde se veía | Parte de la nota azul de la sección **Control de acceso** que decía «Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; consúltelas en la vista de permisos del usuario» (o «tras crear la cuenta podrá consultarlas…» al crear), en Administrador → Usuarios → **Crear nuevo usuario** y **Editar usuario**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
+| Para qué servía | Avisar que, además de los grupos, la cuenta podía tener permisos individuales y dónde consultarlos. |
+| Motivo | El archivo no usará configuraciones individuales de permisos por ahora y la vista de permisos del usuario está oculta (OCULTO-048). La nota queda solo con «Aquí solo se asignan grupos.». Cómo restaurar: descomentar el párrafo original del bloque OCULTO-050 y quitar el nuevo. |
