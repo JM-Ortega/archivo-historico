@@ -2,7 +2,7 @@
 /**
  * Shared navigation for the public search area.
  *
- * @var string $active Active item: basic, advanced, cataloging, export, history, users or privacy.
+ * @var string $active Active item: basic, advanced, cataloging, export, history, users, places or privacy.
  */
 $module = $sf_context->getModuleName();
 $action = $sf_context->getActionName();
@@ -12,6 +12,7 @@ $isCataloging = 'cataloging' === $active || ('informationobject' === $module && 
 $isUsers = 'users' === $active || ('user' === $module && 'list' === $action);
 $isAdministrator = $sf_user->isAdministrator();
 $canCatalog = $isAdministrator || $sf_user->hasCredential('editor');
+$isPlaces = 'places' === $active || ('taxonomy' === $module && 'index' === $action && (int) $sf_request->getParameter('id') === (int) QubitTaxonomy::PLACE_ID);
 $privacyUrl = url_for(['slug' => 'privacy']);
 ?>
 <section class="ah-search-navigation" aria-labelledby="search-navigation-title">
@@ -56,6 +57,13 @@ $privacyUrl = url_for(['slug' => 'privacy']);
       <?php } ?>
       <?php if ($canCatalog) { ?>
         <a
+          class="ah-search-navigation__item<?php echo $isPlaces ? ' is-active' : ''; ?>"
+          href="<?php echo url_for(['module' => 'taxonomy', 'action' => 'index', 'id' => QubitTaxonomy::PLACE_ID]); ?>"
+          <?php echo $isPlaces ? 'aria-current="page"' : ''; ?>>
+          <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+          <span>Lugares</span>
+        </a>
+        <a
           class="ah-search-navigation__item<?php echo $isCataloging ? ' is-active' : ''; ?>"
           href="<?php echo url_for(['module' => 'informationobject', 'action' => 'add']); ?>"
           <?php echo $isCataloging ? 'aria-current="page"' : ''; ?>>
@@ -69,8 +77,4 @@ $privacyUrl = url_for(['slug' => 'privacy']);
       </a>
     </div>
   </nav>
-  <div class="ah-search-navigation__footer">
-    <h3>Memoria abierta</h3>
-    <p>Patrimonio documental al servicio de la ciudadanía y la investigación.</p>
-  </div>
 </section>
