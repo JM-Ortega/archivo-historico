@@ -2,8 +2,9 @@
 
 /*
  * Derived from AtoM v2.10.2 (upstream commit 02a70b8a4b23a805256abd0a14cd0f93e311a581),
- * apps/qubit/modules/user/actions/loginAction.class.php. Único cambio: el validador de email
- * se restringe a @unicauca.edu.co (arUnicaucaEmailDomainPolicy).
+ * apps/qubit/modules/user/actions/loginAction.class.php. Cambios: el validador de email
+ * se restringe a @unicauca.edu.co (arUnicaucaEmailDomainPolicy) y al iniciar sesión se
+ * guarda la fecha del último acceso (arUnicaucaLastLogin).
  *
  * This file is part of the Access to Memory (AtoM) software.
  *
@@ -67,6 +68,9 @@ class UserLoginAction extends sfAction
 
             if ($this->form->isValid()) {
                 if ($this->context->user->authenticate($this->form->getValue('email'), $this->form->getValue('password'))) {
+                    // «Último acceso» de la lista de usuarios (arUnicaucaLastLogin).
+                    arUnicaucaLastLogin::record($this->context->user->getUserID());
+
                     if (sfConfig::get('app_draft_notification_enabled') && $draftCount = QubitInformationObject::getDraftCount()) {
                         $this->getUser()->setFlash('notice', $this->getDraftNotificationText($draftCount));
                     }
