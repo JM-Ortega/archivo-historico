@@ -25,7 +25,8 @@
  * plugin que aporta el fichero, así que es una COPIA de la clase upstream, no una subclase: revisarla al actualizar AtoM.
  * Diferencias con upstream, todas marcadas "arUnicaucaB5Plugin":
  *   - campos `remitentes` y `destinatarios` (arUnicaucaCatalogingRoleEvents);
- *   - opciones agrupadas de levelOfDescription y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
+ *   - opciones de levelOfDescription limitadas a Fondo, Sección, Serie y Subserie (OCULTO-051) y mapa nivel → perfil de
+ *     presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit).
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
@@ -171,10 +172,22 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                 $widget = $this->form->getWidget('levelOfDescription');
                 // Perfil por URL del término (solo agrupación/unidad), para la plantilla. Se calcula antes de agrupar las opciones.
                 $this->levelProfiles = arUnicaucaCatalogingLevels::profileMap($widget->getOption('choices'));
+                /* OCULTO-051
+                   SERVÍA PARA: ofrecer en "Nivel de descripción" todos los niveles de AtoM, en dos grupos: "Niveles
+                   principales" (Fondo, Sección, Serie, Subserie, Unidad documental compuesta y simple) y "Otros niveles"
+                   (Colección, Parte, Record group, Subfondo...).
+                   MOTIVO: por ahora el archivo solo maneja Fondo, Sección, Serie y Subserie. Se conserva el nivel actual
+                   de una ficha que ya tenga otro, para no perderlo al guardar.
+                   Código original:
                 $widget->setOption('choices', arUnicaucaCatalogingLevels::group(
                     $widget->getOption('choices'),
                     $this->context->i18n->__('Niveles principales'),
                     $this->context->i18n->__('Otros niveles')
+                ));
+                */
+                $widget->setOption('choices', arUnicaucaCatalogingLevels::visible(
+                    $widget->getOption('choices'),
+                    (string) $this->form->getDefault('levelOfDescription')
                 ));
 
                 break;

@@ -267,19 +267,20 @@
         libxml_use_internal_errors(true);
         $dom->loadHTML('<?xml encoding="utf-8"?>'.$add['body']);
         $xp = new DOMXPath($dom);
+        // OCULTO-051: solo Fondo, Sección, Serie y Subserie, en ese orden y sin grupos.
         $levelValues = [];
         foreach ($xp->query("//select[@name='levelOfDescription']//option[@value!='']") as $o) {
             $levelValues[] = basename($o->getAttribute('value'));
         }
-        sort($levelValues);
-        $levelSlugs = $col('SELECT s.slug FROM term t JOIN slug s ON s.object_id = t.id WHERE t.taxonomy_id = ?', [QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID]);
-        sort($levelSlugs);
-        $check('Nivel: el selector ofrece todos los términos de la taxonomía, una vez cada uno', $levelSlugs, $levelValues);
-        $check('Nivel: grupos "principales" y "otros"', ['Niveles principales', 'Otros niveles'], array_map(
-            static fn ($g) => $g->getAttribute('label'),
-            iterator_to_array($xp->query("//select[@name='levelOfDescription']/optgroup"))
-        ));
-        $check('Nivel: Sección está entre los niveles principales', 1, $xp->query("//select[@name='levelOfDescription']/optgroup[1]/option[text()='Sección']")->length);
+        $archiveSlugs = array_map(static fn (int $id) => QubitTerm::getById($id)->slug, [
+            (int) $one('SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?', ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Fonds']),
+            $seccionId,
+            (int) $one('SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?', ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Series']),
+            (int) $one('SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?', ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Subseries']),
+        ]);
+        $check('Nivel: el selector ofrece solo Fondo, Sección, Serie y Subserie, en ese orden (OCULTO-051)', $archiveSlugs, $levelValues);
+        $check('Nivel: sin grupos de opciones', 0, $xp->query("//select[@name='levelOfDescription']/optgroup")->length);
+        $check('Niveles inferiores: la columna Nivel ofrece los mismos cuatro niveles', 4, $xp->query("//select[@name='updateChildLevels[0][levelOfDescription]']/option[@value!='']")->length);
         $check('Nivel: sin valor por defecto en el alta', 0, $xp->query("//select[@name='levelOfDescription']//option[@selected]")->length);
 
         echo "== Creación ==\n";
@@ -839,6 +840,10 @@
             // serialNumber y el token CSRF cambian en cada carga/guardado: no forman parte del contenido.
             $content = static fn (array $p) => array_values(array_filter($p, static fn ($x) => !in_array($x[0], ['serialNumber', '_csrf_token'], true)));
             $after = $serialize($request($editPath($io))['body']);
+            if ($fileUrl === $value) {
+                // OCULTO-051: File no se ofrece al catalogar, pero una ficha que ya lo tiene lo conserva al reabrirla.
+                $check('nivel fuera de los cuatro: la ficha reabierta lo conserva seleccionado', [$fileUrl], $get($after, 'levelOfDescription'));
+            }
             $check('cambio de nivel: el formulario reabierto reenvía lo mismo, salvo el nivel', $content($set($payloadBefore, 'levelOfDescription', [$value])), $content($set($after, 'levelOfDescription', [$value])));
             $before = $snapshot($io);
         }
