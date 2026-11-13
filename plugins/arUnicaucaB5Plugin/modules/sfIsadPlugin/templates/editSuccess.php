@@ -184,7 +184,9 @@
           <?php echo $dailyField(
               $form->levelOfDescription,
               __('Nivel de descripción'),
-              __('Unidad documental simple: una unidad formada por un solo documento. Unidad documental compuesta: una unidad formada por varios documentos relacionados. Fondo, sección, serie y subserie organizan jerárquicamente las descripciones.')
+              // OCULTO-051: la ayuda ya no explica Unidad documental simple ni compuesta, que no se ofrecen. Texto original:
+              // 'Unidad documental simple: una unidad formada por un solo documento. Unidad documental compuesta: una unidad formada por varios documentos relacionados. Fondo, sección, serie y subserie organizan jerárquicamente las descripciones.'
+              __('Fondo, sección, serie y subserie organizan jerárquicamente las descripciones.')
           ); ?>
         </div>
         <div class="col-lg-6 ah-no-level">
