@@ -14,8 +14,10 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
   (editar → build → refresh) en [docs/theme-development.md](docs/theme-development.md).
 - Este documento es la entrada rápida. Operación, diagnóstico y RESET: [docs/dev-runbook.md](docs/dev-runbook.md).
 - Dónde vive cada cosa (theme, migration, config, deployment, `scripts/`) y qué no se toca: [docs/repository-layout.md](docs/repository-layout.md).
+- Construir el artefacto de código: [docs/build-artifact.md](docs/build-artifact.md).
+- Actualizar código en una instalación nativa: [docs/deploy-artifact.md](docs/deploy-artifact.md).
 
-Solo DEV. Producción, TLS, backups y CI/CD **no** están definidos todavía.
+El entorno Docker descrito aquí es solo DEV. El procedimiento de actualización de código nativo se documenta por separado; TLS, backups y CI/CD **no** están definidos todavía.
 
 ## Prerrequisitos
 
