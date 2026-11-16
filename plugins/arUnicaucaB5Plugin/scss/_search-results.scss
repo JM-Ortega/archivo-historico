@@ -152,30 +152,54 @@
       height: 3rem;
       margin-left: auto;
       padding: 0;
-      color: $ah-panel !important;
-      background-color: $ah-clipboard !important;
-      border-color: $ah-clipboard !important;
-      border-radius: $ah-radius-control;
-
-      i,
-      svg {
-        color: $ah-panel !important;
-      }
-
-      &:hover,
-      &:focus,
-      &:focus-visible {
-        color: $ah-panel !important;
-        background-color: darken($ah-clipboard, 7%) !important;
-        border-color: darken($ah-clipboard, 7%) !important;
-        box-shadow: none;
-
-        i,
-        svg {
-          color: $ah-panel !important;
-        }
-      }
     }
+  }
+}
+
+// Botón del portapapeles (vista de tabla y de tarjetas). «Agregado» = clase .active (la pone clipboard.js).
+.ah-results .search-result .clipboard,
+.masonry .card .clipboard {
+  border-radius: $ah-radius-field;
+
+  // No agregado: fondo claro con ícono azul.
+  &:not(.active) {
+    color: $ah-blue !important;
+    background-color: $ah-panel !important;
+    border-color: $ah-line-control !important;
+
+    i,
+    svg {
+      color: $ah-blue !important;
+    }
+  }
+
+  // Agregado: fondo azul con ícono blanco.
+  &.active {
+    color: $ah-panel !important;
+    background-color: $ah-blue !important;
+    border-color: $ah-blue !important;
+
+    i,
+    svg {
+      color: $ah-panel !important;
+    }
+  }
+
+  // Hover (y foco de teclado) en ambos estados: azul profundo, ícono blanco.
+  &:hover,
+  &:focus-visible {
+    color: $ah-panel !important;
+    background-color: $ah-blue-deep !important;
+    border-color: $ah-blue-deep !important;
+
+    i,
+    svg {
+      color: $ah-panel !important;
+    }
+  }
+
+  &:focus-visible {
+    box-shadow: $ah-focus-ring;
   }
 }
 
@@ -263,6 +287,74 @@
           margin-bottom: 0;
         }
       }
+    }
+  }
+}
+// Encabezado del listado («Mostrando N resultados»): mismo tratamiento que «Administrar procesos».
+// El kicker y el título vienen de _action-pages.scss (.ah-action-page__kicker y .ah-action-page__header);
+// aquí solo se agregan el trazo rojo y el color del ícono.
+.ah-results-header {
+  // El ícono toma el color del título, sin el fondo oscuro del tema.
+  > i {
+    padding: 0;
+    color: $ah-blue-deep !important;
+    background-color: transparent !important;
+  }
+
+  .ah-action-page__header {
+    margin-bottom: 0;
+
+    &::after {
+      @include ah-accent-rule(5rem);
+
+      margin-top: $ah-space-2;
+    }
+  }
+}
+
+// Barra de herramientas del listado (imprimir, vista, ordenar, dirección)
+.ah-results-toolbar {
+  .atom-btn-white {
+    @include ah-type("small-strong");
+
+    --bs-btn-color: #{$ah-panel};
+    --bs-btn-bg: #{$ah-blue};
+    --bs-btn-border-color: #{$ah-blue};
+    --bs-btn-hover-color: #{$ah-panel};
+    --bs-btn-hover-bg: #{$ah-blue-deep};
+    --bs-btn-hover-border-color: #{$ah-blue-deep};
+    --bs-btn-active-color: #{$ah-panel};
+    --bs-btn-active-bg: #{$ah-blue-deep};
+    --bs-btn-active-border-color: #{$ah-blue-deep};
+    --bs-btn-focus-box-shadow: #{$ah-focus-ring};
+
+    border-radius: $ah-radius-field;
+
+    // Texto e ícono siempre blancos, en cualquier estado
+    &,
+    &:hover,
+    &:focus,
+    &:focus-visible,
+    &:active,
+    &.active,
+    &.show {
+      color: $ah-panel !important;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+    }
+
+    // Hover, foco, pulsado y menú abierto: solo oscurece el fondo (azul profundo).
+    &:hover,
+    &:focus,
+    &:focus-visible,
+    &:active,
+    &.active,
+    &.show {
+      background-color: $ah-blue-deep !important;
+      border-color: $ah-blue-deep !important;
     }
   }
 }
