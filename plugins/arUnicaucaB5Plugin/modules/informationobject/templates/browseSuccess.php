@@ -2,6 +2,8 @@
 
 <?php use_helper('Date'); ?>
 
+<?php $advancedSearch = filter_var($sf_request->getParameter('showAdvanced'), FILTER_VALIDATE_BOOLEAN); ?>
+
 <?php slot('title'); ?>
   <?php echo get_partial('default/printPreviewBar'); ?>
   <div class="multiline-header d-flex align-items-center mb-3">
@@ -20,11 +22,6 @@
 <?php end_slot(); ?>
 
 <?php slot('sidebar'); ?>
-    <?php
-      // The upstream facet sidebar is intentionally replaced for every role.
-      // Search navigation remains available through the shared panel.
-      $advancedSearch = filter_var($sf_request->getParameter('showAdvanced'), FILTER_VALIDATE_BOOLEAN);
-    ?>
     <?php echo get_partial('search/searchOptions', ['active' => $advancedSearch ? 'advanced' : 'basic']); ?>
 <?php end_slot(); ?>
 
@@ -45,13 +42,19 @@
 <?php end_slot(); ?>
 
 <?php slot('content'); ?>
-  <?php echo get_component('informationobject', 'advancedSearch', [
-      'criteria' => $search->criteria,
-      'template' => $template,
-      'form' => $form,
-      'topLod' => $topLod,
-      'hiddenFields' => $hiddenFields,
-  ]); ?>
+  <?php if ($advancedSearch) { ?>
+    <?php echo get_component('informationobject', 'advancedSearch', [
+        'criteria' => $search->criteria,
+        'template' => $template,
+        'form' => $form,
+        'topLod' => $topLod,
+        'hiddenFields' => $hiddenFields,
+    ]); ?>
+  <?php } else { ?>
+    <div class="mb-4">
+      <?php echo get_component('search', 'box'); ?>
+    </div>
+  <?php } ?>
 
   <?php if (isset($pager) && $pager->getNbResults()) { ?>
     <div class="d-flex flex-wrap gap-2 mb-3">
