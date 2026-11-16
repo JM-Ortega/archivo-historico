@@ -1,6 +1,7 @@
 <?php
     $options = $sf_data->getRaw('options');
     $param = $sf_data->getRaw('param');
+    $label = $sf_data->getRaw('label');
     if (isset($sf_request->{$param}, $options[$sf_request->{$param}])) {
         $active = $sf_request->{$param};
     } else {
@@ -10,7 +11,7 @@
 
 <div class="dropdown d-inline-block">
   <button class="btn btn-sm atom-btn-white dropdown-toggle text-wrap" type="button" id="<?php echo $param; ?>-button" data-bs-toggle="dropdown" aria-expanded="false">
-    <?php echo $sf_data->getRaw('label').': '.$options[$active]; ?>
+    <?php echo (!empty($label) ? $label.': ' : '').$options[$active]; ?>
   </button>
   <ul class="dropdown-menu dropdown-menu-end mt-2" aria-labelledby="<?php echo $param; ?>-button">
     <?php foreach ($options as $key => $value) { ?>

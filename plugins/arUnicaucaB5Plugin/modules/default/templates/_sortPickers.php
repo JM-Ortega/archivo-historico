@@ -4,6 +4,6 @@
     'label' => __('Sort by'), ]); ?>
 
 <?php echo get_partial('default/genericPicker', [
-    'options' => ['asc' => __('Ascending'), 'desc' => __('Descending')],
+    'options' => ['asc' => __('Ascendente'), 'desc' => __('Descendente')],
     'param' => 'sortDir',
-    'label' => __('Direction'), ]); ?>
+    'label' => '', ]); ?>

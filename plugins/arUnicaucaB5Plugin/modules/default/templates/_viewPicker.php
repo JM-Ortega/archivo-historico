@@ -1,22 +1,29 @@
-<div class="btn-group btn-group-sm" role="group" aria-label="<?php echo __('View options'); ?>">
-  <a
-    class="btn atom-btn-white text-wrap<?php echo $view === $cardView ? ' active' : ''; ?>"
-    <?php echo $view === $cardView ? 'aria-current="page"' : ''; ?>
-    href="<?php echo url_for(
-        ['module' => $module, 'action' => 'browse', 'view' => $cardView]
-        + $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()
-    ); ?>">
-    <i class="fas fa-th-large me-1" aria-hidden="true"></i>
-    <?php echo __('Card view'); ?>
-  </a>
-  <a
-    class="btn atom-btn-white text-wrap<?php echo $view === $tableView ? ' active' : ''; ?>"
-    <?php echo $view === $tableView ? 'aria-current="page"' : ''; ?>
-    href="<?php echo url_for(
-        ['module' => $module, 'action' => 'browse', 'view' => $tableView]
-        + $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()
-    ); ?>">
-    <i class="fas fa-list me-1" aria-hidden="true"></i>
-    <?php echo __('Table view'); ?>
-  </a>
+<?php
+    $options = [
+        $cardView => ['label' => __('Vista de tarjetas'), 'icon' => 'fa-th-large'],
+        $tableView => ['label' => __('Vista de tabla'), 'icon' => 'fa-list'],
+    ];
+    $active = isset($options[$view]) ? $view : $cardView;
+?>
+
+<div class="dropdown d-inline-block">
+  <button class="btn btn-sm atom-btn-white dropdown-toggle text-wrap" type="button" id="view-button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fas <?php echo $options[$active]['icon']; ?> me-1" aria-hidden="true"></i>
+    <?php echo $options[$active]['label']; ?>
+  </button>
+  <ul class="dropdown-menu mt-2" aria-labelledby="view-button">
+    <?php foreach ($options as $key => $item) { ?>
+      <li>
+        <a
+          href="<?php echo url_for(
+              ['module' => $module, 'action' => 'browse', 'view' => $key]
+              + $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()
+          ); ?>"
+          class="dropdown-item<?php echo $active === $key ? ' active' : ''; ?>"
+          <?php echo $active === $key ? 'aria-current="page"' : ''; ?>>
+          <i class="fas <?php echo $item['icon']; ?> me-2" aria-hidden="true"></i><?php echo $item['label']; ?>
+        </a>
+      </li>
+    <?php } ?>
+  </ul>
 </div>

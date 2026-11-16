@@ -6,17 +6,19 @@
 
 <?php slot('title'); ?>
   <?php echo get_partial('default/printPreviewBar'); ?>
-  <div class="multiline-header d-flex align-items-center mb-3">
-    <i class="fas fa-3x fa-file-alt me-3" aria-hidden="true"></i>
-    <div class="d-flex flex-column">
-      <h1 class="mb-0" aria-describedby="heading-label">
-        <?php if (isset($pager) && $pager->getNbResults()) { ?>
-          <?php echo __('Showing %1% results', ['%1%' => $pager->getNbResults()]); ?>
-        <?php } else { ?>
-          <?php echo __('No results found'); ?>
-        <?php } ?>
-      </h1>
-      <span class="small" id="heading-label"><?php echo sfConfig::get('app_ui_label_informationobject'); ?></span>
+  <div class="multiline-header ah-results-header d-flex align-items-center gap-3 mb-4">
+    <i class="fas fa-3x fa-file-alt" aria-hidden="true"></i>
+    <div>
+      <p class="ah-action-page__kicker" id="heading-label"><?php echo sfConfig::get('app_ui_label_informationobject'); ?></p>
+      <div class="ah-action-page__header">
+        <h1 aria-describedby="heading-label">
+          <?php if (isset($pager) && $pager->getNbResults()) { ?>
+            <?php echo __('Showing %1% results', ['%1%' => $pager->getNbResults()]); ?>
+          <?php } else { ?>
+            <?php echo __('No results found'); ?>
+          <?php } ?>
+        </h1>
+      </div>
     </div>
   </div>
 <?php end_slot(); ?>
@@ -57,7 +59,7 @@
   <?php } ?>
 
   <?php if (isset($pager) && $pager->getNbResults()) { ?>
-    <div class="d-flex flex-wrap gap-2 mb-3">
+    <div class="ah-results-toolbar d-flex flex-wrap gap-2 mb-3">
       <?php echo get_partial('default/printPreviewButton'); ?>
       <?php if ('yes' === sfConfig::get('app_treeview_show_browse_hierarchy_page', 'no')) { ?>
         <a class="btn btn-sm atom-btn-white" href="<?php echo url_for(['module' => 'browse', 'action' => 'hierarchy']); ?>">
