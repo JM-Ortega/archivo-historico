@@ -131,8 +131,6 @@
 
           </div>
 
-          </div>
-
           <div class="accordion mb-4" id="other-search-options">
             <div class="accordion-item">
               <h6 class="accordion-header" id="heading-other-search-options">
