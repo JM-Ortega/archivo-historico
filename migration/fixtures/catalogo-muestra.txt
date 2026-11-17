@@ -1,0 +1,56 @@
+ARCHIVO CENTRAL DEL CAUCA
+Catálogo General
+CIVIL
+Minas
+
+-1-
+Signatura: 1 (Ind. C II -24 mn)
+Remitente: Persona Ficticia Uno.
+Destinatario: Persona Ficticia Dos.
+Contenido: Documento de prueba sobre una mina ficticia.
+Lugar de Procedencia: Villa Ficticia.
+Fecha: 7 de julio de 1813 - 18 de septiembre de 1813.
+Folios: 30
+Observaciones: Manuscrito. Original.
+
+-2-
+Signatura: 2 (Ind. C II -24 mn)
+Remitente: Persona Ficticia Tres
+Destinario: Persona Ficticia Cuatro.
+Contenido: Segundo documento de prueba.
+Lugar del Procedencia: Ciudad Ficticia
+Fecha: Febrero 15 de 1818
+Folio: 1
+Observaciones: Manuscrito. Copia.
+
+-3-
+Signatura: 3 (Ind. C II -24 mn)
+Remitente: Persona Ficticia Cinco.
+Destinatario: Persona Ficticia Seis. Contenido: Contenido pegado en la misma línea.
+Lugar de procedencia: sin información
+Fecha:
+Folios: 12
+Observaciones: Manuscrito.
+
+-4-
+Signatura: 1 (Ind. C II- 24 mn)
+Remitente: Persona Ficticia Siete.
+Contenido: Misma signatura que la ficha 1, con otro espaciado.
+Lugar de Procedencia: Villa Ficticia.
+Fecha: 8 de abril de 1870 - 16 de septiembre de 1826
+Folios: l
+Observaciones: Manuscrito.
+ARCHIVO CENTRAL DEL CAUCA
+Catálogo General
+CIVIL
+Tributos
+
+-1-
+Signatura: 10 (Ind. C 1- 10 t)
+Remitente: Persona Ficticia Ocho.
+Destinatario: Persona Ficticia Nueve.
+Contenido: Documento de tributos ficticio.
+Lugar de Procedencia: Villa Ficticia.
+Fecha: 15 y 17 de Febrero de 1819
+Folios: 5
+Observaciones: Manuscrito. Original.

@@ -1,0 +1,18 @@
+// Fundamentos tipográficos globales que las variables de _variables.scss no alcanzan (reglas que Dominion escribe después de
+// Bootstrap). Se importa tras Dominion. Solo tipografía: el shell, la navegación, los colores y las superficies de AtoM siguen
+// siendo los nativos de Dominion.
+
+:root {
+  // Dominion fija Open Sans en :root (_typography.scss) después de Bootstrap; misma especificidad, gana la regla posterior.
+  --bs-font-sans-serif: #{inspect($ah-font-sans)};
+}
+
+// Etiquetas de los campos en las vistas de AtoM (render_b5_show: <h3 class="h6 ... text-muted">, y los <h3 class="fs-6"> de los
+// acordeones de edición): son etiquetas de interfaz, no encabezados editoriales, así que van en Lato aunque sean h3/h4.
+.field > h3,
+.field > h4,
+.field .h6,
+.accordion-body h3.fs-6 {
+  font-family: $ah-font-sans;
+  font-weight: 400; // El peso nativo de esas etiquetas; la negrita de $headings-font-weight es para los títulos.
+}

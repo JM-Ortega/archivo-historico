@@ -1,0 +1,295 @@
+.user.login {
+  background: $ah-panel;
+
+  #top-bar,
+  #wrapper + footer,
+  .ah-login ~ footer {
+    display: none;
+  }
+
+  #wrapper {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 !important;
+  }
+
+  #main-column {
+    width: 100%;
+  }
+
+  .alerts {
+    display: none;
+  }
+}
+
+.ah-login {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(0, 1.4fr) minmax(440px, .62fr);
+}
+
+.ah-login-brand {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: 2.5rem 4.1vw 2rem;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(116deg, rgba($ah-blue-deep, .98) 0%, rgba($ah-blue, .96) 58%, rgba(#0068ad, .93) 100%);
+
+  &::before,
+  &::after {
+    position: absolute;
+    content: "";
+    pointer-events: none;
+  }
+
+  &::before {
+    inset: 0;
+    background:
+      linear-gradient(128deg, transparent 49%, rgba(#79a6ca, .08) 49.2%, transparent 70%),
+      linear-gradient(165deg, transparent 42%, rgba(#001f3d, .12) 42.2%, transparent 77%);
+  }
+
+  &::after {
+    top: 0;
+    right: -12%;
+    width: 54%;
+    height: 100%;
+    background: linear-gradient(116deg, transparent 0%, rgba(#001f3d, .12) 100%);
+    transform: skewX(-18deg);
+  }
+}
+
+.ah-login-brand-header,
+.ah-login-message,
+.ah-login-legal {
+  position: relative;
+  z-index: 1;
+}
+
+.ah-login-brand-header {
+  display: flex;
+  gap: .8rem;
+  align-items: center;
+}
+
+.ah-login-brand-rule {
+  width: 1px;
+  height: 3.2rem;
+  background: rgba(#fff, .72);
+}
+
+.ah-login-kicker {
+  color: rgba(#fff, .68);
+  font-family: $ah-font-sans;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.ah-login-brand-name {
+  margin-top: .28rem;
+  font-family: $ah-font-serif;
+  font-size: 1.12rem;
+  font-weight: 700;
+}
+
+.ah-login-message {
+  max-width: 34rem;
+  margin-top: -2rem;
+
+  h1 {
+    margin: 1rem 0 1.35rem;
+    color: #fff;
+    font-family: $ah-font-serif;
+    font-size: clamp(2.35rem, 3.4vw, 3.15rem);
+    line-height: 1.18;
+  }
+
+  p {
+    max-width: 31rem;
+    margin: 1.25rem 0 0;
+    color: rgba(#fff, .92);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+}
+
+.ah-login-accent {
+  display: block;
+  width: 4.7rem;
+  height: 2px;
+  background: $ah-accent;
+}
+
+.ah-login-legal {
+  color: rgba(#fff, .7);
+  font-size: .75rem;
+
+  span {
+    margin: 0 .45rem;
+    color: $ah-accent;
+  }
+}
+
+.ah-login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  border-left: 2px solid $ah-accent;
+  background: $ah-panel;
+}
+
+.ah-login-form-container {
+  width: min(100% - 5rem, 26rem);
+
+  h2 {
+    margin: 0 0 .65rem;
+    color: $ah-blue-deep;
+    font-family: $ah-font-serif;
+    font-size: 1.7rem;
+  }
+}
+
+.ah-login-subtitle {
+  margin: 0 0 2rem;
+  color: $ah-text-muted;
+  font-size: .875rem;
+}
+
+.ah-login-form {
+  .ah-login-field {
+    margin-bottom: 1.25rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: .45rem;
+    color: $ah-blue-deep;
+    font-size: .8125rem;
+    font-weight: 700;
+
+    span {
+      color: $ah-accent;
+    }
+  }
+
+  .form-control {
+    min-height: 2.75rem;
+    padding: .7rem .8rem;
+    border: 1px solid $ah-line-control;
+    border-radius: $ah-radius-control;
+    color: $ah-text;
+    font-size: .8125rem;
+
+    &::placeholder {
+      color: #7891a4;
+    }
+
+    &:focus {
+      border-color: $ah-focus-color;
+      box-shadow: $ah-focus-ring;
+    }
+  }
+}
+
+.ah-login-submit {
+  width: 100%;
+  min-height: 2.55rem;
+  margin-top: .1rem;
+  border: 0;
+  border-radius: 999px;
+  color: #fff;
+  background: $ah-blue-action;
+  font-size: .8125rem;
+  font-weight: 700;
+
+  &:hover,
+  &:focus {
+    background: $ah-blue-deep;
+  }
+
+  &:focus {
+    outline: 0;
+    box-shadow: $ah-focus-ring;
+  }
+}
+
+.ah-login-forgot {
+  display: block;
+  width: fit-content;
+  margin: 1.8rem auto 0;
+  padding: 0;
+  border: 0;
+  color: $ah-blue-action;
+  background: transparent;
+  font-size: .8125rem;
+  font-weight: 400;
+  text-decoration: underline;
+  text-decoration-color: $ah-accent;
+  text-underline-offset: .18rem;
+
+  &:focus {
+    outline: 2px solid $ah-focus-color;
+    outline-offset: 3px;
+  }
+}
+
+.ah-login-recovery {
+  margin-top: 1rem;
+  padding: .75rem 1rem;
+  border: 1px solid $ah-line;
+  border-radius: $ah-radius-control;
+  color: $ah-blue-deep;
+  background: $ah-surface-soft;
+  font-size: .8125rem;
+  line-height: 1.5;
+  text-align: center;
+
+  a {
+    color: $ah-blue-action;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: .15rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .ah-login {
+    grid-template-columns: 1fr;
+  }
+
+  .ah-login-brand {
+    min-height: 22rem;
+    padding: 2rem 1.5rem;
+  }
+
+  .ah-login-message {
+    margin-top: 2rem;
+
+    h1 {
+      font-size: 2rem;
+    }
+  }
+
+  .ah-login-legal {
+    display: none;
+  }
+
+  .ah-login-panel {
+    min-height: 32rem;
+    border-top: 2px solid $ah-accent;
+    border-left: 0;
+  }
+
+  .ah-login-form-container {
+    width: min(100% - 3rem, 26rem);
+  }
+}

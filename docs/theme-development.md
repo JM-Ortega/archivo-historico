@@ -17,7 +17,8 @@ final.
 - Cada fuente que orienta el cambio manda en lo suyo:
   - **Archivo Histórico** → la necesidad funcional (qué necesita quien usa el Archivo).
   - **AtoM** → las capacidades y el comportamiento que ya existen.
-  - **Sistema de Diseño TIC/UniCauca** → la presentación institucional y la UX aplicable.
+  - **Identidad visual del Archivo Histórico del Cauca** → la presentación y la UX aplicable (ver
+    [Identidad visual](#identidad-visual-del-archivo-histórico-del-cauca)).
   - **Arquitectura del Proyecto I** → los límites de extensión y la mantenibilidad.
   - **Referencias externas** → inspiración de patrones de UX, no especificación.
 - La intervención se decide por el **contrato que cambia**, no por cómo se ve la pantalla (ver
@@ -28,7 +29,7 @@ final.
 Materializado desde el skeleton oficial recomendado por AtoM 2.10 para themes BS5,
 [artefactual-labs/arThemeB5Plugin](https://github.com/artefactual-labs/arThemeB5Plugin), commit exacto
 `32743ffc5b008f09abea71f004e139174c1e8194` (2026-03-19). **AtoM target: 2.10.2.** Cambios respecto al skeleton: nombre
-(`arUnicaucaB5Plugin`), summary/versión, marcador de foundation (`scss/_foundation-marker.scss` + `<meta name="atom-theme">`),
+(`arUnicaucaB5Plugin`), summary/versión, marcador de theme activo (`<meta name="atom-theme">`),
 `images/image.png` propio del skeleton y **una divergencia deliberada**: `templates/_layout_start_webpack.php` parte de
 `arDominionB5Plugin` 2.10.2, no de la del skeleton. Webpack exige ese fichero en cada plugin, y el del skeleton está
 desfasado (sin `googleAnalytics`, favicon configurable, atributo `media` ni la clase `show-edit-tooltips` de 2.10.2), lo que
@@ -47,6 +48,10 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
 | `plugins/arUnicaucaB5Plugin/tools/build.sh` | Wrapper de build del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tools/watch.sh` | Wrapper del watch DEV opt-in del theme (se ejecuta dentro de Docker) |
 | `plugins/arUnicaucaB5Plugin/tests/test-theme.sh` | Prueba de integración del ciclo del theme |
+| `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/`, `lib/arUnicaucaCataloging*.class.php` | **Source**: formulario de catalogación (override de la vista y la action de edición ISAD(G)) |
+| `plugins/arUnicaucaB5Plugin/modules/user/templates/` (`editSuccess*`, `indexSuccess*`, `index*AclSuccess`, `_aclMenu`, `_aclMatrix`, `_showActions`), `scss/_user-admin.scss` | **Source**: crear/editar, detalle y permisos de usuario (solo presentación: la action, el formulario y las validaciones son las nativas; el `editAction` del plugin solo añade la política de correo) |
+| `plugins/arUnicaucaB5Plugin/tests/test-cataloging-form.sh` | Prueba de integración del formulario de catalogación (HTTP real + SQL) |
+| `plugins/arUnicaucaB5Plugin/fonts/` | **Source**: fuentes self-hosted de la identidad (Lato, Merriweather; procedencia y licencias en `fonts/README.md`) |
 | `plugins/arUnicaucaB5Plugin/templates/_layout_start.php` | **Derivado** por Webpack; ignorado por Git; no se edita (edita `_layout_start_webpack.php`) |
 | Volumen `archivo-historico_theme_dist` (`/atom/src/dist`) | **Derivado y reconstruible**; sin backup; no está en el repo |
 | `upstream/atom/` | Nunca se modifica |
@@ -60,6 +65,41 @@ templates a los de Dominion y sube el plugin al primer puesto). SCSS y JS import
   directo. `scss/`, `js/`, `templates/`, `webpack.entry.js` y el PHP no se exponen por HTTP.
 - `atom`, `atom_worker` y `nginx` dependen de `theme_build` (`service_completed_successfully`): en un checkout limpio el
   runtime no consume el theme antes de que exista `_layout_start.php`. `bootstrap` (BD) **no** depende del theme build.
+
+### Navegación independiente de búsqueda
+
+La navegación lateral de búsqueda vive en
+`plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_searchOptions.php` y se incluye desde la vista de
+resultados (`browseSuccess.php`) y desde la página de inicio. Expone las rutas de búsqueda básica y avanzada para todos
+los visitantes bajo el título `Navegación`. La opción `Usuarios` solo se incluye cuando la sesión tiene la credencial
+`administrator`, que es la misma protección definida por AtoM para la acción `user/list`. La vista de usuarios reutiliza
+el mismo panel y marca `Usuarios` como la sección activa.
+
+La vista de administración de usuarios mantiene el slot lateral vacío de forma intencional. Esto evita que el panel de
+opciones quede acoplado a permisos del módulo `user`; el comentario en `listSuccess.php` documenta esa decisión. No se
+modificó el formulario ni el acordeón de búsqueda avanzada: el partial solo organiza su navegación externa. El panel
+usa una tarjeta blanca compacta, con bordes redondeados, sombra suave, separadores y estado activo azul oscuro para
+coincidir con el prototipo.
+
+En resultados de búsqueda, el panel de facetas nativo (`collapse-aggregations`, mostrado como “Restringir resultados
+por”, “Parte de”, “Nombre”, etc.) también se oculta. No se modifica el template upstream ni el formulario principal de
+búsqueda avanzada.
+
+La vista `browseSuccess.php` del plugin conserva el flujo de resultados y reemplaza únicamente el contenido del sidebar:
+el panel de facetas nativo se sustituye por `informationobject/_searchOptions.php` para todos los roles. No se oculta con
+CSS ni depende del estado de autenticación; el formulario principal y los resultados mantienen sus acciones existentes.
+
+### Navegación temática «Lugares»
+
+`Navegar → Lugares` (`taxonomy/index` de la taxonomía de lugares) usa el override
+`plugins/arUnicaucaB5Plugin/modules/taxonomy/templates/indexSuccess.php`, que reproduce el prototipo de Figma
+(`features/places/PlacesBrowser.tsx`): encabezado «Navegación temática», panel lateral «Navegar lugares» con todos los
+lugares y su número de descripciones, barra de búsqueda/orden y tabla (fichas en pantallas estrechas) con paginación propia.
+Solo presentación: la consulta, el orden y la paginación siguen siendo los de `TaxonomyIndexAction` (parámetros GET
+`subquery`, `sort`, `sortDir`, `page`). «Ordenar por» ofrece los dos órdenes que soporta AtoM (`alphabetic`, `lastUpdated`).
+El panel lateral sale de `lib/arUnicaucaPlacesBrowser.class.php` (índice `QubitTerm`, máximo 250 términos, mismo conteo que
+la tabla). Materias, géneros y demás taxonomías incluyen la vista nativa sin cambios. Estilos en `scss/_places.scss`
+(`.ah-places`), envío automático de los selects en `js/places.js`.
 
 No hay Node/npm ni PHP en el host: Webpack y Node ya están en la imagen AtoM.
 
@@ -164,21 +204,57 @@ Contrato de recarga (lo que está verificado):
 - **Partial global del theme en `templates/`** (verificado con `templates/_footer.php`): editar → refrescar el navegador. Sin
   `symfony cc`, sin reload de FPM, sin rebuild de imagen. Hay que contar con la revalidación de OPcache: `atom` corre con
   `ATOM_DEVELOPMENT_MODE=true` (solo `atom`, solo este Compose DEV), que activa `opcache.validate_timestamps=On` con
-  `opcache.revalidate_freq` = 2 s, así que un cambio puede tardar hasta ~2 s en verse. Los overrides bajo
-  `modules/<módulo>/templates/` siguen la convención de rutas del skeleton, pero **las pruebas actuales no los caracterizan**:
-  compruébalo en la primera WU que use uno.
-- **Otros cambios PHP/configuración del plugin** (la clase `Configuration`, actions, cualquier código que Symfony cachee):
-  están bind-mounted, pero **no se garantiza** que se apliquen sin `symfony cc` o reinicio de `atom`. Se caracterizará cuando
-  aparezca un caso real; hasta entonces, ante la duda: `docker compose exec atom php symfony cc` o `docker compose restart atom`.
-
-Sobre las actions: el skeleton documenta copiar actions y templates bajo `modules/<módulo>/…` con la misma ruta, y su
-Configuration sube el plugin al primer puesto con esa intención; en este proyecto **solo** está caracterizado el caso del
-partial global. Tratar una action como override "por ruta" exige inspeccionar antes el mecanismo concreto.
+  `opcache.revalidate_freq` = 2 s, así que un cambio puede tardar hasta ~2 s en verse.
+- **Override de módulo de un plugin de AtoM** (verificado con `modules/sfIsadPlugin/`, el formulario de catalogación): un
+  `templates/<vista>.php` o `actions/<acción>Action.class.php` con la misma ruta que en el plugin original gana, porque la
+  Configuration pone este plugin el primero y Symfony toma el primer directorio de módulo que aporta el fichero. Una action
+  se carga **por nombre de clase** (`<módulo><Acción>Action`), así que el override es una copia de la clase upstream, no una
+  subclase: hay que revisarla al actualizar AtoM. Editar un template o una action ya existentes: igual que un partial
+  (refrescar, ~2 s). **Añadir** un fichero de action o una clase nueva en `lib/`: `docker compose exec atom php symfony cc`
+  (el autoload de Symfony está cacheado).
+- **Otros cambios PHP/configuración del plugin** (la clase `Configuration`, cualquier código que Symfony cachee): están
+  bind-mounted, pero **no se garantiza** que se apliquen sin `symfony cc` o reinicio de `atom`; ante la duda:
+  `docker compose exec atom php symfony cc` o `docker compose restart atom`.
 
 `ATOM_DEVELOPMENT_MODE` también expone `/qubit_dev.php`, accesible solo desde el host DEV porque el puerto web sigue
 publicado únicamente en `127.0.0.1`. No cambia `NODE_ENV`.
 
 `_layout_start_webpack.php` es una plantilla de build, no un override de recarga inmediata: editarla requiere `theme_build`.
+
+## Identidad visual del Archivo Histórico del Cauca
+
+Frontera: **la tipografía es global; la identidad cromática es de las vistas personalizadas.** El shell, la navegación y las
+pantallas nativas conservan los colores, fondos, superficies y comportamiento de Dominion. Cascada de `scss/main.scss`:
+
+1. `_tokens.scss` (solo variables): paleta (`$ah-blue` #004783, `$ah-blue-deep`, `$ah-blue-action`, `$ah-panel`,
+   `$ah-surface-soft`, `$ah-text`, `$ah-text-muted`, `$ah-accent` #E31946, `$ah-line`...), derivados con contraste comprobado
+   (`$ah-line-control`, `$ah-surface-band`, `$ah-error`...), familias, escala de componentes (`$ah-type-scale`), espaciado,
+   radios (6 px controles, 8 px paneles) y foco. No se asignan a variables de Bootstrap/Dominion.
+2. `_variables.scss`: **solo tipografía**, antes de Dominion: Lato (`$font-family-sans-serif`), Merriweather
+   (`$headings-font-family`) y la escala y el peso de los encabezados.
+3. Dominion completo; Font Awesome *regular* (iconos lineales, mismo paquete) y `_fonts.scss` (`@font-face` de Lato y
+   Merriweather, self-hosted).
+4. `_base.scss`: solo tipografía sobre lo nativo (reasigna la Open Sans que Dominion fija en `:root`; etiquetas de las vistas de
+   ficha en Lato con su peso nativo).
+5. Componentes (`_help.scss`) y vistas (`_cataloging-form.scss`), los únicos que aplican la identidad cromática, desde sus
+   propios selectores. La ficha redefine dentro de `.ah-cataloging-form` las custom properties de Bootstrap (`--bs-body-color`,
+   `--bs-border-color`, `--bs-secondary-color`, enlaces...) y estiliza controles, foco, acordeones y sugerencias del autocomplete.
+
+`_mixins.scss`: `ah-type()`, `ah-focus-ring()`, `ah-status-badge()`, `ah-paper` (superficie documental) y `ah-accent-rule()`.
+
+Reglas: Merriweather para títulos y encabezados, Lato para interfaz; el rojo de acento es identidad, **nunca** error; sin símbolos
+ni marcas de la Universidad del Cauca. Una vista nueva que deba llevar la identidad la aplica en su propio ámbito, como la ficha;
+no se cambian variables de color de Bootstrap/Dominion. Open Sans sigue declarada en el bundle por Dominion, pero ninguna regla la
+usa.
+
+Componentes reutilizables (por clase: solo actúan donde una vista los usa):
+
+- Ayuda contextual `uc_help($id, $label, $text)` (`lib/helper/UcHelpHelper.php`, `scss/_help.scss`, `js/help.js`): botón de
+  información junto a la etiqueta que muestra un texto breve; se abre al pasar el ratón, al enfocarlo con el teclado o con un
+  clic (queda fijada), y se cierra con Escape, al salir o con un clic fuera. El control del campo debe referenciar `$id` en su
+  `aria-describedby`. Usar ids que no terminen en `-help` (Dominion oculta esas ayudas en edición y les añade su tooltip).
+- No hay todavía indicador de obligatorio: un asterisco significará "el sistema no deja guardar si está vacío", nunca
+  "importante" o "frecuente".
 
 ## Editar SCSS / JS
 
@@ -328,9 +404,11 @@ plugins/arUnicaucaB5Plugin/tests/test-theme.sh    # ~2 min; requiere el runtime 
 ```
 
 Revierte lo que toca (ediciones, activación temporal si la hizo ella, y reconstruye el theme). No destruye estado. Sella la
-foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss` y `_foundation-marker.scss`, y usa
-`templates/_footer.php` como override temporal (se detiene si ya existe uno durable). La WU que añada el primer parcial SCSS o
-el primer override de ese fichero debe **adaptar esas aserciones de forma consciente**, no esquivarlas.
+foundation actual: entre otras cosas exige que `scss/` contenga exactamente `main.scss`, la identidad (`_tokens.scss`,
+`_variables.scss`, `_mixins.scss`, `_fonts.scss`, `_base.scss`), el componente `_help.scss` y `_cataloging-form.scss`, que el
+bundle registre Lato y Merriweather sin Titillium ni URLs de terceros, edita `_base.scss` para probar el ciclo SCSS y usa `templates/_footer.php` como override temporal (se detiene si ya existe uno durable). Un cambio
+que añada otro parcial SCSS o un override durable de ese fichero debe **adaptar esas aserciones de forma consciente**, no
+esquivarlas.
 
 El E2E completo (`scripts/test-fresh-e2e.sh`) no se ejecuta por defecto para cada cambio local: cada WU decide según su alcance
 y riesgo. Compose y el arranque son casos claros que lo justifican, pero también puede justificarlo un flujo crítico transversal.
@@ -357,7 +435,7 @@ ESCALATION:
 
 `arUnicaucaB5Plugin` está habilitado por el servicio `reconcile` (`docker compose up -d --wait` lo ejecuta antes de `atom`/`atom_worker`), a partir del
 desired state versionado `config/atom/required-plugins.conf`. La presencia del plugin en el filesystem no lo habilita: la activación es estado de la BD
-y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-plugins-desired-state). `theme_build` no toca la BD.
+y pertenece al reconcile. Detalle, semántica y exits: [runbook](dev-runbook.md#reconcile-de-atom-desired-state). `theme_build` no toca la BD.
 
 ```bash
 docker compose run --rm reconcile          # aplicar/verificar a mano

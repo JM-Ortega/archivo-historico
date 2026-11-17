@@ -1,0 +1,66 @@
+// Ayuda contextual (toggletip) del theme: lib/helper/UcHelpHelper.php + js/help.js. Componente por clase: solo afecta a
+// los elementos .uc-help que una vista renderiza a propósito. Icono lineal en el azul de acción; burbuja en azul profundo.
+
+.uc-help {
+  position: relative;
+  display: inline-block;
+  margin-left: $ah-space-1;
+  vertical-align: baseline;
+}
+
+.uc-help-toggle {
+  // Objetivo táctil de 24 px alrededor del icono, sin desplazar la etiqueta.
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  margin: -0.25rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: $ah-blue-action;
+  font-weight: 400;
+  line-height: 1;
+
+  &:hover {
+    color: $ah-blue;
+  }
+
+  &:focus-visible {
+    @include ah-focus-ring;
+  }
+}
+
+.uc-help-bubble {
+  position: absolute;
+  top: calc(100% + #{$ah-space-1});
+  left: 0;
+  z-index: $zindex-popover;
+  display: none;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - #{$ah-space-6}));
+  padding: $ah-space-2 $ah-space-3;
+  border-radius: $ah-radius-control;
+  background-color: $ah-blue-deep;
+  box-shadow: $ah-shadow-overlay;
+  color: $white;
+  @include ah-type("small");
+  line-height: 1.45;
+  white-space: normal;
+
+  // Puente transparente sobre el hueco entre icono y burbuja: el puntero puede pasar a la burbuja sin cerrarla.
+  &::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: $ah-space-1;
+  }
+
+  .uc-help.is-open & {
+    display: block;
+  }
+}

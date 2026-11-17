@@ -24,14 +24,27 @@
 require_once sfConfig::get('sf_plugins_dir')
     .'/arDominionB5Plugin/config/arDominionB5PluginConfiguration.class.php';
 
+require_once __DIR__.'/../lib/arUnicaucaSearchInput.class.php';
+require_once __DIR__.'/../lib/arUnicaucaTreeCounts.class.php'; // KAN-139
+// Las clases de lib/ que usa una vista se cargan explícitamente: en prod el autoload de AtoM no las encuentra.
+require_once __DIR__.'/../lib/arUnicaucaPlacesBrowser.class.php';
+require_once __DIR__.'/../lib/arUnicaucaResultHighlight.class.php'; // KAN-138
+require_once __DIR__.'/../lib/arUnicaucaResultPath.class.php'; // KAN-138
+
 class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
 {
-    public static $summary = 'Institutional theme of the Archivo Histórico (Universidad del Cauca). Bootstrap 5 theme, extension of arDominionB5Plugin without modifications; foundation stage.';
+    public static $summary = 'Theme of the Archivo Histórico del Cauca. Bootstrap 5 theme, extension of arDominionB5Plugin without modifications.';
     public static $version = '0.0.1';
 
     public function initialize()
     {
         parent::initialize();
+
+        // KAN-98/KAN-99: normaliza los parámetros de búsqueda antes de que Symfony construya el request, de modo que
+        // la caja básica, el panel avanzado y cualquier enlace directo pasan por la misma regla sin tocar sus templates.
+        if ('cli' !== PHP_SAPI && !empty($_GET)) {
+            $_GET = arUnicaucaSearchInput::sanitize($_GET);
+        }
 
         // Add this plugin templates before arDominionB5Plugin
         sfConfig::set('sf_decorator_dirs', array_merge(
@@ -46,5 +59,8 @@ class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
             unset($plugins[$key]);
         }
         $this->configuration->setPlugins(array_merge([$this->name], $plugins));
+        // OCULTO-008 y OCULTO-014: bloquea con 404 las páginas de registros de autoridad e instituciones archivísticas
+        // (arUnicaucaAuthorityRecordsGuard). Sin esta línea el bloqueo no se activa.
+        $this->dispatcher->connect('controller.change_action', ['arUnicaucaAuthorityRecordsGuard', 'listen']);
     }
 }

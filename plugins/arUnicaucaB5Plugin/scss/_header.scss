@@ -1,0 +1,270 @@
+.ah-site-header {
+  min-height: 86px;
+  padding: 0;
+  border-bottom: 2px solid $ah-accent;
+  background-color: #07568d;
+  background-image:
+    repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, .025) 0,
+      rgba(255, 255, 255, .025) 1px,
+      transparent 1px,
+      transparent 9px
+    ),
+    linear-gradient(110deg, #0b4778 0%, #07568d 52%, #006ca8 100%);
+}
+
+.ah-site-header-inner {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 84px;
+  padding-right: 4%;
+  padding-left: 4%;
+}
+
+.ah-site-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 530px;
+  padding: 8px 32px 8px 18px;
+  border-left: 1px solid rgba(255, 255, 255, .35);
+  color: #fff !important;
+  text-decoration: none;
+}
+
+.ah-site-brand-kicker,
+.ah-site-recognition span {
+  color: #b8d6e9;
+  font-size: .625rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+}
+
+.ah-site-brand-name {
+  margin-top: 3px;
+  font-family: $ah-font-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ah-site-brand-subtitle {
+  margin-top: 3px;
+  color: #c6deed;
+  font-size: .625rem;
+}
+
+.ah-site-header-tools {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.ah-site-recognition {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 1.25rem;
+  border-right: 1px solid rgba(255, 255, 255, .25);
+  text-align: right;
+
+  strong {
+    color: #fff;
+    font-size: .625rem;
+    font-weight: 700;
+  }
+}
+
+.ah-site-header .ah-site-header-tools > .dropdown {
+  margin: 0;
+}
+
+.ah-login-header-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.15rem;
+  min-width: 138px;
+  padding: .6rem 1rem;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  background-color: transparent;
+  font-size: .8rem;
+  font-weight: 700;
+  text-decoration: none;
+
+  .fa-chevron-right {
+    font-size: .75rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    color: #0b4778;
+    border-color: #fff;
+    background-color: #e4f1f8;
+    text-decoration: none;
+  }
+}
+
+.ah-user-header-button {
+  min-width: 138px;
+  padding: .6rem 1rem;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  background-color: transparent;
+  font-size: .8rem;
+  font-weight: 700;
+
+  &:hover,
+  &:focus-visible,
+  &.show {
+    color: #0b4778;
+    border-color: #fff;
+    background-color: #e4f1f8;
+  }
+}
+
+.ah-header-utilities {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > .nav-item > .dropdown-toggle::after {
+    display: none;
+  }
+
+  > .nav-item > .nav-link,
+  > .nav-item > .nav-link:hover,
+  > .nav-item > .nav-link:focus {
+    color: #fff !important;
+  }
+}
+
+.ah-header-utilities .dropdown-menu,
+.ah-header-dropdown-menu {
+  min-width: 290px;
+  margin-top: .75rem !important;
+  padding: .8rem .7rem .65rem;
+  border: 1px solid #c5d5e0;
+  border-radius: .55rem;
+  background-color: #fffdf9;
+  box-shadow: 0 .45rem 1.2rem rgba(#003b63, .18);
+
+  .dropdown-header {
+    margin: 0 .15rem .35rem;
+    padding: .25rem .7rem .75rem;
+    color: #5b7488;
+    border-bottom: 1px solid #c5d5e0;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .65rem .7rem;
+    color: $ah-blue-deep;
+    font-size: .95rem;
+    font-weight: 700;
+    border-radius: .25rem;
+
+    &:hover,
+    &:focus {
+      color: $ah-blue-deep;
+      background-color: #eaf3f8;
+    }
+  }
+
+  .text-muted {
+    color: $ah-text-muted !important;
+  }
+}
+
+.ah-header-utilities .dropdown-menu .dropdown-item {
+  &::after {
+    color: $ah-blue-action;
+    content: "\f054";
+    font-family: "Font Awesome 6 Free";
+    font-size: .65rem;
+    font-weight: 900;
+  }
+}
+
+.ah-header-utilities .dropdown-menu #counts-block {
+  word-spacing: .12em;
+}
+
+.ah-user-header-dropdown {
+  .ah-header-dropdown-menu {
+    right: 0;
+    left: auto;
+
+    .dropdown-item {
+      justify-content: flex-start;
+
+      &::before,
+      &::after {
+        display: none !important;
+        content: none !important;
+      }
+    }
+  }
+}
+
+@media (max-width: 991.98px) {
+  .ah-site-header-inner {
+    flex-wrap: wrap;
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .ah-site-brand {
+    min-width: 0;
+    flex: 1 1 auto;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .ah-site-recognition {
+    display: none;
+  }
+
+  .ah-site-header-tools {
+    gap: .65rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .ah-site-brand-name {
+    font-size: 1rem;
+  }
+
+  .ah-site-brand-kicker,
+  .ah-site-brand-subtitle {
+    font-size: .5rem;
+  }
+
+  .ah-login-header-button {
+    min-width: auto;
+    padding: .65rem .8rem;
+    font-size: .625rem;
+  }
+
+  .ah-user-header-button {
+    min-width: auto;
+    padding: .65rem .8rem;
+    font-size: .625rem;
+  }
+}

@@ -1,0 +1,521 @@
+// Ficha pública de descripciones archivísticas. El selector del módulo/acción limita estas reglas a las vistas ISAD públicas.
+
+body.sfIsadPlugin.index {
+  background-color: $ah-canvas;
+
+  #wrapper {
+    max-width: 1180px;
+    padding-top: $ah-space-4 !important;
+  }
+
+  #sidebar {
+    padding-right: $ah-space-3;
+  }
+
+  #main-column {
+    max-width: none;
+  }
+
+  #main-column > .row {
+    margin: 0;
+  }
+
+  #main-column > .row > .col-md-9 {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 100%;
+  }
+
+  #main-column > h1 {
+    @include ah-type("page-title");
+
+    position: relative;
+    margin: $ah-space-4 0 $ah-space-3;
+    padding: $ah-space-5 $ah-space-5 $ah-space-6;
+    overflow: hidden;
+    color: $white;
+    background: linear-gradient(112deg, $ah-blue-deep 0%, $ah-blue 66%, $ah-blue-action 66%);
+    border: 0;
+    border-radius: $ah-radius-feature;
+    box-shadow: $ah-shadow-overlay;
+
+    &::before {
+      display: block;
+      margin-bottom: $ah-space-2;
+      color: rgba($white, .78);
+      content: "DESCRIPCIÓN ARCHIVÍSTICA";
+      font-family: $ah-font-sans;
+      font-size: $ah-font-size-xsmall;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    &::after {
+      display: block;
+      width: 3rem;
+      margin-top: $ah-space-3;
+      border-bottom: 2px solid $ah-accent;
+      content: "";
+    }
+  }
+
+  #main-column > .breadcrumb {
+    margin: 0 0 $ah-space-3;
+  }
+
+  #content {
+    margin-bottom: $ah-space-5;
+    overflow: visible;
+    background: transparent;
+    border: 0;
+
+    a,
+    a:not([class]) {
+      color: $ah-blue-action !important;
+    }
+  }
+
+  .ah-description-back {
+    margin-bottom: $ah-space-4;
+
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      color: $ah-blue-action;
+      font-family: $ah-font-sans;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+
+      &:hover,
+      &:focus-visible {
+        color: $ah-blue-deep;
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        @include ah-focus-ring;
+      }
+
+      .fa-chevron-left {
+        font-size: .75rem;
+      }
+    }
+  }
+
+  .atom-section-header {
+    a,
+    a:hover,
+    a:focus {
+      color: $ah-blue-deep !important;
+      background-color: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+
+  #main-column > .row > .col-md-9 > .actions {
+    margin-top: $ah-space-4;
+    padding: $ah-space-3;
+    background-color: $ah-blue-deep !important;
+    border-radius: $ah-radius-control;
+
+    .btn.atom-btn-outline-light,
+    .btn.atom-btn-outline-danger,
+    .btn.clipboard {
+      --bs-btn-color: #{$ah-panel};
+      --bs-btn-border-color: #{$ah-line-strong};
+      --bs-btn-hover-color: #{$ah-blue-deep};
+      --bs-btn-hover-bg: #{$ah-panel};
+      --bs-btn-hover-border-color: #{$ah-panel};
+      color: $ah-panel !important;
+      background-color: transparent !important;
+      border-color: $ah-line-strong !important;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep !important;
+        background-color: $ah-panel !important;
+        border-color: $ah-panel !important;
+
+        i,
+        svg {
+          color: $ah-blue-deep !important;
+        }
+      }
+    }
+  }
+
+  .ah-description-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: $ah-space-2;
+    margin-bottom: $ah-space-3;
+
+    &__item {
+      @include ah-paper;
+
+      min-width: 0;
+      padding: $ah-space-2 $ah-space-3;
+
+      span {
+        display: block;
+        margin-bottom: 2px;
+        color: $ah-blue-action;
+        font-family: $ah-font-sans;
+        font-size: .65rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      strong {
+        display: block;
+        overflow: hidden;
+        color: $ah-blue-deep;
+        font-family: $ah-font-sans;
+        font-size: .78rem;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .ah-description-hierarchy {
+    @include ah-paper;
+
+    margin-bottom: $ah-space-3;
+    overflow: hidden;
+    border: 1px solid $ah-line !important;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+
+    &__toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: $ah-space-3 $ah-space-4;
+      color: $ah-panel;
+      font-family: $ah-font-sans;
+      font-weight: 700;
+      text-align: left;
+      background: $ah-blue-deep;
+      border: 0;
+
+      span {
+        display: inline-flex;
+        align-items: center;
+        gap: $ah-space-2;
+      }
+
+      > .fa-chevron-down {
+        transition: transform .2s ease;
+      }
+
+      &:not(.collapsed) > .fa-chevron-down {
+        transform: rotate(180deg);
+      }
+
+      &:hover,
+      &:focus-visible {
+        background: $ah-blue-action;
+      }
+    }
+
+    #ah-description-hierarchy-content {
+      border-top: 1px solid $ah-line;
+    }
+
+    #treeview-menu {
+      padding: $ah-space-2 $ah-space-3 0;
+      background-color: $ah-surface-band;
+
+      .nav-item:last-child,
+      #treeview-search {
+        display: none;
+      }
+
+      .nav-link {
+        color: $ah-blue-deep;
+        font-family: $ah-font-sans;
+        font-weight: 700;
+        border-color: transparent;
+
+        &.active {
+          color: $ah-blue-deep;
+          background-color: $ah-panel;
+          border-color: $ah-line $ah-line $ah-panel;
+        }
+
+        &:hover,
+        &:focus-visible {
+          color: $ah-blue-action;
+        }
+      }
+    }
+
+    #treeview-content {
+      margin-bottom: 0 !important;
+      background-color: $ah-panel;
+    }
+
+    #treeview,
+    #treeview-search {
+      border-top: 1px solid $ah-line;
+    }
+
+    #treeview .list-group-item {
+      color: $ah-text;
+      border-color: $ah-line;
+      background-color: $ah-panel;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+        background-color: $ah-surface-soft;
+      }
+    }
+
+    #treeview-search form {
+      padding: $ah-space-3 !important;
+      background-color: $ah-panel !important;
+      border: 0 !important;
+    }
+  }
+
+  .ah-description-quick-search {
+    @include ah-paper;
+
+    margin-bottom: $ah-space-3;
+    padding: $ah-space-3 $ah-space-4;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: $ah-space-2;
+      margin: 0 0 $ah-space-2;
+      color: $ah-blue-deep;
+      font-family: $ah-font-sans;
+      font-size: $ah-font-size-small;
+      font-weight: 700;
+    }
+
+    form {
+      margin: 0;
+    }
+
+    .form-control {
+      border-color: $ah-line;
+
+      &:focus {
+        border-color: $ah-blue-action;
+        box-shadow: 0 0 0 .2rem rgba($ah-blue-action, .15);
+      }
+    }
+
+    .btn {
+      color: $ah-panel;
+      background-color: $ah-blue-action;
+      border-color: $ah-blue-action;
+
+      i,
+      svg {
+        color: $ah-panel !important;
+      }
+
+      &:hover,
+      &:focus-visible {
+        background-color: $ah-blue-deep;
+        border-color: $ah-blue-deep;
+
+        i,
+        svg {
+          color: $ah-panel !important;
+        }
+      }
+    }
+  }
+
+  #main-column > .row > #context-menu {
+    display: none;
+  }
+
+  #identityArea,
+  #contextArea,
+  #contentAndStructureArea,
+  #conditionsOfAccessAndUseArea,
+  #alliedMaterialsArea,
+  #notesArea,
+  #accessPointsArea,
+  #descriptionControlArea,
+  #rightsArea {
+    @include ah-paper;
+
+    position: relative;
+    margin-bottom: $ah-space-3;
+    overflow: hidden;
+    border: 1px solid $ah-line !important;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .atom-section-header {
+      position: relative;
+      margin: 0 !important;
+      background: transparent;
+      border-bottom: 1px solid $ah-line !important;
+
+      > div,
+      > a {
+        display: block !important;
+        padding: $ah-space-4 $ah-space-5 !important;
+        border: 0 !important;
+        color: $ah-blue-deep !important;
+        background-color: transparent !important;
+        font-family: $ah-font-serif;
+        font-size: 1.25rem;
+      }
+
+      > div::before,
+      > a::before {
+        display: block;
+        margin-bottom: 2px;
+        color: $ah-blue-action;
+        content: "ÁREA";
+        font-family: $ah-font-sans;
+        font-size: .65rem;
+        font-weight: 700;
+        letter-spacing: .12em;
+      }
+
+      &::after {
+        position: absolute;
+        top: 50%;
+        right: $ah-space-4;
+        width: 1.25rem;
+        height: 1.25rem;
+        color: $ah-blue-action;
+        background: $ah-surface-soft;
+        border-radius: 50%;
+        content: "\f078";
+        font-family: "Font Awesome 6 Free";
+        font-size: .7rem;
+        font-weight: 900;
+        line-height: 1.25rem;
+        text-align: center;
+        transform: translateY(-50%);
+      }
+
+      &.ah-area-expanded::after {
+        transform: translateY(-50%) rotate(180deg);
+      }
+    }
+
+    .field {
+      margin: 0;
+      padding: $ah-space-3 $ah-space-5;
+      border-bottom: 1px solid $ah-line;
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+  }
+
+  #notesArea .atom-section-header > div::before {
+    content: "ÁREA 6";
+  }
+
+  #accessPointsArea .atom-section-header > div::before {
+    content: "ÍNDICES";
+  }
+
+  #identityArea .atom-section-header > div::before {
+    content: "ÁREA 1";
+  }
+
+  #contextArea .atom-section-header > div::before {
+    content: "ÁREA 2";
+  }
+
+  #contentAndStructureArea .atom-section-header > div::before {
+    content: "ÁREA 3";
+  }
+
+  #conditionsOfAccessAndUseArea .atom-section-header > div::before {
+    content: "ÁREA 4";
+  }
+
+  #alliedMaterialsArea .atom-section-header > div::before {
+    content: "ÁREA 5";
+  }
+
+  #descriptionControlArea .atom-section-header > div::before {
+    content: "ÁREA 7";
+  }
+
+  .field > h3,
+  .field > h4 {
+    color: $ah-blue-deep;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  body.sfIsadPlugin.index {
+    #wrapper {
+      padding-right: $ah-space-3;
+      padding-left: $ah-space-3;
+    }
+
+    #sidebar,
+    #main-column,
+    #main-column > .row {
+      width: 100%;
+      max-width: none;
+      flex: 0 0 100%;
+    }
+
+    #sidebar {
+      padding-right: 0;
+    }
+
+    #main-column > h1 {
+      margin-top: $ah-space-2;
+      padding: $ah-space-4;
+      font-size: 1.35rem;
+    }
+
+    .ah-description-summary {
+      grid-template-columns: 1fr;
+    }
+
+    #identityArea,
+    #contextArea,
+    #contentAndStructureArea,
+    #conditionsOfAccessAndUseArea,
+    #alliedMaterialsArea,
+    #notesArea,
+    #accessPointsArea,
+    #descriptionControlArea,
+    #rightsArea {
+      .field {
+        display: block;
+      }
+    }
+  }
+}

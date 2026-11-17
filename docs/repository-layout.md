@@ -14,7 +14,7 @@ Entrada rápida: [README](../README.md). Operación DEV: [runbook](dev-runbook.m
 | `docs/` | existe | Documentación durable |
 | `migration/` | existe (solo `README.md`) | Pipeline y tooling de migración. Ver [migration/README.md](../migration/README.md) |
 | `plugins/arUnicaucaB5Plugin/` | existe | Theme institucional de AtoM (source, wrapper de build y tests del theme). Ver [theme-development.md](theme-development.md) |
-| `config/atom/` | existe | Configuración de AtoM **gestionada por el proyecto**: entrypoint runtime (`runtime-config.sh`: cultura, timezone, secreto), proveedor del secreto DEV (`dev-secrets.sh`), desired state y reconcile (`required-plugins.conf`, `reconcile*.{sh,php}`) y `tests/`. Ver [Configuración crítica](dev-runbook.md#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates) y [Reconcile](dev-runbook.md#reconcile-de-plugins-desired-state) |
+| `config/atom/` | existe | Configuración de AtoM **gestionada por el proyecto**: entrypoint runtime (`runtime-config.sh`: cultura, timezone, secreto), proveedor del secreto DEV (`dev-secrets.sh`), desired state y reconcile (`required-plugins.conf`, `reconcile*.{sh,php}`) y `tests/`. Ver [Configuración crítica](dev-runbook.md#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates) y [Reconcile](dev-runbook.md#reconcile-de-atom-desired-state) |
 | `deploy/` | **reservada** | Foundation y automatización de despliegue |
 
 "Reservada" significa que la ruta es la canónica pero el directorio **no existe todavía**: se crea con el primer
@@ -41,8 +41,8 @@ de una feature.
   `theme_dist`, Nginx) está en [theme-development.md](theme-development.md). Su tooling y sus tests viven dentro del plugin
   (`tools/`, `tests/`), no en `scripts/`.
 - **¿Dónde va migration?** En `migration/`. Contrato en [migration/README.md](../migration/README.md).
-- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara un
-  par de propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado y `check_for_updates = 0`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
+- **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara unas pocas
+  propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado, `check_for_updates = 0`, `require_strong_passwords = 1` e `inherit_code_informationobject = 0`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
   tests viven ahí (`reconcile*.{sh,php}`, `runtime-config.sh`, `tests/`), no en `scripts/`.
 - **¿Dónde irá deployment?** En `deploy/`. Fuera de esta foundation: producción, TLS, CI/CD, Ansible/Terraform, etc.
 - **¿Dónde van datos reales locales?** En `migration/local/`, ignorado por Git (ver abajo).
