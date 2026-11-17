@@ -25,8 +25,8 @@
  * plugin que aporta el fichero, así que es una COPIA de la clase upstream, no una subclase: revisarla al actualizar AtoM.
  * Diferencias con upstream, todas marcadas "arUnicaucaB5Plugin":
  *   - campos `remitentes` y `destinatarios` (arUnicaucaCatalogingRoleEvents);
- *   - opciones de levelOfDescription limitadas a Fondo, Sección, Serie y Subserie (OCULTO-051) y mapa nivel → perfil de
- *     presentación (arUnicaucaCatalogingLevels);
+ *   - opciones de levelOfDescription limitadas a Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple
+ *     (OCULTO-051) y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
  *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
  *     arUnicaucaCatalogingContext::chosenParent().
@@ -183,8 +183,8 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                    SERVÍA PARA: ofrecer en "Nivel de descripción" todos los niveles de AtoM, en dos grupos: "Niveles
                    principales" (Fondo, Sección, Serie, Subserie, Unidad documental compuesta y simple) y "Otros niveles"
                    (Colección, Parte, Record group, Subfondo...).
-                   MOTIVO: por ahora el archivo solo maneja Fondo, Sección, Serie y Subserie. Se conserva el nivel actual
-                   de una ficha que ya tenga otro, para no perderlo al guardar.
+                   MOTIVO: el archivo solo maneja Fondo, Sección, Serie, Subserie, Unidad documental compuesta y Unidad
+                   documental simple. Se conserva el nivel actual de una ficha que ya tenga otro, para no perderlo al guardar.
                    Código original:
                 $widget->setOption('choices', arUnicaucaCatalogingLevels::group(
                     $widget->getOption('choices'),

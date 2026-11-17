@@ -39,7 +39,7 @@
           $rows[] = ['identifier' => '', 'levelOfDescription' => '', 'title' => '', 'date' => '', 'startDate' => '', 'endDate' => ''];
           /* OCULTO-051
              SERVÍA PARA: ofrecer todos los niveles de AtoM en la columna "Nivel" de los nuevos niveles inferiores.
-             MOTIVO: por ahora el archivo solo maneja Fondo, Sección, Serie y Subserie.
+             MOTIVO: el archivo solo maneja Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple.
              Código original:
           $levels = QubitTerm::getLevelsOfDescription();
           */
