@@ -31,8 +31,8 @@ TMP="$(mktemp -d)"
 PARTIAL="$PDIR/templates/_layout_start.php"
 fails=0
 ACTIVATED=0
-FOOTER_CREATED=0
-OVERRIDE="$PDIR/templates/_footer.php" # override temporal (partial de la app) que crea esta prueba y borra al terminar
+OVERRIDE_CREATED=0
+OVERRIDE="$PDIR/templates/_alerts.php" # override temporal (partial de la app sin override durable) que crea esta prueba y borra al terminar
 
 expect() { # <descripción> <esperado> <resultado>
   if [[ "$3" == "$2" ]]; then echo "PASS  $1 -> ${3:0:90}"; else echo "FAIL  $1 -> ${3:0:300} (esperado ${2:0:300})"; fails=$((fails + 1)); fi
@@ -66,7 +66,7 @@ cleanup() {
     [[ -f "$TMP/$(basename "$f").orig" ]] && cp "$TMP/$(basename "$f").orig" "$PDIR/$f"
   done
   rm -f "$PDIR/images/theme-test-$RUN.txt"
-  ((FOOTER_CREATED)) && rm -f "$OVERRIDE"
+  ((OVERRIDE_CREATED)) && rm -f "$OVERRIDE"
   ((ACTIVATED)) && in_svc atom php symfony tools:atom-plugins delete "$PLUGIN" >/dev/null 2>&1
   # Deja el partial y dist coherentes con el source restaurado.
   if [[ -f "$TMP/dirty" ]]; then "${COMPOSE[@]}" run --rm -T theme_build >"$TMP/final-build.log" 2>&1 || { echo "WARN  el build final de restauración falló:"; tail -n 20 "$TMP/final-build.log"; }; fi
@@ -135,9 +135,11 @@ expect "la clase Configuration usa el nombre nuevo y extiende arDominionB5Plugin
 expect "la Configuration hereda la precedencia del skeleton: parent::initialize() y sin array_unshift propio" "1:0" \
   "$(grep -c 'parent::initialize()' "$PDIR/config/${PLUGIN}Configuration.class.php"):$(grep -c 'array_unshift' "$PDIR/config/${PLUGIN}Configuration.class.php" || true)"
 expect "el summary contiene 'theme' (AtoM lo lista como tema)" "1" "$(grep -cEi "summary = '.*theme" "$PDIR/config/${PLUGIN}Configuration.class.php")"
-expect "scss/ contiene EXACTAMENTE main.scss, la identidad (_tokens, _variables, _mixins, _fonts, _base), el componente _help, las vistas _search, _search-results, _home, _about y _cataloging-form.scss (sin parciales copiados de Dominion)" \
-  "./_about.scss ./_base.scss ./_cataloging-form.scss ./_fonts.scss ./_help.scss ./_home.scss ./_mixins.scss ./_search-results.scss ./_search.scss ./_tokens.scss ./_variables.scss ./main.scss" \
-  "$(cd "$PDIR/scss" && find . -type f | sort | tr '\n' ' ' | sed 's/ $//')"
+# Los parciales del theme crecen con cada vista; el contrato es que existe main.scss y ninguno copia un parcial de Dominion
+# (solo main.scss y _variables.scss, propios, comparten nombre con los suyos).
+expect "scss/ tiene main.scss y ningún parcial copiado de Dominion" "main.scss:" \
+  "$([[ -f $PDIR/scss/main.scss ]] && echo main.scss):$(comm -12 <(find "$PDIR/scss" -type f -printf '%f\n' | sort) \
+    <(find upstream/atom/plugins/arDominionB5Plugin/scss -type f -printf '%f\n' | sort) | grep -vxE 'main\.scss|_variables\.scss' | tr '\n' ' ')"
 expect "sin layout.php ni logos duplicados de Dominion" "0" \
   "$(ls "$PDIR/templates/layout.php" "$PDIR/images/logo.png" "$PDIR/images/default_atom_logo.png" 2>/dev/null | wc -l)"
 expect "_layout_start.php está ignorado por Git" "ignored" "$(git check-ignore -q "$PARTIAL" && echo ignored || echo tracked)"
@@ -224,11 +226,12 @@ expect "el CSS referenciado por la página lo sirve Nginx" "200" "$(code "$URL$(
 ATOM_BEFORE="$(svc_id atom)"; ATOM_START="$(docker inspect -f '{{.State.StartedAt}}' "$ATOM_BEFORE")"
 ATOM_IMG="$(docker inspect -f '{{.Image}}' "$ATOM_BEFORE")"
 NGINX_START="$(docker inspect -f '{{.State.StartedAt}}' "$(svc_id nginx)")"
-# Override PHP mínimo: un partial de la app (`_footer.php`) copiado al plugin, como indica el skeleton. Lo crea y lo borra esta prueba.
+# Override PHP mínimo: un partial de la app (`_alerts.php`, en todas las páginas) copiado al plugin, como indica el skeleton. Lo crea y lo
+# borra esta prueba. No usa `_footer.php`: el theme ya lo sobrescribe de forma durable.
 [[ ! -e "$OVERRIDE" ]] || { echo "STOP  $OVERRIDE ya existe (override durable): la prueba no lo sobrescribe" >&2; exit 2; }
-FOOTER_CREATED=1
+OVERRIDE_CREATED=1
 echo "<!-- theme-test-$RUN-v1 -->" >"$OVERRIDE"
-expect "override nuevo templates/_footer.php → visible tras refresh (≤10 s, sin reload de FPM)" "found" "$(poll_for "theme-test-$RUN-v1" 10)"
+expect "override nuevo templates/_alerts.php → visible tras refresh (≤10 s, sin reload de FPM)" "found" "$(poll_for "theme-test-$RUN-v1" 10)"
 echo "<!-- theme-test-$RUN-v2 -->" >"$OVERRIDE"
 expect "editar el override → la versión nueva se ve tras refresh (≤10 s)" "found" "$(poll_for "theme-test-$RUN-v2" 10)"
 rm -f "$OVERRIDE"
