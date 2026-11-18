@@ -6,6 +6,35 @@ AtoM 2.10.2. No instala AtoM, activa plugins, configura el servidor, reconcilia
 ajustes ni ejecuta migraciones. La instalación y activación iniciales deben estar
 resueltas antes de usar este procedimiento.
 
+## Contrato de actualización
+
+| Operación | Qué hace | Cuándo y cómo |
+| --- | --- | --- |
+| DEPLOY | Este script: reemplaza solo las [superficies del paquete](build-artifact.md#contenido-y-límites) y converge permisos | Publicación ordinaria de código y assets del plugin |
+| INSTALL | `tools:install` de AtoM: BD inicial y ficheros de configuración del entorno | Una vez, como `root`, antes del primer DEPLOY |
+| RECONCILE | `config/atom/reconcile*.{sh,php}`: plugins habilitados, ajustes, términos, Privacidad, «Acerca de» y nombre del grupo, en la BD | Fuera del DEPLOY, explícito, como usuario de runtime |
+| UPGRADE | Otra versión de AtoM, cambio de esquema o migración de datos | No soportado por este procedimiento |
+
+El DEPLOY conserva la BD, `uploads/`, `downloads/`, la configuración del entorno y
+el contenido de otros plugins (véase [Aplicación](#aplicación)). Rechaza paquetes de
+otro commit de AtoM e instalaciones que no sean 2.10.2, pero no inspecciona la BD.
+
+**STOP.** No es un DEPLOY ordinario, y debe planificarse aparte, si la revisión
+cambia el submódulo `upstream/atom`, requiere otro esquema o migraciones, toca la
+configuración de instalación (`config/config.php`, `propel.ini`, `settings.yml`,
+servicios) o cambia el estado deseado de `config/atom/` (el paquete no lo incluye).
+
+Advertencias de RECONCILE conocidas:
+
+- Privacidad y «Acerca de» se sobrescriben en `es` y `en` desde
+  `config/atom/content/*.md`; las ediciones hechas en la interfaz se pierden. Esos
+  ficheros no viajan en el paquete: en la instalación nativa deben proporcionarse
+  (`RECONCILE_PRIVACY_FILE`, `RECONCILE_ABOUT_FILE`).
+- Los [términos PROJECT-MANAGED](dev-runbook.md#términos-project-managed-de-taxonomías)
+  se identifican por `code`. Un homónimo ajeno o un término propio alterado es STOP
+  (78) sin escribir; borrar uno no se recupera recreándolo (los eventos de un tipo
+  borrado se eliminan en cascada).
+
 ## Requisitos
 
 En el servidor: Linux con systemd, Python >= 3.12, PHP 8.3 con las dependencias de

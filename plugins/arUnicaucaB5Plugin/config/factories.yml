@@ -1,6 +1,6 @@
 # Symfony fusiona este archivo con config/factories.yml de AtoM (los plugins se cargan antes que el proyecto).
 # sfFileLogger crea cada log con chmod(0666) salvo que se indique otro modo; `umask` no lo evita.
-# KAN-133: logs legibles solo por el usuario de runtime y su grupo, también al recrearse.
+# file_mode 0640: logs legibles solo por el usuario de runtime y su grupo, también al recrearse.
 all:
   logger:
     class: sfAggregateLogger
