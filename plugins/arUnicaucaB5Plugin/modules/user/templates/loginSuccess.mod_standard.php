@@ -7,7 +7,7 @@
         <span class="ah-login-brand-rule" aria-hidden="true"></span>
         <div>
           <div class="ah-login-kicker">Patrimonio documental</div>
-          <div class="ah-login-brand-name">Archivo Histórico del Cauca</div>
+          <div class="ah-login-brand-name">Centro de investigaciones históricas Jose Maria Llorente</div>
         </div>
       </div>
 
@@ -18,7 +18,7 @@
         <p>Preservamos y ponemos a disposición el patrimonio documental que da testimonio de nuestra historia.</p>
       </div>
 
-      <div class="ah-login-legal">© <?php echo date('Y'); ?> Archivo Histórico del Cauca <span aria-hidden="true">·</span> Popayán, Cauca, Colombia</div>
+      <div class="ah-login-legal">© <?php echo date('Y'); ?> Centro de investigaciones históricas Jose Maria Llorente <span aria-hidden="true">·</span> Popayán, Cauca, Colombia</div>
     </section>
 
     <section class="ah-login-panel" aria-labelledby="ah-login-title">
@@ -66,7 +66,7 @@
           ¿Olvidó su contraseña?
         </button>
         <div id="ah-login-recovery" class="ah-login-recovery" hidden>
-          Comuníquese con el equipo del Archivo Histórico del Cauca para recuperar su acceso.
+          Comuníquese con el equipo del Centro de investigaciones históricas Jose Maria Llorente para recuperar su acceso.
           <br>
           Correo: <a href="mailto:archivoh@unicauca.edu.co">archivoh@unicauca.edu.co</a>
         </div>

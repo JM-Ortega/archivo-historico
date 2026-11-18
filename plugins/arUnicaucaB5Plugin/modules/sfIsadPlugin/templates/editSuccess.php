@@ -203,6 +203,11 @@
         <span class="ah-profile-name" data-ah-profile-name><?php echo $initial ? '' : '— '.$profileTitles[$profile]; ?></span>
       </h2>
 
+      <?php /* OCULTO-047
+        SERVÍA PARA: registrar el Productor mediante búsqueda o creación de un registro de autoridad.
+        MOTIVO: el catálogo no administra registros de autoridad desde el formulario de descripción.
+        El campo creators no se renderiza aquí para impedir nuevas asociaciones desde la interfaz.
+      */ ?>
       <div class="row ah-row">
         <div class="col-md-7 ah-switch"<?php echo $switchAttrs('identifier', arUnicaucaCatalogingLevels::PROFILE_UNIT, $form->identifier); ?><?php echo $labelAttr($labels['identifier']); ?>>
           <?php echo $dailyField(
@@ -217,28 +222,6 @@
         <?php echo render_field($form->title
             ->help(__('Opcional. Si se deja vacío, la descripción se guarda sin título.'))
             ->label(__('Title')), $resource); ?>
-      </div>
-
-      <div class="ah-switch"<?php echo $switchAttrs('creators', arUnicaucaCatalogingLevels::PROFILE_GROUPING, $form->creators); ?>>
-        <?php
-            $creatorInputs = '<input class="list" type="hidden" value="'
-                .url_for(['module' => 'actor', 'action' => 'autocomplete', 'showOnlyActors' => 'true'])
-                .'">';
-            if (QubitAcl::check(QubitActor::getRoot(), 'create')) {
-                $creatorInputs .= '<input class="add" type="hidden" data-link-existing="true" value="'
-                    .url_for(['module' => 'actor', 'action' => 'add'])
-                    .' #authorizedFormOfName">';
-            }
-            echo render_field(
-                $form->creators
-                    ->label(__('Productor'))
-                    ->help(__(
-                        'Record the name of the organization(s) or the individual(s) responsible for the creation, accumulation and maintenance of the records in the unit of description. Search for an existing name in the authority records by typing the first few characters of the name. Alternatively, type a new name to create and link to a new authority record. (ISAD 3.2.1)'
-                    )),
-                null,
-                ['class' => 'form-autocomplete', 'extraInputs' => $creatorInputs]
-            );
-        ?>
       </div>
 
       <div class="row ah-row">
@@ -313,7 +296,6 @@
         <ul class="ah-reveal-list" aria-labelledby="ah-reveal-title">
           <?php foreach ([
               'title' => __('Mostrar Título'),
-              'creators' => __('Mostrar Productor'),
               'remitentes' => __('Mostrar Remitente'),
               'destinatarios' => __('Mostrar Destinatario'),
               'identifier' => __('Mostrar Identificador'),

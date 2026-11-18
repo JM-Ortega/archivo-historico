@@ -2,7 +2,7 @@
 /**
  * Shared navigation for the public search area.
  *
- * @var string $active Active item: basic, advanced, cataloging, export, history, users, places or privacy.
+ * @var string $active Active item: basic, advanced, cataloging, export, history, users or places.
  */
 $module = $sf_context->getModuleName();
 $action = $sf_context->getActionName();
@@ -13,7 +13,6 @@ $isUsers = 'users' === $active || ('user' === $module && 'list' === $action);
 $isAdministrator = $sf_user->isAdministrator();
 $canCatalog = $isAdministrator || $sf_user->hasCredential('editor');
 $isPlaces = 'places' === $active || ('taxonomy' === $module && 'index' === $action && (int) $sf_request->getParameter('id') === (int) QubitTaxonomy::PLACE_ID);
-$privacyUrl = url_for(['slug' => 'privacy']);
 ?>
 <section class="ah-search-navigation" aria-labelledby="search-navigation-title">
   <h2 class="ah-search-navigation__title" id="search-navigation-title">NAVEGACIÓN</h2>
@@ -71,10 +70,10 @@ $privacyUrl = url_for(['slug' => 'privacy']);
           <span>Catalogación</span>
         </a>
       <?php } ?>
-      <a class="ah-search-navigation__item<?php echo 'privacy' === $active ? ' is-active' : ''; ?>" href="<?php echo $privacyUrl; ?>">
-        <i class="fas fa-lock" aria-hidden="true"></i>
-        <span>Política de privacidad</span>
-      </a>
+      <?php /* OCULTO-044
+        SERVÍA PARA: enlazar a la página pública «Política de privacidad» desde el panel lateral de navegación.
+        MOTIVO: la opción se retira de este panel; la página y su URL no se eliminan.
+      */ ?>
     </div>
   </nav>
 </section>

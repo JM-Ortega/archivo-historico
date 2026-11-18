@@ -86,51 +86,6 @@
     </div>
   </div>
 
-  <section class="ah-description-hierarchy" aria-label="<?php echo __('Hierarchy'); ?>">
-    <button
-      class="ah-description-hierarchy__toggle collapsed"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#ah-description-hierarchy-content"
-      aria-controls="ah-description-hierarchy-content"
-      aria-expanded="false">
-      <span>
-        <i class="fas fa-sitemap" aria-hidden="true"></i>
-        <?php echo __('Hierarchy'); ?>
-      </span>
-      <i class="fas fa-chevron-down" aria-hidden="true"></i>
-    </button>
-
-    <div class="collapse" id="ah-description-hierarchy-content">
-      <?php echo get_component('informationobject', 'treeView'); ?>
-    </div>
-  </section>
-
-  <section class="ah-description-quick-search" aria-labelledby="ah-description-quick-search-title">
-    <h2 id="ah-description-quick-search-title">
-      <i class="fas fa-search" aria-hidden="true"></i>
-      <?php echo __('Quick search'); ?>
-    </h2>
-    <form
-      method="get"
-      role="search"
-      action="<?php echo url_for(['module' => 'search', 'action' => 'index', 'collection' => $resource->getCollectionRoot()->id]); ?>">
-      <div class="input-group">
-        <input
-          type="text"
-          name="query"
-          class="form-control"
-          aria-label="<?php echo __('Search hierarchy'); ?>"
-          placeholder="<?php echo __('Search hierarchy'); ?>"
-          required>
-        <button class="btn atom-btn-white" type="submit">
-          <i class="fas fa-search" aria-hidden="true"></i>
-          <span class="visually-hidden"><?php echo __('Search'); ?></span>
-        </button>
-      </div>
-    </form>
-  </section>
-
   <?php echo get_component('digitalobject', 'imageflow', ['resource' => $resource]); ?>
 
 <?php end_slot(); ?>
@@ -204,38 +159,6 @@
       <?php echo render_show(__('Related function'), link_to(render_title($item->subject->getLabel()), [$item->subject, 'module' => 'function'])); ?>
     <?php } ?>
   </div>
-
-<?php /* OCULTO-016
-     SERVÍA PARA: mostrar la institución archivística de la descripción como un enlace a su ficha.
-     MOTIVO: las fichas de instituciones ya no son accesibles (OCULTO-014); el nombre se sigue mostrando, pero como texto.
-     Código original:
-
-  <div class="repository">
-    <?php echo render_show_repository(__('Repository'), $resource); ?>
-  </div>
-
-*/ ?>
-
-<?php
-    // Igual que render_show_repository(), sin enlace: la institución propia o, si no la tiene, la del ancestro más cercano.
-    $repositoryName = null;
-    if (isset($resource->repository)) {
-        $repositoryName = render_title($resource->repository);
-    } else {
-        foreach ($resource->ancestors->orderBy('rgt') as $item) {
-            if (isset($item->repository)) {
-                $repositoryName = '<span title="'.__('Inherited from %1%', ['%1%' => $item]).'">'.render_title($item->repository).'</span>';
-
-                break;
-            }
-        }
-    }
-  ?>
-  <?php if (null !== $repositoryName) { ?>
-    <div class="repository">
-      <?php echo render_show(__('Repository'), $repositoryName); ?>
-    </div>
-  <?php } ?>
 
   <?php if (check_field_visibility('app_element_visibility_isad_archival_history')) { ?>
     <?php echo render_show(__('Archival history'), render_value($resource->getArchivalHistory(['cultureFallback' => true])), ['fieldLabel' => 'archivalHistory']); ?>

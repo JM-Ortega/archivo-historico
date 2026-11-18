@@ -15,7 +15,7 @@
   <div class="ah-site-footer-content">
     <div class="ah-site-footer-column ah-site-footer-intro">
       <span class="ah-site-footer-kicker">Patrimonio documental</span>
-      <h2>Archivo Histórico del Cauca</h2>
+      <h2>Centro de investigaciones históricas Jose Maria Llorente</h2>
       <span class="ah-site-footer-rule"></span>
       <p>Memoria, patrimonio y conocimiento al servicio de la ciudadanía y la investigación.</p>
     </div>
@@ -25,7 +25,7 @@
       <dl>
         <dt>Archivo</dt>
         <dd><a href="mailto:archivoh@unicauca.edu.co">archivoh@unicauca.edu.co</a></dd>
-        <dt>Coordinadora</dt>
+        <dt>Directora</dt>
         <dd>Beatriz Quintero Espinosa</dd>
         <dd><a href="mailto:bequintero@unicauca.edu.co">bequintero@unicauca.edu.co</a></dd>
       </dl>
@@ -42,7 +42,7 @@
   </div>
 
   <div class="ah-site-footer-bottom">
-    <span>© <?php echo date('Y'); ?> Archivo Histórico del Cauca</span>
+    <span>© <?php echo date('Y'); ?> Centro de investigaciones históricas Jose Maria Llorente</span>
     <span>Memoria del Mundo de América Latina y el Caribe</span>
   </div>
 

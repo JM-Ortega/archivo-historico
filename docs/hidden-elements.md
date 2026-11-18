@@ -21,6 +21,10 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-033 | 05/11/2026 | Botón «Navegar» y navegación principal del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Oculto |
 | OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
+| OCULTO-043 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» de creación/edición de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
+| OCULTO-044 | 12/11/2026 | Opción «Política de privacidad» del panel lateral de navegación | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchOptions.php` | Oculto |
+| OCULTO-046 | 12/11/2026 | Columna «Institución archivística» del historial | `plugins/arUnicaucaB5Plugin/modules/search/templates/descriptionUpdatesSuccess.php` | Oculto |
+| OCULTO-047 | 12/11/2026 | Campo «Productor» para crear o asociar registros de autoridad | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/editSuccess.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -225,3 +229,47 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/scss/_description.scss` y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/indexSuccess.php` |
 | Para qué servía | Reunía acciones como informes, inventario, navegación como lista, importación XML/CSV y exportaciones, incluida **EAD 2002 XML**. |
 | Motivo | Se oculta el panel lateral para simplificar la ficha; **Añadir al portapapeles** y **EAD 2002 XML** se reubican temporalmente en el panel principal de acciones. |
+
+### OCULTO-043 - Campo «Idiomas permitidos para la traducción»
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-043 |
+| Tipo y método | Oculto (control no renderizado en la plantilla) |
+| Elemento y dónde se veía | Campo **Allowed languages for translation**, en Administrador → Usuarios → Crear nuevo usuario / Editar. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
+| Para qué servía | Limitaba los idiomas en los que un usuario podía utilizar las funciones de traducción de la interfaz. |
+| Motivo | La administración de idiomas de traducción no forma parte de la vista operativa de usuarios. Se conserva la lógica del formulario y del permiso para no alterar configuraciones existentes. |
+
+### OCULTO-044 - Opción «Política de privacidad» del panel lateral
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-044 |
+| Tipo y método | Oculto (enlace no renderizado) |
+| Elemento y dónde se veía | Opción **Política de privacidad** del panel lateral **NAVEGACIÓN**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchOptions.php` |
+| Para qué servía | Abría la página pública de política de privacidad desde las páginas que reutilizan el panel lateral. |
+| Motivo | Se simplifica el panel para conservar únicamente las opciones operativas de navegación. La página y su ruta siguen disponibles fuera de este panel. |
+
+### OCULTO-046 - Columna «Institución archivística» del historial
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-046 |
+| Tipo y método | Oculto (celdas y encabezado no renderizados) |
+| Elemento y dónde se veía | Columna **Repository / Institución archivística** de la tabla de resultados de Administrador → Historial. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/search/templates/descriptionUpdatesSuccess.php` |
+| Para qué servía | Mostraba la institución archivística asociada a cada descripción registrada en el historial. |
+| Motivo | El historial se presenta con el título y la fecha de modificación/creación. La consulta y el filtro de institución se conservan para no cambiar el funcionamiento de la búsqueda. |
+
+### OCULTO-047 - Campo «Productor» de registros de autoridad
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-047 |
+| Tipo y método | Oculto (campo no renderizado en el formulario) |
+| Elemento y dónde se veía | Campo **Productor**, que permitía buscar o crear una persona u organización en los registros de autoridad durante la catalogación. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/editSuccess.php` |
+| Para qué servía | Asociaba el productor de una descripción archivística con un registro de autoridad existente o nuevo. |
+| Motivo | El archivo no administra registros de autoridad desde la catalogación. Se oculta el control y sus ayudas de creación sin eliminar los datos históricos ya asociados. |

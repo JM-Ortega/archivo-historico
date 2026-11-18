@@ -141,12 +141,11 @@
             ['class' => 'form-autocomplete']
         ); ?>
 
-        <?php echo render_field(
-            $form->translate->label(__('Allowed languages for translation')),
-            null,
-            ['class' => 'form-autocomplete']
-        ); ?>
-
+        <?php /* OCULTO-043
+          SERVÍA PARA: asignar los idiomas que cada usuario podía utilizar al traducir la interfaz.
+          MOTIVO: la configuración de idiomas de traducción no se administra desde la vista de usuarios.
+          El campo y su permiso siguen existiendo en el formulario/acción para no alterar datos ya guardados.
+        */ ?>
         <?php if ($restEnabled) { ?>
           <?php echo render_field($form->restApiKey->label(
               __('REST API access key'.((isset($restApiKey)) ? ': <code class="ms-2">'.$restApiKey.'</code>' : ''))
