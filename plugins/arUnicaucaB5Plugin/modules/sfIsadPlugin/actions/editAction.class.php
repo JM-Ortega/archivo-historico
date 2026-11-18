@@ -97,6 +97,16 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
     protected function earlyExecute()
     {
+        // arUnicaucaB5Plugin: upstream toma el padre del alta del parámetro `parent` (el hidden que cambia la cascada) y,
+        // si no resuelve a un recurso, llama a QubitAcl::check(null) → HTTP 500. Un valor que no es una descripción se
+        // descarta antes: upstream usa entonces el nivel superior (y comprueba `create` sobre él), como sin `parent`.
+        if ($this->isNewDescription() && $this->request->hasParameter('parent')) {
+            $value = $this->request->getParameter('parent');
+            if (!is_string($value) || !(arUnicaucaCatalogingResubmit::resource($value) instanceof QubitInformationObject)) {
+                $this->request->getParameterHolder()->remove('parent');
+            }
+        }
+
         parent::earlyExecute();
 
         $this->isad = new sfIsadPlugin($this->resource);
