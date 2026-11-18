@@ -29,7 +29,9 @@
  *     (OCULTO-051) y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
  *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
- *     arUnicaucaCatalogingContext::chosenParent() y con la regla de niveles parentForLevel() (processForm).
+ *     arUnicaucaCatalogingContext::chosenParent() y con la regla de niveles parentForLevel() (processForm);
+ *   - en el alta de una Sección, "Series que pasan a esta sección" (adoptChildren): tras guardar, las series marcadas se
+ *     mueven dentro de ella con arObjectMoveJob, como el botón «Mover» (moveAdoptedChildren).
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
  * @author     Jesús García Crespo <correo@sevein.com>
@@ -79,15 +81,27 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
         // arUnicaucaB5Plugin
         'remitentes',
         'destinatarios',
+        'adoptChildren',
     ];
 
     // arUnicaucaB5Plugin: campo → ['type' => QubitTerm, 'events' => QubitEvent[]], leídos antes de procesar el POST
     protected $roleEvents = [];
 
+    // arUnicaucaB5Plugin: ids de las series marcadas en "Series que pasan a esta sección" (alta de una Sección)
+    protected $adoptChildren = [];
+
     // arUnicaucaB5Plugin
     public function execute($request)
     {
-        parent::execute($request);
+        try {
+            parent::execute($request);
+        } catch (sfStopException $e) {
+            // Un alta válida termina con redirect (sfStopException) justo después de guardar: es el momento de mover las
+            // series marcadas dentro de la Sección recién creada.
+            $this->moveAdoptedChildren();
+
+            throw $e;
+        }
 
         // Solo se llega aquí sin redirigir si el POST no fue válido: el formulario vuelve con lo enviado.
         if ($request->isMethod('post')) {
@@ -209,6 +223,14 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            // arUnicaucaB5Plugin: "Series que pasan a esta sección". Lo dibuja js/cataloging-parent.js como casillas
+            // adoptChildren[]; este widget no se pinta, solo declara el campo para que el formulario lo acepte.
+            case 'adoptChildren':
+                $this->form->setValidator($name, new sfValidatorPass(['required' => false]));
+                $this->form->setWidget($name, new sfWidgetFormSelect(['choices' => [], 'multiple' => true]));
+
+                break;
+
             // arUnicaucaB5Plugin
             case 'remitentes':
             case 'destinatarios':
@@ -292,6 +314,14 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            // arUnicaucaB5Plugin: solo se guarda la lista; las series se mueven después de guardar (moveAdoptedChildren).
+            case 'adoptChildren':
+                if ($this->isNewDescription()) {
+                    $this->adoptChildren = array_values(array_unique(array_filter(array_map('intval', (array) $this->form->getValue('adoptChildren')))));
+                }
+
+                break;
+
             // arUnicaucaB5Plugin: en un alta, el `parent` lo puede cambiar la cascada "Pertenece a"; se valida antes de
             // usarlo. En edición y duplicado sigue el comportamiento nativo.
             case 'parent':
@@ -304,6 +334,45 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
             default:
                 return parent::processField($field);
+        }
+    }
+
+    /**
+     * arUnicaucaB5Plugin: mueve dentro de la Sección recién creada las series marcadas en "Series que pasan a esta
+     * sección". Usa el mismo proceso que el botón nativo «Mover» (arObjectMoveJob), así que cada serie se mueve con sus
+     * subseries y descripciones. Solo series que estaban directamente en el mismo fondo que la sección y que el usuario
+     * puede editar; cualquier otro id enviado se ignora.
+     */
+    protected function moveAdoptedChildren(): void
+    {
+        if ([] === $this->adoptChildren || !isset($this->resource->id)
+            || 1 !== arUnicaucaCatalogingLevels::hierarchyPosition($this->resource->levelOfDescription)) {
+            return;
+        }
+
+        $moved = $failed = 0;
+        foreach ($this->adoptChildren as $id) {
+            $child = QubitInformationObject::getById($id);
+            if (!$child instanceof QubitInformationObject
+                || (int) $child->parentId !== (int) $this->resource->parentId
+                || 2 !== arUnicaucaCatalogingLevels::hierarchyPosition($child->levelOfDescription)
+                || !QubitAcl::check($child, 'update')) {
+                continue;
+            }
+
+            try {
+                QubitJob::runJob('arObjectMoveJob', ['objectId' => $child->id, 'parentId' => $this->resource->id]);
+                ++$moved;
+            } catch (Exception $e) {
+                ++$failed;
+            }
+        }
+
+        $i18n = $this->context->i18n;
+        if ($failed > 0) {
+            $this->getUser()->setFlash('error', $i18n->__('La sección se guardó, pero %1% serie(s) no se pudieron mover porque el servicio de procesos no está disponible. Muévelas con «Mover» desde cada serie.', ['%1%' => $failed]));
+        } elseif ($moved > 0) {
+            $this->getUser()->setFlash('notice', $i18n->__('Se están moviendo %1% serie(s) a esta sección, con sus subseries. Si aún no aparecen, recarga en unos segundos; el avance se ve en «Administrar procesos».', ['%1%' => $moved]));
         }
     }
 

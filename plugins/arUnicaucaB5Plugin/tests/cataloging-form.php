@@ -833,6 +833,23 @@
             $check($label, [302, $expectedParent], [$r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']])]);
         }
 
+        // "Series que pasan a esta sección": alta de una Sección en el fondo marcando la serie suelta; tras guardar, la
+        // serie se mueve dentro de la sección con arObjectMoveJob (el mismo proceso que «Mover»; lo ejecuta atom_worker).
+        $form = $set($serialize($page), 'parent', [$slugOf($fondo)]);
+        $form = $set($form, 'levelOfDescription', [$levelUrl($seccionId)]);
+        $form = $set($form, 'identifier', ["ADOPTA-{$run}"]);
+        $form = $set($form, 'adoptChildren[]', [(string) $serie]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $serieParent = 0;
+        for ($i = 0; $i < 30 && $serieParent !== (int) $r['id']; ++$i) {
+            usleep(500000);
+            $serieParent = (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [$serie]);
+        }
+        $check('series que pasan a la sección: la sección se guarda y la serie marcada queda dentro de ella', [302, (int) $r['id']], [$r['code'], $serieParent]);
+        // Limpieza: la serie ahora cuelga de la sección; se borra antes que ella (la lista se borra al revés).
+        $created['io'][] = $serie;
+
         echo "== Ficha adaptable (CAT-03): perfiles, contexto y preservación ==\n";
         $attr = static fn (string $html, string $name) => preg_match('/<div class="ah-cataloging-form"[^>]*?\s'.$name.'="([^"]*)"/s', $html, $m) ? html_entity_decode($m[1]) : null;
         $nodes = static function (string $html, string $query) {

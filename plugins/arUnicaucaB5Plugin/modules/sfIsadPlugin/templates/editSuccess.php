@@ -195,7 +195,10 @@
                 __('Una serie puede pertenecer a un fondo y a una sección.'),
                 __('Una subserie puede pertenecer a un fondo, una sección y una serie.'),
             ],
-        ]; ?>
+            'adoptNone' => __('Este fondo no tiene series sueltas para pasar a la sección.'),
+        ];
+        // "Series que pasan a esta sección": lo marcado si el formulario vuelve por un error de validación.
+        $parentCascade['adoptChecked'] = array_values(array_map('intval', (array) sfContext::getInstance()->getRequest()->getParameter('adoptChildren', []))); ?>
         <fieldset class="ah-parent-cascade" hidden
           data-ah-parent-cascade="<?php echo htmlspecialchars(json_encode($parentCascade, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES); ?>">
           <legend class="ah-parent-legend"><?php echo __('Pertenece a'); ?></legend>
@@ -204,6 +207,14 @@
           </p>
           <div class="row ah-row ah-parent-steps" data-ah-parent-steps></div>
           <p class="ah-parent-rule" data-ah-parent-rule aria-live="polite"></p>
+          <?php // Solo en el alta de una Sección con un fondo elegido; las casillas (adoptChildren[]) las crea el script. ?>
+          <fieldset class="ah-parent-adopt" data-ah-parent-adopt hidden>
+            <legend class="ah-parent-adopt-legend"><?php echo __('Series que pasan a esta sección'); ?></legend>
+            <p id="ah-parent-adopt-hint" class="ah-parent-hint">
+              <?php echo __('Marca las series de este fondo que pertenecen a la nueva sección. Al guardar se mueven dentro de ella, con sus subseries.'); ?>
+            </p>
+            <div class="ah-parent-adopt-list" data-ah-parent-adopt-list></div>
+          </fieldset>
         </fieldset>
       <?php } ?>
 

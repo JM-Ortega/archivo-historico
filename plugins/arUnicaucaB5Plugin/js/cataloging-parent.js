@@ -9,6 +9,10 @@
 //   - El "Nivel de descripción" de la ficha limita los campos: solo se puede pertenecer a niveles superiores (una Sección
 //     solo a un Fondo; una Serie a un Fondo y una Sección; una Subserie a los tres; un Fondo a ninguno). Los campos que no
 //     aplican se deshabilitan y se vacían. El servidor aplica la misma regla (arUnicaucaCatalogingContext::parentForLevel).
+//   - Si la ficha es una Sección y hay un Fondo elegido, aparece "Series que pasan a esta sección": casillas
+//     (adoptChildren[]) con las series que están directamente en ese fondo. Al guardar, el servidor las mueve dentro de
+//     la sección nueva (sfIsadPluginEditAction::moveAdoptedChildren). Si el bloque se oculta, las casillas se quitan y
+//     no se envía nada.
 //
 // No añade nada al POST: los selects no tienen `name` y lo único que cambia es el valor del hidden nativo `parent`, que AtoM
 // ya usa en el alta (el servidor lo valida en arUnicaucaCatalogingContext::chosenParent). Sin JavaScript el bloque sigue
@@ -203,7 +207,60 @@
       }
     };
 
+    // "Series que pasan a esta sección".
+    const adopt = box.querySelector("[data-ah-parent-adopt]");
+    const adoptList = adopt && adopt.querySelector("[data-ah-parent-adopt-list]");
+    const adoptChecked = new Set((data.adoptChecked || []).map(Number));
+    let adoptFor = null; // fondo cuyas series se están mostrando
+    const renderAdopt = (initialLoad) => {
+      if (!adopt || !adoptList) {
+        return;
+      }
+      const isSection = levelSelect && levelPositions[slug(levelSelect.value)] === 1;
+      const fonds = isSection ? chosen[0] : null;
+      if (!fonds) {
+        adopt.hidden = true;
+        adoptList.textContent = "";
+        adoptFor = null;
+        return;
+      }
+      if (adoptFor === fonds.id) {
+        return; // mismo fondo: se conservan las casillas y lo marcado
+      }
+      adoptFor = fonds.id;
+      adoptList.textContent = "";
+      const series = items.filter((item) => item.level === 2 && item.parent === fonds.id);
+      if (!series.length) {
+        const empty = document.createElement("p");
+        empty.className = "ah-parent-hint mb-0";
+        empty.textContent = texts.adoptNone || "";
+        adoptList.append(empty);
+      }
+      series.forEach((item) => {
+        const wrap = document.createElement("div");
+        wrap.className = "form-check";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.className = "form-check-input";
+        input.name = "adoptChildren[]";
+        input.value = String(item.id);
+        input.id = `ah-adopt-${item.id}`;
+        input.setAttribute("aria-describedby", "ah-parent-adopt-hint");
+        const checked = initialLoad && adoptChecked.has(item.id);
+        input.defaultChecked = checked;
+        input.checked = checked;
+        const label = document.createElement("label");
+        label.className = "form-check-label";
+        label.htmlFor = input.id;
+        label.textContent = item.label;
+        wrap.append(input, label);
+        adoptList.append(wrap);
+      });
+      adopt.hidden = false;
+    };
+
     const update = () => {
+      renderAdopt(false);
       fill(false);
       const tip = deepest();
       const value = tip ? tip.url : data.root;
@@ -237,6 +294,7 @@
     // La ubicación de partida ya la pinta el servidor; se redibuja solo cuando el catalogador cambia algo.
     fill(true);
     showRule();
+    renderAdopt(true);
     // Si el nivel de partida obligó a vaciar algo, el `parent` y la ubicación se actualizan.
     const tip = deepest();
     const startValue = tip ? tip.url : data.root;

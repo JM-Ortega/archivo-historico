@@ -280,6 +280,28 @@
     @include ah-type("small");
   }
 
+  // "Series que pasan a esta sección" (alta de una Sección).
+  .ah-parent-adopt {
+    min-width: 0;
+    margin: $ah-space-2 0 0;
+    padding: $ah-space-2 $ah-space-3;
+    border: $border-width dashed $ah-line-strong;
+    border-radius: $ah-radius-panel;
+  }
+
+  .ah-parent-adopt-legend {
+    float: none;
+    width: auto;
+    margin-bottom: $ah-space-1;
+    @include ah-type("small-strong");
+  }
+
+  .ah-parent-adopt-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: $ah-space-1 $ah-space-3;
+  }
+
   .ah-parent-rule {
     margin: 0;
     color: $ah-text-muted;
