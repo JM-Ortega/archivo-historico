@@ -26,6 +26,7 @@ Cascada:
 
 // Componentes reutilizables (por clase; solo afectan a donde una vista los usa).
 @import "help"; // Ayuda contextual .uc-help (lib/helper/UcHelpHelper.php, js/help.js).
+@import "password-toggle"; // Botón para mostrar u ocultar la contraseña (.ah-password-field, js/password-toggle.js).
 
 // Búsqueda básica y acerca.
 @import "search"; // Caja de búsqueda (.ah-search-box) y menú «Opciones de búsqueda» (.ah-search-options).
