@@ -1,4 +1,4 @@
-<?php decorate_with('layout_1col'); ?>
+<?php decorate_with('layout_2col'); ?>
 <?php use_helper('Date'); ?>
 <?php use_helper('Text'); ?>
 
@@ -16,6 +16,10 @@ $hasResults = isset($pager) && $pager->getNbResults();
 // Filtros inválidos (p. ej. «Fin» anterior a «Inicio»): no se busca, el panel queda abierto y se explica el motivo.
 $hasFilterErrors = $form->hasErrors();
 ?>
+
+<?php slot('sidebar'); ?>
+  <?php echo get_partial('search/searchOptions', ['active' => 'history']); ?>
+<?php end_slot(); ?>
 
 <?php slot('title'); ?>
 

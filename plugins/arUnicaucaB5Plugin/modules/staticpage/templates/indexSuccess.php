@@ -1,11 +1,12 @@
 <?php $menu = get_component('menu', 'staticPagesMenu'); ?>
 <?php $layout = 'layout_1col'; ?>
 <?php $isPrivacy = 'privacy' === (string) $resource->slug; ?>
-<?php if ($isPrivacy || !empty($menu)) { ?>
+<?php $isAbout = 'about' === (string) $resource->slug; ?>
+<?php if ($isPrivacy || $isAbout || !empty($menu)) { ?>
   <?php $layout = 'layout_2col'; ?>
   <?php slot('sidebar'); ?>
-    <?php if ($isPrivacy) { ?>
-      <?php echo get_partial('search/searchOptions', ['active' => 'privacy']); ?>
+    <?php if ($isPrivacy || $isAbout) { ?>
+      <?php echo get_partial('search/searchOptions', ['active' => $isAbout ? 'about' : 'privacy']); ?>
     <?php } else { ?>
       <?php echo $menu; ?>
     <?php } ?>
