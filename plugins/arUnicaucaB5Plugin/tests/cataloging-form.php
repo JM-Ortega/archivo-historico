@@ -809,6 +809,30 @@
 
         $check('cascada: no aparece al editar', 0, $xq($request($editPath($seccion))['body'], '//fieldset[@data-ah-parent-cascade]')[0]->length);
 
+        // Regla de niveles (servidor): el padre debe ser de un nivel superior. Una Sección enviada con una Serie como padre
+        // queda dentro del Fondo de esa Serie; una Subserie dentro de esa Serie sí se respeta.
+        $seriesTermId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Series']
+        );
+        $subseriesTermId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Subseries']
+        );
+        $serie = $newIo($fondo, $seriesTermId, "SERIE-{$run}");
+        $levelUrl = static fn (int $termId) => '/index.php/'.QubitTerm::getById($termId)->slug;
+        foreach ([
+            'regla de niveles: una Sección con una Serie como padre queda dentro del Fondo' => [$seccionId, $fondo, "REGLA-S-{$run}"],
+            'regla de niveles: una Subserie con una Serie como padre se queda en la Serie' => [$subseriesTermId, $serie, "REGLA-SS-{$run}"],
+        ] as $label => [$termId, $expectedParent, $identifier]) {
+            $form = $set($serialize($page), 'parent', [$slugOf($serie)]);
+            $form = $set($form, 'levelOfDescription', [$levelUrl($termId)]);
+            $form = $set($form, 'identifier', [$identifier]);
+            $r = $save('/index.php/informationobject/add', $form);
+            $created['io'][] = (int) $r['id'];
+            $check($label, [302, $expectedParent], [$r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']])]);
+        }
+
         echo "== Ficha adaptable (CAT-03): perfiles, contexto y preservación ==\n";
         $attr = static fn (string $html, string $name) => preg_match('/<div class="ah-cataloging-form"[^>]*?\s'.$name.'="([^"]*)"/s', $html, $m) ? html_entity_decode($m[1]) : null;
         $nodes = static function (string $html, string $query) {

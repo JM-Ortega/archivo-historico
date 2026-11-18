@@ -280,6 +280,16 @@
     @include ah-type("small");
   }
 
+  .ah-parent-rule {
+    margin: 0;
+    color: $ah-text-muted;
+    @include ah-type("small");
+
+    &:empty {
+      display: none;
+    }
+  }
+
   .ah-parent-step {
     margin-bottom: $ah-space-2;
 

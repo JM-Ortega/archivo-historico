@@ -6,6 +6,9 @@
 //     sección...), y los de abajo que ya no estén dentro de ella vuelven a "Ninguno/Ninguna".
 //   - Al dejar un campo en "Ninguno/Ninguna", los de abajo también se vacían.
 //   - La descripción nueva queda dentro del último campo elegido o, si no se elige nada, en el nivel superior.
+//   - El "Nivel de descripción" de la ficha limita los campos: solo se puede pertenecer a niveles superiores (una Sección
+//     solo a un Fondo; una Serie a un Fondo y una Sección; una Subserie a los tres; un Fondo a ninguno). Los campos que no
+//     aplican se deshabilitan y se vacían. El servidor aplica la misma regla (arUnicaucaCatalogingContext::parentForLevel).
 //
 // No añade nada al POST: los selects no tienen `name` y lo único que cambia es el valor del hidden nativo `parent`, que AtoM
 // ya usa en el alta (el servidor lo valida en arUnicaucaCatalogingContext::chosenParent). Sin JavaScript el bloque sigue
@@ -56,6 +59,21 @@
       return list;
     };
     const isInside = (item, container) => ancestorsOf(item).some((a) => a.id === container.id);
+
+    // Cuántos campos admite el nivel elegido para la ficha: Fondo 0, Sección 1, Serie 2, Subserie 3; el resto, los 4.
+    const levelSelect = form.querySelector('select[name="levelOfDescription"]');
+    const levelPositions = data.levelPositions || {};
+    const allowedFields = () => {
+      const position = levelSelect ? levelPositions[slug(levelSelect.value)] : undefined;
+      return typeof position === "number" ? Math.min(position, LEVELS) : LEVELS;
+    };
+    const rule = box.querySelector("[data-ah-parent-rule]");
+    const showRule = () => {
+      if (rule) {
+        const position = levelSelect ? levelPositions[slug(levelSelect.value)] : undefined;
+        rule.textContent = (typeof position === "number" && (texts.rules || {})[position]) || "";
+      }
+    };
 
     // Elección actual: posición del campo → descripción (o null).
     const chosen = new Array(LEVELS).fill(null);
@@ -109,6 +127,10 @@
     if (initial) {
       choose(initial.level, initial);
     }
+    // Si el nivel con el que arranca la ficha no admite lo elegido (p. ej. vuelve por un error de validación), se vacía.
+    if (allowedFields() < LEVELS) {
+      choose(allowedFields(), null);
+    }
 
     // Los cuatro campos, creados una sola vez.
     const selects = [];
@@ -148,8 +170,8 @@
           const selected = !!current && current.id === item.id;
           select.append(new Option(item.label, String(item.id), selected && initialLoad, selected));
         });
-        // Sin nada que elegir, el campo queda deshabilitado (se ve "Ninguno/Ninguna").
-        select.disabled = options.length === 0;
+        // Sin nada que elegir, o si el nivel de la ficha no admite ese campo, queda deshabilitado ("Ninguno/Ninguna").
+        select.disabled = options.length === 0 || level >= allowedFields();
       });
     };
 
@@ -181,6 +203,17 @@
       }
     };
 
+    const update = () => {
+      fill(false);
+      const tip = deepest();
+      const value = tip ? tip.url : data.root;
+      if (hidden.value !== value) {
+        hidden.value = value;
+        renderPath();
+      }
+      showRule();
+    };
+
     steps.addEventListener("change", (event) => {
       const select = event.target.closest("select[data-ah-level]");
       if (!select) {
@@ -188,14 +221,29 @@
       }
       const level = Number(select.dataset.ahLevel);
       choose(level, byId.get(Number(select.value)) || null);
-      fill(false);
-      const tip = deepest();
-      hidden.value = tip ? tip.url : data.root;
-      renderPath();
+      update();
     });
+
+    // Cambiar el nivel de la ficha vacía y deshabilita los campos que ese nivel no admite.
+    if (levelSelect) {
+      levelSelect.addEventListener("change", () => {
+        if (allowedFields() < LEVELS) {
+          choose(allowedFields(), null);
+        }
+        update();
+      });
+    }
 
     // La ubicación de partida ya la pinta el servidor; se redibuja solo cuando el catalogador cambia algo.
     fill(true);
+    showRule();
+    // Si el nivel de partida obligó a vaciar algo, el `parent` y la ubicación se actualizan.
+    const tip = deepest();
+    const startValue = tip ? tip.url : data.root;
+    if ((initial || null) !== tip && hidden.value !== startValue) {
+      hidden.value = startValue;
+      renderPath();
+    }
     box.hidden = false;
   };
 
