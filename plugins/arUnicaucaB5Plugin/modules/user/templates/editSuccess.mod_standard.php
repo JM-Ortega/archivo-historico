@@ -108,7 +108,7 @@
 
         <?php if ($resourceAlreadyExists) { ?>
           <div class="ah-user-grid">
-            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null); ?>
+            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null, ['data-ah-password-toggle' => 'true']); ?>
           </div>
         <?php } ?>
 
