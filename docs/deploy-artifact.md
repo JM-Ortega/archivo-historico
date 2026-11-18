@@ -250,3 +250,80 @@ ni rollback automático.
 
 La preservación aquí depende de los límites de escritura del actualizador.
 Los efectos del código PHP al ejecutarse requieren sus propias pruebas funcionales.
+
+## Publicación restringida desde CI
+
+La automatización usa una identidad propia, `atom-deploy`, que solo puede invocar
+`scripts/atom-publish.py`. No reutiliza `archivo-admin`, porque esa cuenta es del
+grupo `sudo` y su `authorized_keys` la puede modificar ella misma. Una clave
+comprometida de `atom-deploy` permite publicar un artefacto válido (código PHP que
+se ejecuta como runtime) o dejar la aplicación detenida, pero no obtener un shell,
+reenvíos, ni root.
+
+- **SSH:** `ForceCommand` ejecuta siempre el wrapper mediante `sudo`, sin TTY,
+  reenvíos, `~/.ssh/rc` ni SFTP. Las claves están en un fichero de `root`.
+- **sudo:** una regla con `""` (sin argumentos). `sudo` limpia el entorno y el
+  wrapper se ejecuta con `python3 -I`.
+- **Wrapper:** lee del stdin una línea `check <sha256>` o `deploy <sha256>` seguida
+  del artefacto (máximo 64 MiB). Lo copia en un directorio temporal de `root`,
+  comprueba el SHA-256 y llama al actualizador instalado con opciones fijas
+  (`--atom-root /usr/share/nginx/atom` y los valores por defecto). En `deploy`
+  ejecuta antes `systemctl reset-failed atom-worker`. Admite una publicación a la
+  vez, corta a los 30 s sin cabecera y devuelve el código de salida del
+  actualizador (64 si la entrada no es válida).
+- El wrapper y el actualizador los instala un administrador como `root`. La CI no
+  puede sustituirlos: cada cambio de `scripts/deploy-artifact.py` o
+  `scripts/atom-publish.py` requiere reinstalarlos a mano.
+
+Instalación, como administrador y con ambos scripts transferidos a `/tmp/atom-code/`.
+La clave pública es la de un par generado solo para este uso; la privada no sale
+de los secretos de GitHub.
+
+```bash
+sudo useradd --system --shell /bin/sh --home-dir /nonexistent --no-create-home atom-deploy
+sudo usermod -p '*' atom-deploy
+sudo install -d -o root -g root -m 0755 /etc/ssh/authorized_keys /usr/local/lib/atom-publish
+sudo install -o root -g root -m 0644 /tmp/atom-code/deploy-artifact.py /usr/local/lib/atom-publish/deploy-artifact.py
+sudo install -o root -g root -m 0755 /tmp/atom-code/atom-publish.py /usr/local/sbin/atom-publish
+echo 'restrict <CLAVE_PUBLICA_ED25519> atom-deploy@github-actions' | sudo tee /etc/ssh/authorized_keys/atom-deploy >/dev/null
+sudo chmod 0644 /etc/ssh/authorized_keys/atom-deploy
+echo 'atom-deploy ALL=(root) NOPASSWD: /usr/local/sbin/atom-publish ""' | sudo tee /tmp/atom-code/atom-deploy.sudoers >/dev/null
+sudo visudo -cf /tmp/atom-code/atom-deploy.sudoers && sudo install -o root -g root -m 0440 /tmp/atom-code/atom-deploy.sudoers /etc/sudoers.d/atom-deploy
+sudo tee /etc/ssh/sshd_config.d/20-atom-deploy.conf >/dev/null <<'CONF'
+Match User atom-deploy
+    AuthorizedKeysFile /etc/ssh/authorized_keys/atom-deploy
+    AuthenticationMethods publickey
+    ForceCommand /usr/bin/sudo -n /usr/local/sbin/atom-publish
+    PermitTTY no
+    PermitUserRC no
+    AllowAgentForwarding no
+    AllowTcpForwarding no
+    AllowStreamLocalForwarding no
+    X11Forwarding no
+    PermitTunnel no
+    PermitOpen none
+    PermitListen none
+CONF
+sudo sshd -t && sudo systemctl reload ssh
+```
+
+Invocación desde el runner. Solo se admite la clave de host fijada en
+`known_hosts`; nunca se acepta una desconocida:
+
+```bash
+{ printf 'deploy %s\n' "$SHA"; cat "$ARTIFACT"; } | ssh -T -i "$KEY" -o IdentitiesOnly=yes \
+  -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$KNOWN_HOSTS" atom-deploy@<HOST>
+```
+
+`check` en lugar de `deploy` equivale a `--check-only`. Cancelar el job durante
+`deploy` puede dejar los servicios detenidos, como cualquier fallo del actualizador.
+
+Revocación inmediata: vaciar `/etc/ssh/authorized_keys/atom-deploy`. Reversión
+completa:
+
+```bash
+sudo rm -f /etc/ssh/sshd_config.d/20-atom-deploy.conf /etc/sudoers.d/atom-deploy /etc/ssh/authorized_keys/atom-deploy
+sudo sshd -t && sudo systemctl reload ssh
+sudo userdel atom-deploy
+sudo rm -rf /usr/local/lib/atom-publish /usr/local/sbin/atom-publish
+```
