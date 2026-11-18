@@ -36,6 +36,7 @@ Cascada:
 @import "tree"; // Árbol «Fondos» de la barra lateral: resumen por nivel e insignias de hijos (.ah-tree-*, KAN-139).
 @import "places"; // Navegación temática «Lugares» (.ah-places, taxonomy/index).
 @import "description"; // Fichas públicas de descripciones archivísticas (sfIsadPlugin/index).
+@import "clipboard-export"; // Exportación institucional del portapapeles (clipboard/export).
 
 // Superficies.
 @import "cataloging-form"; // Formulario de catalogación, todo bajo .ah-cataloging-form.

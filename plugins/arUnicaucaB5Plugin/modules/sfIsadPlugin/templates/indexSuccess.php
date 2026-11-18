@@ -115,7 +115,7 @@
     ); ?>
   <?php } ?>
 
-  <?php echo render_show(__('Reference code'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
+  <?php echo render_show(__('Signature'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
 
   <?php echo render_show(__('Title'), render_title($resource), ['fieldLabel' => 'title']); ?>
 
