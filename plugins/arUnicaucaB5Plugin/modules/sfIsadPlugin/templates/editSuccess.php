@@ -186,15 +186,14 @@
         <?php $parentCascade['texts'] = [
             'topLevel' => __('Nivel superior (sin descripción superior)'),
             'newDescription' => __('[Nueva descripción]'),
-            'noFonds' => __('Ninguno (nivel superior)'),
+            'noFonds' => __('Ninguno'),
             'none' => __('Ninguna'),
-            'or' => __('o'),
         ]; ?>
         <fieldset class="ah-parent-cascade" hidden
           data-ah-parent-cascade="<?php echo htmlspecialchars(json_encode($parentCascade, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES); ?>">
           <legend class="ah-parent-legend"><?php echo __('Pertenece a'); ?></legend>
           <p id="ah-parent-hint" class="ah-parent-hint">
-            <?php echo __('Elige el fondo y, si aplica, la sección, la serie y la subserie. Ninguno es obligatorio: la descripción queda dentro del último que elijas.'); ?>
+            <?php echo __('Ninguno es obligatorio. Si eliges uno, los de arriba se llenan solos con aquello a lo que pertenece. La descripción queda dentro del último que elijas.'); ?>
           </p>
           <div class="row ah-row ah-parent-steps" data-ah-parent-steps></div>
         </fieldset>
