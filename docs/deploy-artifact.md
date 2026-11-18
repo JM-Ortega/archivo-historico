@@ -103,7 +103,7 @@ código. Cada publicación converge la instalación, con los servicios detenidos
 | Ruta | Propietario | Modo |
 |---|---|---|
 | Resto del árbol de AtoM (propio, upstream y dependencias) | `root:root` | directorios `0755`; ficheros `0644`, `0755` si tenían algún bit de ejecución |
-| `config/config.php`, `apps/qubit/config/settings.yml` (el runtime los lee) | `root:<grupo de runtime>` | `0640` |
+| `config/config.php`, `apps/qubit/config/settings.yml`, `config/appChallenge.yml` (el runtime los lee; el último contiene el salt del desafío JS) | `root:<grupo de runtime>` | `0640` |
 | `config/propel.ini`, `apps/qubit/config/settings.yml.tmpl` (solo INSTALL, como `root`; el `.tmpl` recibe el secreto CSRF de `config/atom/runtime-config.sh`) | `root:root` | `0600` |
 | `cache/`, `log/` | runtime | `0750`; se vacía `cache/`; los ficheros de primer nivel de `log/` pasan al runtime con `0640` |
 | `uploads/`, `downloads/` | runtime | solo el directorio; su contenido es estado persistente y no se toca |
@@ -113,7 +113,8 @@ código. Cada publicación converge la instalación, con los servicios detenidos
 - Cualquier otra entrada cerrada a «otros» (fichero sin lectura, directorio sin
   lectura o recorrido) se rechaza antes de detener servicios: abrirla a todos o
   cerrarla al runtime sería una decisión que el script no toma. Una instalación de
-  AtoM no contiene ninguna; si aparece, hay que clasificarla.
+  AtoM no contiene ninguna, salvo que se restringieran ficheros a mano; si aparece,
+  hay que clasificarla (o, si no es secreta, dejarla `0644`) antes de publicar.
 - También se rechazan antes de detener servicios: `cache/`, `log/`, `uploads/` o
   `downloads/` como enlace o fichero; enlaces del código que salgan de la
   instalación o apunten a esas carpetas; tipos de fichero especiales; ficheros de

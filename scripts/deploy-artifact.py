@@ -31,9 +31,10 @@ STATE_DIRS = ('uploads', 'downloads')  # persistent: only the directory itself i
 RUNTIME_DIRS = CACHE_DIRS + STATE_DIRS
 # Files with credentials. They are identified by path, never by the mode they arrive with (tools:install and
 # friends may leave them 0644). Group access exists only where the runtime reads the file (verified with the web,
-# `symfony cc`, the worker and tools:run): those are root:<runtime group> 0640. The two that only INSTALL needs
+# `symfony cc`, the worker and tools:run): those are root:<runtime group> 0640. appChallenge.yml holds the cookie
+# signing salt and is read by index.php (lib/challenge/filter.php). The two that only INSTALL needs
 # (run as root, before publishing) stay root:root 0600.
-SECRET_FILES = ('config/config.php', 'apps/qubit/config/settings.yml')
+SECRET_FILES = ('config/config.php', 'apps/qubit/config/settings.yml', 'config/appChallenge.yml')
 ROOT_SECRET_FILES = ('config/propel.ini', 'apps/qubit/config/settings.yml.tmpl')
 ACL_ATTRS = ('system.posix_acl_access', 'system.posix_acl_default')
 # Privileged changes act on a descriptor of the inode that was checked: a final symlink is not followed, FIFOs do not
