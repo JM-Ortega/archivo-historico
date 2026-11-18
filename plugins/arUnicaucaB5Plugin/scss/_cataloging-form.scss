@@ -290,6 +290,12 @@
 
     .form-select {
       background-color: $white;
+
+      // Campo sin opciones (p. ej. un fondo sin secciones): gris, como cualquier control deshabilitado.
+      &:disabled {
+        background-color: $form-select-disabled-bg;
+        color: $ah-text-muted;
+      }
     }
   }
 

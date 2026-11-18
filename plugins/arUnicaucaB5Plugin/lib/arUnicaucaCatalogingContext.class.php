@@ -40,8 +40,9 @@ class arUnicaucaCatalogingContext
     }
 
     // --- Cascada "Pertenece a" del alta (Fondo → Sección → Serie → Subserie) -------------------------------------------
-    // El catalogador elige un fondo y, si quiere, una descripción dentro de él, y así hacia abajo. Ningún paso es
-    // obligatorio: la nueva descripción queda dentro del último elegido o, si no se elige nada, en el nivel superior. La
+    // Cuatro campos fijos en orden estricto (Fondo, Sección, Serie, Subserie), cada uno solo con descripciones de su nivel;
+    // al elegir uno, los de arriba se llenan con aquello a lo que pertenece. Ninguno es obligatorio: la nueva descripción
+    // queda dentro del último elegido o, si no se elige nada, en el nivel superior. La
     // cascada no añade campos al POST: js/cataloging-parent.js solo cambia el valor del hidden nativo `parent`, que AtoM ya
     // usa en el alta. Sin JavaScript no se muestra y el alta funciona como siempre. (Vive en esta clase, y no en una nueva,
     // para no depender de `php symfony cc`: el autoload de Symfony está cacheado y no vería una clase nueva en lib/.)
