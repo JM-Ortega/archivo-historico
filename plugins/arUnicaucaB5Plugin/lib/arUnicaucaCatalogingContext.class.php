@@ -111,7 +111,14 @@ class arUnicaucaCatalogingContext
             ];
         }
 
+        // Nivel de la ficha nueva (slug del término → posición), para que el script limite los campos según el nivel elegido.
+        $levelPositions = [];
+        foreach (arUnicaucaCatalogingLevels::archiveTerms(QubitTerm::getLevelsOfDescription(), 6) as $position => $term) {
+            $levelPositions[(string) $term->slug] = $position;
+        }
+
         return [
+            'levelPositions' => $levelPositions,
             'root' => $routing->generate(null, [$root, 'module' => 'informationobject']),
             'levels' => $levels,
             'items' => $items,
@@ -125,6 +132,29 @@ class arUnicaucaCatalogingContext
      * @param string                 $value    valor enviado en `parent` (URL o slug de la descripción)
      * @param QubitInformationObject $fallback padre con el que se abrió el formulario
      */
+    /**
+     * Regla de jerarquía del alta: el padre debe ser de un nivel superior al de la descripción nueva (una Sección solo
+     * dentro de un Fondo; una Serie dentro de un Fondo o una Sección; una Subserie dentro de un Fondo, una Sección o una
+     * Serie; un Fondo, en el nivel superior). Si el padre elegido no lo cumple, se sube por sus ancestros hasta el primero
+     * que sí; si ninguno, el nivel superior. Unidades documentales, otros niveles y "sin nivel" no se restringen.
+     */
+    public static function parentForLevel(QubitInformationObject $parent, ?QubitTerm $level): QubitInformationObject
+    {
+        $allowed = arUnicaucaCatalogingLevels::allowedParentLevels(arUnicaucaCatalogingLevels::hierarchyPosition($level));
+        if ($allowed >= 4) {
+            return $parent;
+        }
+
+        for ($current = $parent; $current instanceof QubitInformationObject && QubitInformationObject::ROOT_ID != $current->id; $current = $current->parent) {
+            $position = arUnicaucaCatalogingLevels::hierarchyPosition($current->levelOfDescription);
+            if (null !== $position && $position < $allowed) {
+                return $current;
+            }
+        }
+
+        return QubitInformationObject::getById(QubitInformationObject::ROOT_ID);
+    }
+
     public static function chosenParent(string $value, QubitInformationObject $fallback): QubitInformationObject
     {
         $resource = arUnicaucaCatalogingResubmit::resource($value);
