@@ -93,8 +93,8 @@
         <?php } ?>
 
         <div class="ah-user-grid">
-          <?php echo render_field($form->password->label(__('New password')), null, ['class' => 'password-strength']); ?>
-          <?php echo render_field($form->confirmPassword->label(__('Confirmar contraseña')), null, ['class' => 'password-confirm']); ?>
+          <?php echo render_field($form->password->label(__('New password')), null, ['class' => 'password-strength', 'data-ah-password-toggle' => 'true']); ?>
+          <?php echo render_field($form->confirmPassword->label(__('Confirmar contraseña')), null, ['class' => 'password-confirm', 'data-ah-password-toggle' => 'true']); ?>
         </div>
 
         <div class="template ah-user-strength" hidden>
@@ -108,7 +108,7 @@
 
         <?php if ($resourceAlreadyExists) { ?>
           <div class="ah-user-grid">
-            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null); ?>
+            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null, ['data-ah-password-toggle' => 'true']); ?>
           </div>
         <?php } ?>
 

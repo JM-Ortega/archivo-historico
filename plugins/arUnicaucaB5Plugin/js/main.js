@@ -6,6 +6,7 @@ import "./places";
 import "./description-updates";
 import "./search-limit";
 import "./user-email";
+import "./password-toggle";
 import "./export-alerts";
 
 const initializeLoginControls = () => {

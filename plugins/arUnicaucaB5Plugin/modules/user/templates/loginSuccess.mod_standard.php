@@ -55,6 +55,7 @@
                 'required' => 'required',
                 'placeholder' => 'Ingrese su contraseña',
                 'autocomplete' => 'current-password',
+                'data-ah-password-toggle' => 'true',
             ]); ?>
             <?php echo $form->password->renderError(); ?>
           </div>
