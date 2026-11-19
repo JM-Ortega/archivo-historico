@@ -463,7 +463,7 @@ también funciona, probado en aislado). Verificación: el HTML contiene `<meta n
 
 ## Windows
 
-El entorno **validado** es WSL2 + Docker Desktop. Windows 10/11 nativo + Docker Desktop + PowerShell sigue **pendiente de un
-smoke real**: no se declara validado. La foundation evita depender de Node/npm host, PHP host, UID/GID fijos o inotify/watch
+El entorno **validado** es WSL2 + Docker Desktop. Con un checkout en Windows nativo se ha observado que `theme_watch`
+no recompila al editar; para ese caso existe el [fallback con polling](#fallback-con-polling-opt-in). La foundation evita depender de Node/npm host, PHP host, UID/GID fijos o inotify/watch
 para su corrección; `.gitattributes` fija LF en `*.js`, `*.scss`, `*.sh`, `*.php` (Webpack y Bash leen esos ficheros en un
 contenedor Linux). No hay `.ps1` duplicados.
