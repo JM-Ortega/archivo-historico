@@ -180,3 +180,12 @@ input[aria-invalid="true"][data-uc-over-limit] {
   border-color: $ah-warning;
   box-shadow: 0 0 0 0.15rem rgba($ah-warning, 0.25);
 }
+
+// KAN-140: botón de buscar bloqueado mientras algún campo pase del máximo. Conserva el cursor y el tooltip (`title`), que
+// Bootstrap anularía con `pointer-events: none`, y se ve apagado sin depender solo del color.
+[data-uc-limit-blocked]:disabled {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+  pointer-events: auto;
+}
