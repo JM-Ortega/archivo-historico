@@ -21,7 +21,6 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-033 | 05/11/2026 | Botón «Navegar» y navegación principal del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Oculto |
 | OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
-| OCULTO-043 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» de creación/edición de usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
 | OCULTO-044 | 12/11/2026 | Opción «Política de privacidad» del panel lateral de navegación | `plugins/arUnicaucaB5Plugin/modules/search/templates/_searchOptions.php` | Oculto |
 | OCULTO-046 | 12/11/2026 | Columna «Institución archivística» del historial | `plugins/arUnicaucaB5Plugin/modules/search/templates/descriptionUpdatesSuccess.php` | Oculto |
 | OCULTO-047 | 12/11/2026 | Campo «Productor» para crear o asociar registros de autoridad | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/editSuccess.php` | Oculto |
@@ -234,17 +233,6 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/scss/_description.scss` y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/indexSuccess.php` |
 | Para qué servía | Reunía acciones como informes, inventario, navegación como lista, importación XML/CSV y exportaciones, incluida **EAD 2002 XML**. |
 | Motivo | Se oculta el panel lateral para simplificar la ficha; **Añadir al portapapeles** y **EAD 2002 XML** se reubican temporalmente en el panel principal de acciones. |
-
-### OCULTO-043 - Campo «Idiomas permitidos para la traducción»
-
-| Campo | Detalle |
-| --- | --- |
-| Identificador | OCULTO-043 |
-| Tipo y método | Oculto (control no renderizado en la plantilla) |
-| Elemento y dónde se veía | Campo **Allowed languages for translation**, en Administrador → Usuarios → Crear nuevo usuario / Editar. |
-| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
-| Para qué servía | Limitaba los idiomas en los que un usuario podía utilizar las funciones de traducción de la interfaz. |
-| Motivo | La administración de idiomas de traducción no forma parte de la vista operativa de usuarios. Se conserva la lógica del formulario y del permiso para no alterar configuraciones existentes. |
 
 ### OCULTO-044 - Opción «Política de privacidad» del panel lateral
 
