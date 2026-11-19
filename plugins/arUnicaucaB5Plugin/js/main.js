@@ -7,6 +7,7 @@ import "./description-updates";
 import "./search-limit";
 import "./user-email";
 import "./password-toggle";
+import "./clipboard-count";
 import "./export-alerts";
 
 const initializeLoginControls = () => {
