@@ -84,6 +84,8 @@
         <source>Digital objects with restricted access or copyright will not be exported.</source>
         <target>No se exportarán los objetos digitales con acceso restringido o derechos de autor.</target>
       </trans-unit>
+    </body>
+  </file>
   <file source-language="en" target-language="es" datatype="plaintext" original="messages" date="2026-11-18T14:30:00Z" product-name="messages">
     <header/>
     <body>
@@ -134,6 +136,30 @@
       <trans-unit id="12">
         <source>The clipboard is empty for this entity type.</source>
         <target>El portapapeles está vacío para este tipo de entidad.</target>
+      </trans-unit>
+      <trans-unit id="13">
+        <source>My profile</source>
+        <target>Mi perfil</target>
+      </trans-unit>
+      <trans-unit id="14">
+        <source>Log out</source>
+        <target>Cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="15">
+        <source>Quick links</source>
+        <target>Enlaces rápidos</target>
+      </trans-unit>
+      <trans-unit id="16">
+        <source>About</source>
+        <target>Acerca de</target>
+      </trans-unit>
+      <trans-unit id="17">
+        <source>Home</source>
+        <target>Inicio</target>
+      </trans-unit>
+      <trans-unit id="18">
+        <source>Privacy Policy</source>
+        <target>Política de privacidad</target>
       </trans-unit>
     </body>
   </file>
