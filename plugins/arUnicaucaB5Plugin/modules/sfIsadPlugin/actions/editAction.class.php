@@ -179,6 +179,19 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            case 'identifier':
+                parent::addField($name);
+                $this->form->setValidator($name, new sfValidatorAnd([
+                    new sfValidatorString(),
+                    new sfValidatorCallback([
+                        'callback' => [$this, 'validateUniqueUnitIdentifier'],
+                    ], [
+                        'invalid' => $this->context->i18n->__('Esta signatura ya está asignada a otra unidad documental.'),
+                    ]),
+                ]));
+
+                break;
+
             // arUnicaucaB5Plugin
             case 'remitentes':
             case 'destinatarios':
@@ -205,9 +218,81 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
         }
     }
 
+    /**
+     * Prevent duplicate signatures among simple and compound documentary units.
+     */
+    public function validateUniqueUnitIdentifier(sfValidatorBase $validator, $value)
+    {
+        $identifier = trim((string) $value);
+        if ('' === $identifier) {
+            return $value;
+        }
+
+        $level = $this->getSubmittedLevel();
+
+        if (!$level instanceof QubitTerm || arUnicaucaCatalogingLevels::PROFILE_UNIT !== arUnicaucaCatalogingLevels::profile($level)) {
+            return $value;
+        }
+
+        $unitLevelIds = [];
+        foreach (QubitTerm::getLevelsOfDescription() as $term) {
+            if (arUnicaucaCatalogingLevels::PROFILE_UNIT === arUnicaucaCatalogingLevels::profile($term)) {
+                $unitLevelIds[] = (int) $term->id;
+            }
+        }
+
+        if ([] === $unitLevelIds) {
+            return $value;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($unitLevelIds), '?'));
+        $parameters = array_merge([$identifier], $unitLevelIds, [(int) $this->resource->id]);
+        $count = QubitPdo::fetchColumn(
+            "SELECT COUNT(*) FROM information_object
+             WHERE identifier = ? AND level_of_description_id IN ({$placeholders}) AND id <> ?",
+            $parameters
+        );
+
+        if (0 < (int) $count) {
+            throw new sfValidatorError($validator, 'invalid', ['value' => $value]);
+        }
+
+        return $value;
+    }
+
+    protected function getSubmittedLevel()
+    {
+        $value = $this->form->getValue('levelOfDescription');
+        if (!is_string($value) || '' === $value) {
+            $value = $this->request->getPostParameter('levelOfDescription');
+        }
+
+        if (is_string($value) && '' !== $value) {
+            $params = $this->context->routing->parse(Qubit::pathInfo($value));
+            if (isset($params['_sf_route']->resource)) {
+                return $params['_sf_route']->resource;
+            }
+        }
+
+        return $this->resource->levelOfDescription;
+    }
+
     protected function processField($field)
     {
         switch ($field->getName()) {
+            case 'title':
+                $level = $this->getSubmittedLevel();
+                if ($level instanceof QubitTerm
+                    && arUnicaucaCatalogingLevels::PROFILE_UNIT === arUnicaucaCatalogingLevels::profile($level)
+                ) {
+                    $identifier = trim((string) $this->form->getValue('identifier'));
+                    $this->resource['title'] = '' === $identifier ? null : $identifier;
+
+                    break;
+                }
+
+                return parent::processField($field);
+
             case 'creators':
                 $value = $filtered = [];
                 foreach ($this->form->getValue('creators') as $item) {

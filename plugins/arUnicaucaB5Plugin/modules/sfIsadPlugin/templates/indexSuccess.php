@@ -70,11 +70,17 @@
       </strong>
     </div>
     <div class="ah-description-summary__item">
-      <span><?php echo __('Productor'); ?></span>
+      <span><?php echo __('Lugares'); ?></span>
       <strong>
-        <?php $summaryCreators = $resource->getCreators(); ?>
-        <?php if (count($summaryCreators)) { ?>
-          <?php echo render_title($summaryCreators[0]->getAuthorizedFormOfName(['cultureFallback' => true])); ?>
+        <?php $summaryPlaces = $resource->getPlaceAccessPoints(); ?>
+        <?php if (count($summaryPlaces)) { ?>
+          <?php
+              $summaryPlaceNames = [];
+              foreach ($summaryPlaces as $placeRelation) {
+                  $summaryPlaceNames[] = render_title($placeRelation->term->getName(['cultureFallback' => true]));
+              }
+              echo implode(' - ', $summaryPlaceNames);
+          ?>
         <?php } else { ?>
           <?php echo __('Not specified'); ?>
         <?php } ?>

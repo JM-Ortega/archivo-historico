@@ -27,10 +27,18 @@
     };
     const profiles = parse(root.dataset.ahLevelProfiles);
     const titles = parse(root.dataset.ahProfileTitles);
+    const identifier = form && form.querySelector('[name="identifier"]');
+    const title = form && form.querySelector('[name="title"]');
     const announce = (text) => {
       if (status) {
         status.textContent = text;
       }
+    };
+    const syncUnitTitle = () => {
+      if (!identifier || !title || currentProfile() !== "unidad") {
+        return;
+      }
+      title.value = identifier.value;
     };
     const isHidden = (el) => window.getComputedStyle(el).display === "none";
     const fieldByKey = (key) => fields.find((f) => f.dataset.ahField === key);
@@ -109,7 +117,12 @@
         } else {
           applyProfile(profile, true);
         }
+        syncUnitTitle();
       });
+    }
+    if (identifier) {
+      identifier.addEventListener("input", syncUnitTitle);
+      identifier.addEventListener("change", syncUnitTitle);
     }
     const noLevel = root.querySelector("[data-ah-no-level]");
     if (noLevel) {

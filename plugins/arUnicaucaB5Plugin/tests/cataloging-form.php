@@ -305,10 +305,38 @@
         $check('Signatura exacta en identifier', $signatura, $one('SELECT identifier FROM information_object WHERE id = ?', [$io]));
         $check('Nivel = Sección', $seccionId, (int) $one('SELECT level_of_description_id FROM information_object WHERE id = ?', [$io]));
         $check('Título vacío (no se genera ni se copia la Signatura)', null, $i18n($io, 'title'));
+        $fileId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'File']
+        );
+        $itemId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Item']
+        );
+        $sameSignature = $serialize($request('/index.php/informationobject/add')['body']);
+        $sameSignature = $set($sameSignature, 'identifier', [$signatura]);
+        $sameSignature = $set($sameSignature, 'levelOfDescription', ['/index.php/'.QubitTerm::getById($fileId)->slug]);
+        $r = $save('/index.php/informationobject/add', $sameSignature);
+        $check('la misma signatura se permite en una unidad documental nueva', 302, $r['code']);
+        $unit = (int) $r['id'];
+        $created['io'][] = $unit;
+        $check('el título de una unidad documental se rellena con la signatura', $signatura, $i18n($unit, 'title'));
+        $duplicate = $serialize($request('/index.php/informationobject/add')['body']);
+        $duplicate = $set($duplicate, 'identifier', [$signatura]);
+        $duplicate = $set($duplicate, 'levelOfDescription', ['/index.php/'.QubitTerm::getById($itemId)->slug]);
+        $r = $save('/index.php/informationobject/add', $duplicate);
+        $check('una signatura repetida entre unidades simples y compuestas no se guarda', [200, true], [
+            $r['code'], false !== strpos($r['body'], 'Esta signatura ya está asignada a otra unidad documental.'),
+        ]);
         $check('Contenido en scopeAndContent', "Carta sobre el envío de víveres.\nSegundo párrafo.", $i18n($io, 'scope_and_content'));
         $check('Folios en extentAndMedium', '3 folios', $i18n($io, 'extent_and_medium'));
         $places = array_map('intval', $col('SELECT r.term_id FROM object_term_relation r JOIN term t ON t.id = r.term_id WHERE r.object_id = ? AND t.taxonomy_id = ? ORDER BY r.term_id', [$io, QubitTaxonomy::PLACE_ID]));
         $check('Lugares de procedencia', [(int) $p1->id, (int) $p2->id], $places);
+        $show = $request($url(QubitInformationObject::getById($io)));
+        $check('resumen de ficha reemplaza Productor por Lugares', [true, true], [
+            false !== strpos($show['body'], '>Lugares</span>'),
+            false !== strpos($show['body'], '>Productor</span>') ? false : true,
+        ]);
         $check('Fecha: un evento Creación sin actor, solo con la expresión', [[
             'type_id' => QubitTerm::CREATION_ID, 'actor_id' => null, 'start_date' => null, 'end_date' => null, 'date' => '12 de marzo de 1810',
         ]], array_map(static function ($e) {
