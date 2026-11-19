@@ -72,9 +72,12 @@ _FIELD_LABELS = {"remitente": "Remitente", "destinatario": "Destinatario", "cont
 
 
 def _blank(value):
-    """Vacío o «sin información»: el catálogo no trae el dato."""
-    text = value.strip(" .").lower()
-    return text == "" or text.startswith("sin información") or text.startswith("sin informacion")
+    """Vacío o exactamente «sin información»: el catálogo no trae el dato.
+
+    Un valor como «sin información; Vicente España» NO está vacío (trae un nombre): se cuenta como dato.
+    Se ignoran los puntos y espacios de los extremos y las mayúsculas, como antes.
+    """
+    return value.strip(" .").lower() in ("", "sin información", "sin informacion")
 
 
 def sender_recipient_section(records):

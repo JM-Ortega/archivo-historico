@@ -63,3 +63,8 @@ cross = report_text.split("### Cruce remitente / destinatario", 1)[1].split("\n\
 total = sum(int(line.rsplit("|", 2)[1]) for line in cross.splitlines()[2:])
 check(total == sum(1 for _ in open(f"{out}/canonical.jsonl", encoding="utf-8")), "el cruce remitente/destinatario suma todas las fichas")
 
+# «Sin información» solo cuenta como vacío si es todo el valor (7565: «sin información; Vicente España» trae un nombre).
+check([independencia._blank(v) for v in ("", " . ", "Sin información.", "sin informacion", " SIN INFORMACIÓN .. ",
+                                          "sin información; Vicente España", "sin información, Vicente", "Pedro")]
+      == [True, True, True, True, True, False, False, False],
+      "«sin información» solo es vacío cuando es todo el valor")
