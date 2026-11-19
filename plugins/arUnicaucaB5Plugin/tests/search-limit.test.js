@@ -13,13 +13,24 @@ class FakeInput extends FakeEl {
     super(); this.name = name; this.id = id; this.value = value; this.form = form || null; this.after = null;
     if (form) { form.inputs.push(this); }
   }
-  insertAdjacentElement(_, el) { this.after = el; document.byId[el.id] = el; return el; }
+  insertAdjacentElement(_, el) { adopt(el, this); this.after = el; document.byId[el.id] = el; return el; }
 }
 class FakeForm {
   constructor() { this.inputs = []; this.buttons = []; }
   button(disabled = false) { const b = new FakeEl(); b.disabled = disabled; this.buttons.push(b); return b; }
   querySelectorAll(sel) { return "input" === sel ? this.inputs : this.buttons; }
 }
+
+// Un aviso conoce el campo que tiene delante y puede quitarse del DOM (como en el navegador).
+const adopt = (warning, field) => {
+  warning.previousElementSibling = field;
+  warning.remove = () => {
+    document.warnings.splice(document.warnings.indexOf(warning), 1);
+    if (document.byId[warning.id] === warning) { delete document.byId[warning.id]; }
+    if (field.after === warning) { field.after = null; }
+  };
+  document.warnings.push(warning);
+};
 
 const listeners = {};
 const winListeners = {};
@@ -30,11 +41,12 @@ global.MutationObserver = class { constructor(cb) { observed = cb; } observe() {
 global.window = { addEventListener(type, fn) { winListeners[type] = fn; } };
 global.document = {
   byId: {},
+  warnings: [],
   body: {},
   getElementById(id) { return this.byId[id] || null; },
   createElement() { return { id: "", className: "", hidden: false, textContent: "", attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } }; },
   addEventListener(type, fn) { listeners[type] = fn; },
-  querySelectorAll(sel) { return "form" === sel ? forms : []; },
+  querySelectorAll(sel) { return "form" === sel ? forms : ".ah-limit-warning" === sel ? [...this.warnings] : []; },
 };
 
 // Estado previo a cargar el script: formulario básico y uno con un valor ya escrito (volver con «Atrás»).
@@ -123,6 +135,24 @@ const later = () => new Promise((resolve) => setTimeout(resolve, 80));
   sq0.value = "z".repeat(5);
   winListeners.pageshow();
   assert.ok(!advBtn.disabled, "pageshow vuelve a revisar");
+
+  // «Agregar nuevo» clona la fila con el aviso del original dentro (visto en el navegador): el campo nuevo, vacío, queda con
+  // una copia visible con el id del original. Se descarta; el aviso del original sigue y el del campo nuevo es solo suyo.
+  type(sq0, "z".repeat(201));
+  const own = sq0.after;
+  const sq3 = new FakeInput("sq3", "", advForm);
+  const clone = { id: own.id, className: "ah-limit-warning", hidden: false, textContent: own.textContent, attrs: {} };
+  adopt(clone, sq3); sq3.after = clone;
+  observed();
+  await later();
+  assert.ok(!document.warnings.includes(clone), "la copia del aviso en el campo clonado se descarta");
+  assert.strictEqual(sq3.after, null, "el campo nuevo y vacío no queda con aviso");
+  assert.ok(document.warnings.includes(own) && !own.hidden, "el aviso del original sigue visible");
+  type(sq3, "x".repeat(205));
+  assert.strictEqual(sq3.after.textContent, "Máx. 200 caracteres · sobran 5", "el campo nuevo tiene su propio aviso");
+  assert.strictEqual(document.warnings.filter((w) => w.previousElementSibling === sq3).length, 1, "un solo aviso por campo");
+  advForm.inputs.splice(advForm.inputs.indexOf(sq3), 1);
+  type(sq0, "corto");
 
   // Cuenta caracteres, no unidades UTF-16.
   const emojiForm = new FakeForm(); forms.push(emojiForm);
