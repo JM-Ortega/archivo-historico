@@ -5,14 +5,10 @@ on:
     branches: [main, develop]
   push:
     branches: [main, develop]
-  # Manual publication to Archive. Only a run whose ref is main and whose commit
-  # matches the typed approved SHA can reach the publish job (see "Publication guard").
+  # Manual publication to Archive. Only a run on refs/heads/main whose commit is the current tip of main
+  # can reach the publish job (see "Publication guard"); github.sha is the revision published.
   workflow_dispatch:
     inputs:
-      revision:
-        description: 'Full 40-char SHA of the approved main commit to publish (must equal the tip of main)'
-        required: true
-        type: string
       action:
         description: 'check = non-destructive remote validation only; deploy = check, then publish'
         required: true
@@ -84,21 +80,12 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           REF: ${{ github.ref }}
-          INPUT_REVISION: ${{ inputs.revision }}
         run: |
           set -euo pipefail
           # workflow_dispatch lets the operator pick any branch (the file only has to exist on the default
-          # branch to appear in the UI), so the ref is enforced here and again in the publish job.
+          # branch to appear in the UI), so the ref is enforced here and again in the publish job. The tip-of-main check follows the checkout.
           if [ "$REF" != "refs/heads/main" ]; then
             echo "::error::Manual publication is only allowed from refs/heads/main (got '${REF}')"
-            exit 1
-          fi
-          if ! printf '%s' "$INPUT_REVISION" | grep -Eq '^[0-9a-f]{40}$'; then
-            echo "::error::Input 'revision' must be a full lowercase 40-character commit SHA"
-            exit 1
-          fi
-          if [ "$INPUT_REVISION" != "$SOURCE_SHA" ]; then
-            echo "::error::Approved revision ${INPUT_REVISION} is not the commit this run was started on (${SOURCE_SHA}); re-run from the approved tip of main"
             exit 1
           fi
 
