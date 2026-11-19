@@ -1,4 +1,4 @@
-// Crear, editar, detalle y permisos de usuario (KAN-77 / KAN-78).
+// Crear, editar, detalle y permisos de usuario.
 //
 // Solo presentación de las plantillas de modules/user (editSuccess, indexSuccess, _aclMenu, _aclMatrix, index*AclSuccess);
 // todo bajo .ah-user-admin para no afectar a otras vistas. La lista de usuarios tiene sus propios estilos (_users.scss).
@@ -219,6 +219,17 @@ body:has(.ah-user-admin) {
     margin: 0 0 $ah-space-4;
     color: $ah-text-muted;
     font-size: $ah-font-size-xsmall;
+  }
+
+  // Correo que no es @unicauca.edu.co: el aviso pasa a rojo (js/user-email.js).
+  .ah-user-hint--error {
+    color: $ah-error;
+    font-weight: 700;
+  }
+
+  .ah-required-mark {
+    color: $ah-error;
+    font-weight: 700;
   }
 
   .ah-user-muted {

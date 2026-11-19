@@ -361,7 +361,7 @@ requiere `docker compose up -d --build --wait` (reconstruye y recrea `nginx`). U
 | `dist` upstream y estáticos de AtoM | derivado | Vienen de la imagen; en DEV `theme_dist` sombrea `dist` en nginx |
 | Memcached, Gearmand | efímero | Sin volumen a propósito |
 
-## Pendiente (fuera de este runbook)
+## Alcance
 
-Producción, gestión/rotación de secretos de producción, TLS, backup/restore, monitorización, CI/CD, seed de datos, migraciones, gestión de otros `setting` o de más plugins vía reconcile,
-hot-reconcile/concurrencia y el diseño institucional final: no están decididos y no se describen aquí.
+Este runbook cubre solo el entorno Docker DEV. La publicación de código en Archive (instalación nativa) y su
+comprobación están en [operacion-archive.md](operacion-archive.md).

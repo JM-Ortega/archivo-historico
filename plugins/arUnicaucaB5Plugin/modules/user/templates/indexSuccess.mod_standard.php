@@ -10,7 +10,7 @@
       <p class="ah-user-eyebrow"><?php echo __('Administración del sistema'); ?></p>
       <h1><?php echo __('Detalles de usuario'); ?></h1>
       <p class="ah-user-lead">
-        <?php echo __('Consulte la información de la cuenta y sus configuraciones de permisos por grupo e individuales.'); ?>
+        <?php echo __('Consulte la información de la cuenta del usuario.'); ?>
       </p>
     </div>
     <div class="ah-user-head-actions">
@@ -125,6 +125,11 @@
       </dl>
     </section>
 
+    <?php /* OCULTO-048
+       SERVÍA PARA: mostrar debajo de los datos de la cuenta la sección «Permisos» (nota y pestañas de
+       configuraciones de permisos por grupo e individuales) y el historial de edición del usuario.
+       MOTIVO: la ficha del usuario solo debe mostrar la información de la cuenta.
+       Código original:
     <section class="ah-user-panel" aria-labelledby="ah-user-perm-title">
       <div class="ah-user-panel-head">
         <span class="ah-user-panel-icon"><i class="fas fa-lock" aria-hidden="true"></i></span>
@@ -180,8 +185,26 @@
         </div>
       </div>
     <?php } ?>
+    */ ?>
 
   </section>
 
+  <?php /* OCULTO-048
+     SERVÍA PARA: mostrar al pie de la ficha el botón «Eliminar» del usuario, junto a «Crear nuevo
+     usuario» y «Volver a la lista de usuarios» (estos dos se veían como enlaces).
+     MOTIVO: la ficha del usuario solo debe mostrar la información de la cuenta; «Crear nuevo usuario»
+     y «Volver a la lista de usuarios» se mantienen abajo como botones azules, igual a los de arriba.
+     Código original:
   <?php echo get_partial('showActions', ['resource' => $resource]); ?>
+  */ ?>
+  <?php if (QubitAcl::check($resource, ['create', 'list'])) { ?>
+    <ul class="actions mb-3 nav gap-2">
+      <?php if (QubitAcl::check($resource, 'create')) { ?>
+        <li><?php echo link_to(__('Crear nuevo usuario'), ['module' => 'user', 'action' => 'add'], ['class' => 'btn ah-user-btn-primary']); ?></li>
+      <?php } ?>
+      <?php if (QubitAcl::check($resource, 'list')) { ?>
+        <li><?php echo link_to(__('Volver a la lista de usuarios'), ['module' => 'user', 'action' => 'list'], ['class' => 'btn ah-user-btn-primary']); ?></li>
+      <?php } ?>
+    </ul>
+  <?php } ?>
 </div>

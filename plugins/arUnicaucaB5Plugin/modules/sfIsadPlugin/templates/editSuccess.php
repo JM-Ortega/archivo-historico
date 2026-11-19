@@ -179,6 +179,34 @@
         </ol>
       </nav>
 
+      <?php // Cascada "Pertenece a" (solo en un alta): la arma js/cataloging-parent.js y solo cambia el hidden nativo `parent`.
+            // Sin JavaScript queda oculta y el alta usa el padre con el que se abrió el formulario. ?>
+      <?php $parentCascade = $sf_data->getRaw('parentCascade'); ?>
+      <?php if (!$isEdit && null !== $parentCascade) { ?>
+        <?php $parentCascade['texts'] = [
+            'topLevel' => __('Nivel superior (sin descripción superior)'),
+            'newDescription' => __('[Nueva descripción]'),
+            'noFonds' => __('Ninguno'),
+            'none' => __('Ninguna'),
+            // Regla según el nivel de la ficha (posición 0 Fondo … 3 Subserie); las unidades documentales no tienen límite.
+            'rules' => [
+                __('Un fondo no pertenece a otra descripción: queda en el nivel superior.'),
+                __('Una sección solo puede pertenecer a un fondo.'),
+                __('Una serie puede pertenecer a un fondo y a una sección.'),
+                __('Una subserie puede pertenecer a un fondo, una sección y una serie.'),
+            ],
+        ]; ?>
+        <fieldset class="ah-parent-cascade" hidden
+          data-ah-parent-cascade="<?php echo htmlspecialchars(json_encode($parentCascade, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), ENT_QUOTES); ?>">
+          <legend class="ah-parent-legend"><?php echo __('Pertenece a'); ?></legend>
+          <p id="ah-parent-hint" class="ah-parent-hint">
+            <?php echo __('Ninguno es obligatorio. Si eliges uno, los de arriba se llenan solos con aquello a lo que pertenece. La descripción queda dentro del último que elijas.'); ?>
+          </p>
+          <div class="row ah-row ah-parent-steps" data-ah-parent-steps></div>
+          <p class="ah-parent-rule" data-ah-parent-rule aria-live="polite"></p>
+        </fieldset>
+      <?php } ?>
+
       <div class="row ah-row ah-level-row">
         <div class="col-lg-6">
           <?php echo $dailyField(

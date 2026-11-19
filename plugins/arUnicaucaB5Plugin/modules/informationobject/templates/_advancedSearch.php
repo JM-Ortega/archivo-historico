@@ -1,19 +1,28 @@
+<?php
+  $ahOpen = $showAdvanced;
+  foreach (['advSubmit', 'sort', 'sortDir', 'view', 'page'] as $ahParam) {
+      if ($sf_request->hasParameter($ahParam)) {
+          $ahOpen = false;
+      }
+  }
+?>
+
 <div class="accordion mb-3 adv-search" role="search">
   <div class="accordion-item">
     <h2 class="accordion-header" id="heading-adv-search">
-      <button class="accordion-button<?php echo $showAdvanced ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-adv-search" aria-expanded="<?php echo $showAdvanced ? 'true' : 'false'; ?>" aria-controls="collapse-adv-search" data-cy="advanced-search-toggle">
+      <button class="accordion-button<?php echo $ahOpen ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-adv-search" aria-expanded="<?php echo $ahOpen ? 'true' : 'false'; ?>" aria-controls="collapse-adv-search" data-cy="advanced-search-toggle">
         <?php echo __('Advanced search options'); ?>
       </button>
     </h2>
-    <div id="collapse-adv-search" class="accordion-collapse collapse<?php echo $showAdvanced ? ' show' : ''; ?>" aria-labelledby="heading-adv-search">
+    <div id="collapse-adv-search" class="accordion-collapse collapse<?php echo $ahOpen ? ' show' : ''; ?>" aria-labelledby="heading-adv-search">
       <div class="accordion-body">
         <?php echo $form->renderFormTag(url_for(['module' => 'informationobject', 'action' => 'browse']), ['name' => 'advanced-search-form', 'method' => 'get']); ?>
 
           <?php foreach ($hiddenFields as $name => $value) { ?>
             <input type="hidden" name="<?php echo $name; ?>" value="<?php echo $value; ?>"/>
           <?php } ?>
-
-          
+          <input type="hidden" name="advSubmit" value="1"/>
+          <input type="hidden" name="showAdvanced" value="1"/>
 
               <div class="criteria mb-4">
 
@@ -128,8 +137,6 @@
               </div>
 
             </div>
-
-          </div>
 
           </div>
 

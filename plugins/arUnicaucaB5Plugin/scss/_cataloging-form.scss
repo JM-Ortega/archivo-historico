@@ -258,6 +258,57 @@
     }
   }
 
+  // Cascada "Pertenece a" (js/cataloging-parent.js): un select por paso, en fila; cada paso nuevo aparece a la derecha.
+  .ah-parent-cascade {
+    min-width: 0;
+    margin: 0 0 $ah-space-3;
+    padding: 0 0 $ah-space-3;
+    border: 0;
+    border-bottom: $border-width solid $ah-line;
+  }
+
+  .ah-parent-legend {
+    float: none;
+    width: auto;
+    margin-bottom: $ah-space-1;
+    @include ah-type("label");
+  }
+
+  .ah-parent-hint {
+    margin-bottom: $ah-space-2;
+    color: $ah-text-muted;
+    @include ah-type("small");
+  }
+
+  .ah-parent-rule {
+    margin: 0;
+    color: $ah-text-muted;
+    @include ah-type("small");
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  .ah-parent-step {
+    margin-bottom: $ah-space-2;
+
+    .form-label {
+      margin-bottom: $ah-space-1;
+      @include ah-type("small-strong");
+    }
+
+    .form-select {
+      background-color: $white;
+
+      // Campo sin opciones (p. ej. un fondo sin secciones): gris, como cualquier control deshabilitado.
+      &:disabled {
+        background-color: $form-select-disabled-bg;
+        color: $ah-text-muted;
+      }
+    }
+  }
+
   .ah-no-level-hint {
     margin: 0;
     color: $ah-text-muted;

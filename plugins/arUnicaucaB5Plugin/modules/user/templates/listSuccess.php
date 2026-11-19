@@ -161,8 +161,8 @@
                 </td>
                 <td><span class="user-role"><?php echo esc_entities($role); ?></span></td>
                 <td><span class="user-status<?php echo $item->active ? '' : ' inactive'; ?>"><?php echo $item->active ? 'Activo' : 'Inactivo'; ?></span></td>
-                <td>—</td>
-                <td><?php echo link_to('Editar permisos', [$item, 'module' => 'user', 'action' => 'edit'], ['class' => 'users-action']); ?></td>
+                <td><?php echo esc_entities(arUnicaucaLastLogin::format($item->id) ?? '—'); ?></td>
+                <td><?php echo link_to('Editar usuario', [$item, 'module' => 'user', 'action' => 'edit'], ['class' => 'users-action']); ?></td>
               </tr>
             <?php } ?>
           </tbody>

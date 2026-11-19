@@ -93,8 +93,8 @@
         <?php } ?>
 
         <div class="ah-user-grid">
-          <?php echo render_field($form->password->label(__('New password')), null, ['class' => 'password-strength']); ?>
-          <?php echo render_field($form->confirmPassword->label(__('Confirmar contraseña')), null, ['class' => 'password-confirm']); ?>
+          <?php echo render_field($form->password->label(__('New password')), null, ['class' => 'password-strength', 'data-ah-password-toggle' => 'true']); ?>
+          <?php echo render_field($form->confirmPassword->label(__('Confirmar contraseña')), null, ['class' => 'password-confirm', 'data-ah-password-toggle' => 'true']); ?>
         </div>
 
         <div class="template ah-user-strength" hidden>
@@ -108,7 +108,7 @@
 
         <?php if ($resourceAlreadyExists) { ?>
           <div class="ah-user-grid">
-            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null); ?>
+            <?php echo render_field($form->currentPassword->label(__('Su contraseña actual (%1%)', ['%1%' => $sf_user->user->username])), null, ['data-ah-password-toggle' => 'true']); ?>
           </div>
         <?php } ?>
 
@@ -129,11 +129,19 @@
         </div>
       </div>
       <div class="ah-user-panel-body">
+        <?php /* OCULTO-050
+           SERVÍA PARA: avisar que los permisos también pueden tener configuraciones individuales que se
+           consultan en la vista de permisos del usuario.
+           MOTIVO: el archivo no usará configuraciones individuales de permisos y la vista de permisos del
+           usuario está oculta (OCULTO-048); la nota queda solo con «Aquí solo se asignan grupos.».
+           Código original:
         <p class="ah-user-note">
           <?php echo $resourceAlreadyExists
               ? __('Aquí solo se asignan grupos. Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; consúltelas en la vista de permisos del usuario.')
               : __('Aquí solo se asignan grupos. Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; tras crear la cuenta podrá consultarlas en la vista de permisos del usuario.'); ?>
         </p>
+        */ ?>
+        <p class="ah-user-note"><?php echo __('Aquí solo se asignan grupos.'); ?></p>
 
         <?php echo render_field(
             $form->groups->label(__('User groups')),
@@ -141,11 +149,19 @@
             ['class' => 'form-autocomplete']
         ); ?>
 
-        <?php echo render_field(
-            $form->translate->label(__('Allowed languages for translation')),
-            null,
-            ['class' => 'form-autocomplete']
-        ); ?>
+        <?php /* OCULTO-049
+           SERVÍA PARA: elegir los idiomas en los que el usuario puede traducir la interfaz.
+           MOTIVO: el archivo no usa la traducción de la interfaz. El campo se oculta con «hidden» pero sigue
+           en el formulario, para que al guardar se envíen sus valores actuales y no se borren los permisos
+           de traducción que ya tenga la cuenta. Para volver a mostrarlo, quita el <div hidden> que lo envuelve.
+        */ ?>
+        <div hidden>
+          <?php echo render_field(
+              $form->translate->label(__('Allowed languages for translation')),
+              null,
+              ['class' => 'form-autocomplete']
+          ); ?>
+        </div>
 
         <?php if ($restEnabled) { ?>
           <?php echo render_field($form->restApiKey->label(

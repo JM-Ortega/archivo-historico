@@ -267,19 +267,19 @@
         libxml_use_internal_errors(true);
         $dom->loadHTML('<?xml encoding="utf-8"?>'.$add['body']);
         $xp = new DOMXPath($dom);
+        // OCULTO-051: Fondo, Sección, Serie, Subserie, Unidad documental compuesta y simple, en ese orden y sin grupos.
         $levelValues = [];
         foreach ($xp->query("//select[@name='levelOfDescription']//option[@value!='']") as $o) {
             $levelValues[] = basename($o->getAttribute('value'));
         }
-        sort($levelValues);
-        $levelSlugs = $col('SELECT s.slug FROM term t JOIN slug s ON s.object_id = t.id WHERE t.taxonomy_id = ?', [QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID]);
-        sort($levelSlugs);
-        $check('Nivel: el selector ofrece todos los términos de la taxonomía, una vez cada uno', $levelSlugs, $levelValues);
-        $check('Nivel: grupos "principales" y "otros"', ['Niveles principales', 'Otros niveles'], array_map(
-            static fn ($g) => $g->getAttribute('label'),
-            iterator_to_array($xp->query("//select[@name='levelOfDescription']/optgroup"))
-        ));
-        $check('Nivel: Sección está entre los niveles principales', 1, $xp->query("//select[@name='levelOfDescription']/optgroup[1]/option[text()='Sección']")->length);
+        $levelSlug = static fn (string $en) => QubitTerm::getById((int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, $en]
+        ))->slug;
+        $archiveSlugs = [$levelSlug('Fonds'), QubitTerm::getById($seccionId)->slug, $levelSlug('Series'), $levelSlug('Subseries'), $levelSlug('File'), $levelSlug('Item')];
+        $check('Nivel: el selector ofrece Fondo, Sección, Serie, Subserie, Unidad documental compuesta y simple, en ese orden (OCULTO-051)', $archiveSlugs, $levelValues);
+        $check('Nivel: sin grupos de opciones', 0, $xp->query("//select[@name='levelOfDescription']/optgroup")->length);
+        $check('Niveles inferiores: la columna Nivel ofrece los mismos seis niveles', 6, $xp->query("//select[@name='updateChildLevels[0][levelOfDescription]']/option[@value!='']")->length);
         $check('Nivel: sin valor por defecto en el alta', 0, $xp->query("//select[@name='levelOfDescription']//option[@selected]")->length);
 
         echo "== Creación ==\n";
@@ -743,6 +743,96 @@
             $r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [$child]), $i18n($child, 'scope_and_content'),
         ]);
 
+        echo "== Jerarquía: cascada «Pertenece a» (Fondo → Sección → Serie → Subserie) ==\n";
+        // Fondo y Sección de prueba creados con el modelo; la cascada solo cambia el hidden nativo `parent`.
+        $fondsId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Fonds']
+        );
+        $newIo = static function (int $parentId, int $levelId, string $identifier) use (&$created): int {
+            $o = new QubitInformationObject();
+            $o->parentId = $parentId;
+            $o->levelOfDescriptionId = $levelId;
+            $o->sourceCulture = 'es';
+            $o->identifier = $identifier;
+            $o->setTitle("Título {$identifier}", ['culture' => 'es']);
+            $o->save();
+            $created['io'][] = $o->id;
+
+            return (int) $o->id;
+        };
+        $fondo = $newIo(QubitInformationObject::ROOT_ID, $fondsId, "FONDO-{$run}");
+        $seccion = $newIo($fondo, $seccionId, "SECCION-{$run}");
+        $xq = static function (string $html, string $query) {
+            $d = new DOMDocument();
+            libxml_use_internal_errors(true);
+            $d->loadHTML('<?xml encoding="utf-8"?>'.$html);
+            libxml_clear_errors();
+
+            return [(new DOMXPath($d))->query($query), $d];
+        };
+        $slugOf = static fn (int $id) => $one('SELECT slug FROM slug WHERE object_id = ?', [$id]);
+
+        $page = $request('/index.php/informationobject/add')['body'];
+        [$cascade] = $xq($page, '//fieldset[@data-ah-parent-cascade]');
+        $data = 1 === $cascade->length ? json_decode($cascade->item(0)->getAttribute('data-ah-parent-cascade'), true) : null;
+        $byId = array_column($data['items'] ?? [], null, 'id');
+        $check('cascada: el alta la trae oculta (sin JavaScript no se ve)', [1, true], [$cascade->length, 1 === $cascade->length && $cascade->item(0)->hasAttribute('hidden')]);
+        $check('cascada: el fondo y la sección de prueba están, con su padre y su nivel (0 Fondo, 1 Sección)', [[0, QubitInformationObject::ROOT_ID], [1, $fondo]], [
+            [$byId[$fondo]['level'] ?? null, $byId[$fondo]['parent'] ?? null], [$byId[$seccion]['level'] ?? null, $byId[$seccion]['parent'] ?? null],
+        ]);
+        $check('cascada: los selects no tienen name (no añaden nada al POST)', 0, $xq($page, "//fieldset[@data-ah-parent-cascade]//select[@name]")[0]->length);
+
+        // Lo que haría el script al elegir Fondo → Sección: poner la URL de la sección en `parent`.
+        $form = $serialize($page);
+        $form = $set($form, 'parent', [$byId[$seccion]['url'] ?? '']);
+        $form = $set($form, 'identifier', ["CASCADA-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: el alta queda dentro de la sección elegida', [302, $seccion], [$r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']])]);
+
+        // Solo el fondo, por slug (como llega con ?parent=).
+        $form = $set($serialize($page), 'parent', [$slugOf($fondo)]);
+        $form = $set($form, 'identifier', ["CASCADA-F-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: elegir solo el fondo deja el alta dentro del fondo', $fondo, (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']]));
+
+        // Valor manipulado: no es una descripción → se usa el padre con el que se abrió el formulario (nivel superior).
+        $form = $set($serialize($page), 'parent', ["/index.php/no-existe-{$run}"]);
+        $form = $set($form, 'identifier', ["CASCADA-X-{$run}"]);
+        $r = $save('/index.php/informationobject/add', $form);
+        $created['io'][] = (int) $r['id'];
+        $check('cascada: un parent que no es una descripción cae al nivel superior', [302, QubitInformationObject::ROOT_ID], [
+            $r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']]),
+        ]);
+
+        $check('cascada: no aparece al editar', 0, $xq($request($editPath($seccion))['body'], '//fieldset[@data-ah-parent-cascade]')[0]->length);
+
+        // Regla de niveles (servidor): el padre debe ser de un nivel superior. Una Sección enviada con una Serie como padre
+        // queda dentro del Fondo de esa Serie; una Subserie dentro de esa Serie sí se respeta.
+        $seriesTermId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Series']
+        );
+        $subseriesTermId = (int) $one(
+            'SELECT t.id FROM term t JOIN term_i18n i ON i.id = t.id AND i.culture = ? WHERE t.taxonomy_id = ? AND i.name = ?',
+            ['en', QubitTaxonomy::LEVEL_OF_DESCRIPTION_ID, 'Subseries']
+        );
+        $serie = $newIo($fondo, $seriesTermId, "SERIE-{$run}");
+        $levelUrl = static fn (int $termId) => '/index.php/'.QubitTerm::getById($termId)->slug;
+        foreach ([
+            'regla de niveles: una Sección con una Serie como padre queda dentro del Fondo' => [$seccionId, $fondo, "REGLA-S-{$run}"],
+            'regla de niveles: una Subserie con una Serie como padre se queda en la Serie' => [$subseriesTermId, $serie, "REGLA-SS-{$run}"],
+        ] as $label => [$termId, $expectedParent, $identifier]) {
+            $form = $set($serialize($page), 'parent', [$slugOf($serie)]);
+            $form = $set($form, 'levelOfDescription', [$levelUrl($termId)]);
+            $form = $set($form, 'identifier', [$identifier]);
+            $r = $save('/index.php/informationobject/add', $form);
+            $created['io'][] = (int) $r['id'];
+            $check($label, [302, $expectedParent], [$r['code'], (int) $one('SELECT parent_id FROM information_object WHERE id = ?', [(int) $r['id']])]);
+        }
+
         echo "== Ficha adaptable (CAT-03): perfiles, contexto y preservación ==\n";
         $attr = static fn (string $html, string $name) => preg_match('/<div class="ah-cataloging-form"[^>]*?\s'.$name.'="([^"]*)"/s', $html, $m) ? html_entity_decode($m[1]) : null;
         $nodes = static function (string $html, string $query) {
@@ -839,6 +929,10 @@
             // serialNumber y el token CSRF cambian en cada carga/guardado: no forman parte del contenido.
             $content = static fn (array $p) => array_values(array_filter($p, static fn ($x) => !in_array($x[0], ['serialNumber', '_csrf_token'], true)));
             $after = $serialize($request($editPath($io))['body']);
+            if ($fileUrl === $value) {
+                // OCULTO-051: una ficha con nivel Unidad documental compuesta lo conserva seleccionado al reabrirla.
+                $check('unidad documental compuesta: la ficha reabierta conserva el nivel seleccionado', [$fileUrl], $get($after, 'levelOfDescription'));
+            }
             $check('cambio de nivel: el formulario reabierto reenvía lo mismo, salvo el nivel', $content($set($payloadBefore, 'levelOfDescription', [$value])), $content($set($after, 'levelOfDescription', [$value])));
             $before = $snapshot($io);
         }

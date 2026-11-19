@@ -21,6 +21,10 @@ Una fila por cambio, en orden de identificador.
 | OCULTO-033 | 05/11/2026 | Botón «Navegar» y navegación principal del encabezado | `plugins/arUnicaucaB5Plugin/templates/_header.php` | Oculto |
 | OCULTO-034 | 06/11/2026 | Botón «Duplicar» de la ficha archivística | `plugins/arUnicaucaB5Plugin/modules/informationobject/templates/_actions.php` | Oculto |
 | OCULTO-035 | 06/11/2026 | Panel lateral de opciones de la ficha archivística | `plugins/arUnicaucaB5Plugin/scss/_description.scss` | Oculto (opciones seleccionadas reubicadas) |
+| OCULTO-048 | 12/11/2026 | Sección «Permisos», historial de edición y botón «Eliminar» en los detalles del usuario | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` | Oculto |
+| OCULTO-049 | 12/11/2026 | Campo «Idiomas permitidos para la traducción» al crear y editar usuarios | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
+| OCULTO-050 | 12/11/2026 | Texto sobre configuraciones individuales de permisos en la nota de «Control de acceso» | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` | Oculto |
+| OCULTO-051 | 13/11/2026 | Niveles de descripción distintos de Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple en el campo «Nivel de descripción» de la ficha de catalogación | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/actions/editAction.class.php` y `plugins/arUnicaucaB5Plugin/lib/arUnicaucaCatalogingLevels.class.php` | Oculto |
 
 ## Fichas de detalle
 
@@ -225,3 +229,47 @@ Se conserva **Proceso** (`jobs`, `jobs/browse`): muestra el avance de las import
 | Ruta o ubicación | `plugins/arUnicaucaB5Plugin/scss/_description.scss` y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/indexSuccess.php` |
 | Para qué servía | Reunía acciones como informes, inventario, navegación como lista, importación XML/CSV y exportaciones, incluida **EAD 2002 XML**. |
 | Motivo | Se oculta el panel lateral para simplificar la ficha; **Añadir al portapapeles** y **EAD 2002 XML** se reubican temporalmente en el panel principal de acciones. |
+
+### OCULTO-048 - Sección «Permisos», historial de edición y botón «Eliminar» en los detalles del usuario
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-048 |
+| Tipo y método | Oculto (comentado) |
+| Elemento y dónde se veía | Sección **Permisos** (nota y pestaña **Descripciones archivísticas**), historial de edición y botón **Eliminar**, debajo de los datos de la cuenta en Administrador → Usuarios → clic en el nombre de un usuario (**Detalles de usuario**). |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/indexSuccess.mod_standard.php` |
+| Para qué servía | Consultar las configuraciones de permisos por grupo e individuales del usuario, ver su historial de edición y eliminar la cuenta. |
+| Motivo | La ficha del usuario solo debe mostrar la información de la cuenta. **Crear nuevo usuario** y **Volver a la lista de usuarios** se mantienen al pie, ahora como botones azules iguales a los de la cabecera. Cómo restaurar: descomentar los bloques OCULTO-048. |
+
+### OCULTO-049 - Campo «Idiomas permitidos para la traducción» al crear y editar usuarios
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-049 |
+| Tipo y método | Oculto (campo envuelto en un bloque con el atributo hidden) |
+| Elemento y dónde se veía | Campo **Idiomas permitidos para la traducción**, debajo de **Grupos de usuarios** en la sección **Control de acceso** de Administrador → Usuarios → **Crear nuevo usuario** y **Editar usuario**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
+| Para qué servía | Elegir los idiomas en los que el usuario puede traducir la interfaz de AtoM. |
+| Motivo | El archivo no usa la traducción de la interfaz. El campo sigue en el formulario (oculto) para que al guardar no se borren los permisos de traducción que ya tenga la cuenta. Cómo restaurar: quitar el `<div hidden>` que lo envuelve. |
+
+### OCULTO-050 - Texto sobre configuraciones individuales de permisos en «Control de acceso»
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-050 |
+| Tipo y método | Oculto (comentado y reemplazado por un texto más corto) |
+| Elemento y dónde se veía | Parte de la nota azul de la sección **Control de acceso** que decía «Los permisos también pueden tener configuraciones individuales, que no se editan en este formulario; consúltelas en la vista de permisos del usuario» (o «tras crear la cuenta podrá consultarlas…» al crear), en Administrador → Usuarios → **Crear nuevo usuario** y **Editar usuario**. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/user/templates/editSuccess.mod_standard.php` |
+| Para qué servía | Avisar que, además de los grupos, la cuenta podía tener permisos individuales y dónde consultarlos. |
+| Motivo | El archivo no usará configuraciones individuales de permisos por ahora y la vista de permisos del usuario está oculta (OCULTO-048). La nota queda solo con «Aquí solo se asignan grupos.». Cómo restaurar: descomentar el párrafo original del bloque OCULTO-050 y quitar el nuevo. |
+
+### OCULTO-051 - Niveles de descripción no usados en «Nivel de descripción» de la ficha de catalogación
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | OCULTO-051 |
+| Tipo y método | Oculto (excluido por condición: la lista solo ofrece los seis niveles del archivo; el código original queda comentado) |
+| Elemento y dónde se veía | Opciones del campo **Nivel de descripción** en Agregar → **Nueva descripción archivística** y al editar una descripción: todo el grupo «Otros niveles» (**Colección**, **Fonds**, **Parte**, **Record group**, **Series**, **Subfondo**, **Subfonds**, **Subseries**, etc.). También en la columna **Nivel** de la tabla **Agregar nuevos niveles inferiores**. Visible para administrador y catalogador. |
+| Ruta o ubicación | `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/actions/editAction.class.php` (case `levelOfDescription`), `plugins/arUnicaucaB5Plugin/lib/arUnicaucaCatalogingLevels.class.php` (métodos `visible()` y `visibleTerms()`) y `plugins/arUnicaucaB5Plugin/modules/sfIsadPlugin/templates/_catalogingChildLevels.php`. |
+| Para qué servía | Elegir cualquier nivel de la taxonomía de AtoM para la descripción que se crea o se edita. |
+| Motivo | El archivo solo maneja Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple (estas dos también para documentos que no pertenecen a ningún fondo); el resto de niveles confunde y satura la lista. Si una ficha ya tiene otro nivel, ese nivel se sigue mostrando al editarla para no perderlo al guardar. Limitación: solo se ocultan las opciones; los términos siguen en la taxonomía y el servidor acepta cualquier nivel enviado. Cómo restaurar: en `editAction.class.php` volver a llamar a `group()` (bloque OCULTO-051) y en `_catalogingChildLevels.php` usar de nuevo `QubitTerm::getLevelsOfDescription()`. |

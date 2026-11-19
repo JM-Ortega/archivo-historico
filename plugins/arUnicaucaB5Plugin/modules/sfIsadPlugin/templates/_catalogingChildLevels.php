@@ -37,7 +37,13 @@
               ? arUnicaucaCatalogingResubmit::rows('updateChildLevels', ['identifier', 'levelOfDescription', 'title', 'date'])
               : [];
           $rows[] = ['identifier' => '', 'levelOfDescription' => '', 'title' => '', 'date' => '', 'startDate' => '', 'endDate' => ''];
+          /* OCULTO-051
+             SERVÍA PARA: ofrecer todos los niveles de AtoM en la columna "Nivel" de los nuevos niveles inferiores.
+             MOTIVO: el archivo solo maneja Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple.
+             Código original:
           $levels = QubitTerm::getLevelsOfDescription();
+          */
+          $levels = arUnicaucaCatalogingLevels::visibleTerms(QubitTerm::getLevelsOfDescription());
       ?>
       <?php foreach ($rows as $i => $row) { ?>
         <?php $e = static fn ($field) => htmlspecialchars($row[$field] ?? '', ENT_QUOTES, 'UTF-8'); ?>

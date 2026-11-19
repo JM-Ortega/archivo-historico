@@ -25,6 +25,16 @@ class arUnicaucaCatalogingLevels
     ];
 
     /**
+     * OCULTO-051: niveles que se ofrecen al catalogar: las 6 posiciones de ARCHIVE_LEVELS (Fondo, Sección, Serie, Subserie,
+     * Unidad documental compuesta y Unidad documental simple). Las unidades documentales sirven también para documentos que
+     * no pertenecen a ningún fondo.
+     */
+    private const NEW_RECORD_LEVELS = 6;
+
+    /** Niveles que agrupan descripciones (Fondo a Subserie): los que ofrece la cascada "Pertenece a". */
+    private const GROUPING_LEVELS = 4;
+
+    /**
      * @param array $choices opciones nativas del widget: URL del término → QubitTerm (más la opción vacía)
      *
      * @return array opción vacía + dos optgroups (el segundo solo si tiene opciones)
@@ -65,6 +75,80 @@ class arUnicaucaCatalogingLevels
     }
 
     /**
+     * OCULTO-051: opciones del selector "Nivel de descripción" limitadas a los niveles que maneja el Archivo: Fondo, Sección,
+     * Serie, Subserie, Unidad documental compuesta y Unidad documental simple (ARCHIVE_LEVELS), en ese orden y sin optgroups. El resto de niveles
+     * de AtoM no se ofrece. Solo cambia lo que se muestra: la taxonomía, los términos y el validador no cambian.
+     *
+     * Excepción: si la descripción ya tiene otro nivel ($keep, p. ej. al editar una ficha antigua), esa opción se conserva
+     * al final para que al guardar no se pierda el nivel.
+     *
+     * Cómo restaurar: en sfIsadPlugin/actions/editAction.class.php volver a llamar a group() (bloque OCULTO-051).
+     *
+     * @param array       $choices opciones nativas del widget: URL del término → QubitTerm (más la opción vacía)
+     * @param null|string $keep    valor actual del campo, que se conserva aunque no sea uno de los seis niveles
+     */
+    public static function visible(array $choices, ?string $keep = null): array
+    {
+        $archive = array_fill(0, self::NEW_RECORD_LEVELS, null);
+        $result = $kept = [];
+        foreach ($choices as $value => $term) {
+            if (!$term instanceof QubitTerm) {
+                $result[$value] = $term;
+
+                continue;
+            }
+
+            $position = self::position($term);
+            if (null !== $position && $position < self::NEW_RECORD_LEVELS && null === $archive[$position]) {
+                $archive[$position] = [$value, $term];
+            } elseif (null !== $keep && '' !== $keep && (string) $value === $keep) {
+                $kept[$value] = $term;
+            }
+        }
+
+        foreach (array_filter($archive) as [$value, $term]) {
+            $result[$value] = $term;
+        }
+
+        return $result + $kept;
+    }
+
+    /**
+     * OCULTO-051: los mismos seis niveles para la tabla "Agregar nuevos niveles inferiores", en orden jerárquico.
+     *
+     * @param iterable $terms términos de la taxonomía de niveles (QubitTerm::getLevelsOfDescription())
+     *
+     * @return QubitTerm[]
+     */
+    public static function visibleTerms(iterable $terms): array
+    {
+        return array_values(self::archiveTerms($terms, self::NEW_RECORD_LEVELS));
+    }
+
+    /**
+     * Niveles del archivo por su posición jerárquica (0 Fondo, 1 Sección, 2 Serie, 3 Subserie, 4 Unidad documental
+     * compuesta, 5 Unidad documental simple). Por defecto solo los que agrupan (Fondo a Subserie), que son los de la cascada
+     * "Pertenece a". Un nivel que no exista en la instalación simplemente no aparece; las posiciones de los demás no cambian.
+     *
+     * @param iterable $terms términos de la taxonomía de niveles (QubitTerm::getLevelsOfDescription())
+     * @param int      $count cuántas posiciones de ARCHIVE_LEVELS incluir
+     *
+     * @return QubitTerm[] posición → término
+     */
+    public static function archiveTerms(iterable $terms, int $count = self::GROUPING_LEVELS): array
+    {
+        $archive = array_fill(0, $count, null);
+        foreach ($terms as $term) {
+            $position = $term instanceof QubitTerm ? self::position($term) : null;
+            if (null !== $position && $position < $count && null === $archive[$position]) {
+                $archive[$position] = $term;
+            }
+        }
+
+        return array_filter($archive);
+    }
+
+    /**
      * Perfil de presentación de un nivel: Fondo, Sección, Serie y Subserie → agrupación; File e Item → unidad documental;
      * cualquier otro nivel (o ninguno, o uno no reconocible) → general. Solo cambia qué campos se priorizan; no toca datos.
      */
@@ -93,6 +177,25 @@ class arUnicaucaCatalogingLevels
         }
 
         return $map;
+    }
+
+    /**
+     * Posición jerárquica de un nivel (0 Fondo, 1 Sección, 2 Serie, 3 Subserie, 4 Unidad documental compuesta, 5 Unidad
+     * documental simple); null para cualquier otro nivel o sin nivel.
+     */
+    public static function hierarchyPosition(?QubitTerm $term): ?int
+    {
+        return $term instanceof QubitTerm ? self::position($term) : null;
+    }
+
+    /**
+     * Cuántos campos de "Pertenece a" (Fondo, Sección, Serie, Subserie) admite una descripción de esa posición: solo los de
+     * nivel superior al suyo. Fondo → 0, Sección → 1 (Fondo), Serie → 2, Subserie → 3; unidades documentales, otros
+     * niveles o sin nivel → los 4.
+     */
+    public static function allowedParentLevels(?int $position): int
+    {
+        return null === $position ? self::GROUPING_LEVELS : min($position, self::GROUPING_LEVELS);
     }
 
     private static function position(QubitTerm $term): ?int

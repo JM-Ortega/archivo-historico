@@ -25,8 +25,11 @@
  * plugin que aporta el fichero, así que es una COPIA de la clase upstream, no una subclase: revisarla al actualizar AtoM.
  * Diferencias con upstream, todas marcadas "arUnicaucaB5Plugin":
  *   - campos `remitentes` y `destinatarios` (arUnicaucaCatalogingRoleEvents);
- *   - opciones agrupadas de levelOfDescription y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
- *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit).
+ *   - opciones de levelOfDescription limitadas a Fondo, Sección, Serie, Subserie y Unidad documental compuesta y simple
+ *     (OCULTO-051) y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
+ *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
+ *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
+ *     arUnicaucaCatalogingContext::chosenParent() y con la regla de niveles parentForLevel() (processForm).
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
  * @author     Jesús García Crespo <correo@sevein.com>
@@ -94,9 +97,24 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
     protected function earlyExecute()
     {
+        // arUnicaucaB5Plugin: upstream toma el padre del alta del parámetro `parent` (el hidden que cambia la cascada) y,
+        // si no resuelve a un recurso, llama a QubitAcl::check(null) → HTTP 500. Un valor que no es una descripción se
+        // descarta antes: upstream usa entonces el nivel superior (y comprueba `create` sobre él), como sin `parent`.
+        if ($this->isNewDescription() && $this->request->hasParameter('parent')) {
+            $value = $this->request->getParameter('parent');
+            if (!is_string($value) || !(arUnicaucaCatalogingResubmit::resource($value) instanceof QubitInformationObject)) {
+                $this->request->getParameterHolder()->remove('parent');
+            }
+        }
+
         parent::earlyExecute();
 
         $this->isad = new sfIsadPlugin($this->resource);
+
+        // arUnicaucaB5Plugin: cascada Fondo → Sección → Serie → Subserie para elegir dónde queda la descripción nueva.
+        // Sin propiedad declarada a propósito: así `parentCascade` llega a la plantilla (variable de la action, como
+        // levelProfiles). Null en edición, en duplicado o si no hay descripciones con esos niveles.
+        $this->parentCascade = $this->isNewDescription() ? arUnicaucaCatalogingContext::parentCascade() : null;
 
         $title = $this->context->i18n->__('Add new archival description');
         if (isset($this->getRoute()->resource)) {
@@ -171,10 +189,22 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                 $widget = $this->form->getWidget('levelOfDescription');
                 // Perfil por URL del término (solo agrupación/unidad), para la plantilla. Se calcula antes de agrupar las opciones.
                 $this->levelProfiles = arUnicaucaCatalogingLevels::profileMap($widget->getOption('choices'));
+                /* OCULTO-051
+                   SERVÍA PARA: ofrecer en "Nivel de descripción" todos los niveles de AtoM, en dos grupos: "Niveles
+                   principales" (Fondo, Sección, Serie, Subserie, Unidad documental compuesta y simple) y "Otros niveles"
+                   (Colección, Parte, Record group, Subfondo...).
+                   MOTIVO: el archivo solo maneja Fondo, Sección, Serie, Subserie, Unidad documental compuesta y Unidad
+                   documental simple. Se conserva el nivel actual de una ficha que ya tenga otro, para no perderlo al guardar.
+                   Código original:
                 $widget->setOption('choices', arUnicaucaCatalogingLevels::group(
                     $widget->getOption('choices'),
                     $this->context->i18n->__('Niveles principales'),
                     $this->context->i18n->__('Otros niveles')
+                ));
+                */
+                $widget->setOption('choices', arUnicaucaCatalogingLevels::visible(
+                    $widget->getOption('choices'),
+                    (string) $this->form->getDefault('levelOfDescription')
                 ));
 
                 break;
@@ -262,9 +292,25 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            // arUnicaucaB5Plugin: en un alta, el `parent` lo puede cambiar la cascada "Pertenece a"; se valida antes de
+            // usarlo. En edición y duplicado sigue el comportamiento nativo.
+            case 'parent':
+                if (!$this->isNewDescription()) {
+                    return parent::processField($field);
+                }
+                $this->resource->parent = arUnicaucaCatalogingContext::chosenParent((string) $this->form->getValue('parent'), $this->parent);
+
+                break;
+
             default:
                 return parent::processField($field);
         }
+    }
+
+    // arUnicaucaB5Plugin: alta de una descripción nueva (ni edición ni duplicado).
+    protected function isNewDescription(): bool
+    {
+        return !isset($this->getRoute()->resource) && !isset($this->request->source);
     }
 
     protected function processForm()
@@ -281,6 +327,15 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
         $this->archivistsNotesComponent->processForm();
 
-        return parent::processForm();
+        $result = parent::processForm();
+
+        // arUnicaucaB5Plugin: en un alta, el padre debe ser de un nivel superior al de la ficha (una Sección solo dentro
+        // de un Fondo...). Ya procesados `parent` y `levelOfDescription`, si no se cumple se usa el ancestro válido más
+        // cercano (arUnicaucaCatalogingContext::parentForLevel). El script de "Pertenece a" ya lo impide en pantalla.
+        if ($this->isNewDescription() && $this->resource->parent instanceof QubitInformationObject) {
+            $this->resource->parent = arUnicaucaCatalogingContext::parentForLevel($this->resource->parent, $this->resource->levelOfDescription);
+        }
+
+        return $result;
     }
 }
