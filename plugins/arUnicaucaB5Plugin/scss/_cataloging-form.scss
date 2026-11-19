@@ -280,6 +280,16 @@
     @include ah-type("small");
   }
 
+  .ah-parent-rule {
+    margin: 0;
+    color: $ah-text-muted;
+    @include ah-type("small");
+
+    &:empty {
+      display: none;
+    }
+  }
+
   .ah-parent-step {
     margin-bottom: $ah-space-2;
 
@@ -290,6 +300,12 @@
 
     .form-select {
       background-color: $white;
+
+      // Campo sin opciones (p. ej. un fondo sin secciones): gris, como cualquier control deshabilitado.
+      &:disabled {
+        background-color: $form-select-disabled-bg;
+        color: $ah-text-muted;
+      }
     }
   }
 

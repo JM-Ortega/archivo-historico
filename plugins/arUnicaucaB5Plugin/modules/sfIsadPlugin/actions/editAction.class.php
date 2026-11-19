@@ -29,7 +29,7 @@
  *     (OCULTO-051) y mapa nivel → perfil de presentación (arUnicaucaCatalogingLevels);
  *   - si el POST no es válido, los selects conservan lo enviado (arUnicaucaCatalogingResubmit);
  *   - en un alta, cascada "Pertenece a" (Fondo → Sección → Serie → Subserie) que fija el `parent` nativo, validado con
- *     arUnicaucaCatalogingContext::chosenParent().
+ *     arUnicaucaCatalogingContext::chosenParent() y con la regla de niveles parentForLevel() (processForm).
  *
  * @author     Peter Van Garderen <peter@artefactual.com>
  * @author     Jesús García Crespo <correo@sevein.com>
@@ -97,6 +97,16 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
     protected function earlyExecute()
     {
+        // arUnicaucaB5Plugin: upstream toma el padre del alta del parámetro `parent` (el hidden que cambia la cascada) y,
+        // si no resuelve a un recurso, llama a QubitAcl::check(null) → HTTP 500. Un valor que no es una descripción se
+        // descarta antes: upstream usa entonces el nivel superior (y comprueba `create` sobre él), como sin `parent`.
+        if ($this->isNewDescription() && $this->request->hasParameter('parent')) {
+            $value = $this->request->getParameter('parent');
+            if (!is_string($value) || !(arUnicaucaCatalogingResubmit::resource($value) instanceof QubitInformationObject)) {
+                $this->request->getParameterHolder()->remove('parent');
+            }
+        }
+
         parent::earlyExecute();
 
         $this->isad = new sfIsadPlugin($this->resource);
@@ -317,6 +327,15 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
         $this->archivistsNotesComponent->processForm();
 
-        return parent::processForm();
+        $result = parent::processForm();
+
+        // arUnicaucaB5Plugin: en un alta, el padre debe ser de un nivel superior al de la ficha (una Sección solo dentro
+        // de un Fondo...). Ya procesados `parent` y `levelOfDescription`, si no se cumple se usa el ancestro válido más
+        // cercano (arUnicaucaCatalogingContext::parentForLevel). El script de "Pertenece a" ya lo impide en pantalla.
+        if ($this->isNewDescription() && $this->resource->parent instanceof QubitInformationObject) {
+            $this->resource->parent = arUnicaucaCatalogingContext::parentForLevel($this->resource->parent, $this->resource->levelOfDescription);
+        }
+
+        return $result;
     }
 }

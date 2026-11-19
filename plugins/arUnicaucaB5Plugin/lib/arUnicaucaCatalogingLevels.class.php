@@ -179,6 +179,25 @@ class arUnicaucaCatalogingLevels
         return $map;
     }
 
+    /**
+     * Posición jerárquica de un nivel (0 Fondo, 1 Sección, 2 Serie, 3 Subserie, 4 Unidad documental compuesta, 5 Unidad
+     * documental simple); null para cualquier otro nivel o sin nivel.
+     */
+    public static function hierarchyPosition(?QubitTerm $term): ?int
+    {
+        return $term instanceof QubitTerm ? self::position($term) : null;
+    }
+
+    /**
+     * Cuántos campos de "Pertenece a" (Fondo, Sección, Serie, Subserie) admite una descripción de esa posición: solo los de
+     * nivel superior al suyo. Fondo → 0, Sección → 1 (Fondo), Serie → 2, Subserie → 3; unidades documentales, otros
+     * niveles o sin nivel → los 4.
+     */
+    public static function allowedParentLevels(?int $position): int
+    {
+        return null === $position ? self::GROUPING_LEVELS : min($position, self::GROUPING_LEVELS);
+    }
+
     private static function position(QubitTerm $term): ?int
     {
         foreach (self::ARCHIVE_LEVELS as $position => $match) {
