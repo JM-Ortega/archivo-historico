@@ -40,7 +40,7 @@ $isPlaces = 'places' === $active || ('taxonomy' === $module && 'index' === $acti
       <?php if ($isAdministrator) { ?>
         <a class="ah-search-navigation__item<?php echo 'export' === $active ? ' is-active' : ''; ?>" href="<?php echo url_for(['module' => 'jobs', 'action' => 'browse']); ?>">
           <i class="fas fa-download" aria-hidden="true"></i>
-          <span>Exportación</span>
+          <span>Procesos de exportación</span>
         </a>
         <a class="ah-search-navigation__item<?php echo 'history' === $active ? ' is-active' : ''; ?>" href="<?php echo url_for(['module' => 'search', 'action' => 'descriptionUpdates']); ?>">
           <i class="far fa-clock" aria-hidden="true"></i>

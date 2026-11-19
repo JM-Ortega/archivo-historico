@@ -115,7 +115,7 @@
     ); ?>
   <?php } ?>
 
-  <?php echo render_show(__('Signature'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
+  <?php echo render_show(__('Signatura'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
 
   <?php echo render_show(__('Title'), render_title($resource), ['fieldLabel' => 'title']); ?>
 
@@ -134,7 +134,7 @@
 
   <?php echo render_show(__('Level of description'), render_value_inline($resource->levelOfDescription), ['fieldLabel' => 'levelOfDescription']); ?>
 
-  <?php echo render_show(__('Extent and medium'), render_value($resource->getCleanExtentAndMedium(['cultureFallback' => true])), ['fieldLabel' => 'extentAndMedium']); ?>
+  <?php echo render_show(__('Folios'), render_value($resource->getCleanExtentAndMedium(['cultureFallback' => true])), ['fieldLabel' => 'extentAndMedium']); ?>
 </section> <!-- /section#identityArea -->
 
 <section id="contextArea" class="border-bottom">
@@ -181,7 +181,7 @@
     ); ?>
   <?php } ?>
 
-  <?php echo render_show(__('Scope and content'), render_value($resource->getScopeAndContent(['cultureFallback' => true])), ['fieldLabel' => 'scopeAndContent']); ?>
+  <?php echo render_show(__('Contenido'), render_value($resource->getScopeAndContent(['cultureFallback' => true])), ['fieldLabel' => 'scopeAndContent']); ?>
 
   <?php if (check_field_visibility('app_element_visibility_isad_appraisal_destruction')) { ?>
     <?php echo render_show(__('Appraisal, destruction and scheduling'), render_value($resource->getAppraisal(['cultureFallback' => true])), ['fieldLabel' => 'appraisalDestructionAndScheduling']); ?>
@@ -299,7 +299,7 @@
   </div>
 
   <div class="placeAccessPoints">
-    <?php echo get_partial('object/placeAccessPoints', ['resource' => $resource]); ?>
+    <?php echo get_partial('object/placeAccessPoints', ['resource' => $resource, 'label' => __('Lugar de procedencia')]); ?>
   </div>
 
   <div class="nameAccessPoints">
