@@ -5,6 +5,20 @@ on:
     branches: [main, develop]
   push:
     branches: [main, develop]
+  # Manual publication to Archive. Only a run whose ref is main and whose commit
+  # matches the typed approved SHA can reach the publish job (see "Publication guard").
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Full 40-char SHA of the approved main commit to publish (must equal the tip of main)'
+        required: true
+        type: string
+      action:
+        description: 'check = non-destructive remote validation only; deploy = check, then publish'
+        required: true
+        type: choice
+        default: check
+        options: [check, deploy]
 
 permissions:
   contents: read
@@ -52,3 +66,219 @@ jobs:
           fi
           echo "::error::PRs into main must originate from branch 'develop' in ${BASE_REPO} (got branch '${HEAD_REF}' from repo '${HEAD_REPO}')"
           exit 1
+
+  build-artifact:
+    name: Build artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # The exact commit under test: the PR head (not the synthetic merge commit) or the pushed/dispatched commit.
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      ATOM_COMMIT: 02a70b8a4b23a805256abd0a14cd0f93e311a581
+      ATOM_URL: https://github.com/artefactual/atom.git
+    outputs:
+      sha256: ${{ steps.build.outputs.sha256 }}
+      file: ${{ steps.build.outputs.file }}
+    steps:
+      - name: Publication guard (manual runs only)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          REF: ${{ github.ref }}
+          INPUT_REVISION: ${{ inputs.revision }}
+        run: |
+          set -euo pipefail
+          # workflow_dispatch lets the operator pick any branch (the file only has to exist on the default
+          # branch to appear in the UI), so the ref is enforced here and again in the publish job.
+          if [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::Manual publication is only allowed from refs/heads/main (got '${REF}')"
+            exit 1
+          fi
+          if ! printf '%s' "$INPUT_REVISION" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::Input 'revision' must be a full lowercase 40-character commit SHA"
+            exit 1
+          fi
+          if [ "$INPUT_REVISION" != "$SOURCE_SHA" ]; then
+            echo "::error::Approved revision ${INPUT_REVISION} is not the commit this run was started on (${SOURCE_SHA}); re-run from the approved tip of main"
+            exit 1
+          fi
+
+      - name: Checkout exact commit with submodule
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          submodules: true
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify checkout, main tip and upstream pin
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA" || { echo "::error::Checked-out HEAD differs from ${SOURCE_SHA}"; exit 1; }
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            git fetch --no-tags origin main
+            test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_SHA" || { echo "::error::Commit is not the current tip of main"; exit 1; }
+          fi
+          entry=$(git ls-tree HEAD upstream/atom)
+          test "$entry" = "$(printf '160000 commit %s\tupstream/atom' "$ATOM_COMMIT")" || { echo "::error::upstream/atom is not pinned to ${ATOM_COMMIT}"; exit 1; }
+          test "$(git config -f .gitmodules submodule.upstream/atom.url)" = "$ATOM_URL" || { echo "::error::Unexpected upstream URL in .gitmodules"; exit 1; }
+          test "$(git -C upstream/atom rev-parse HEAD)" = "$ATOM_COMMIT" || { echo "::error::Submodule checkout is not ${ATOM_COMMIT}"; exit 1; }
+          test -z "$(git status --porcelain --ignore-submodules=none)" || { echo "::error::Working tree is not clean"; git status --short; exit 1; }
+          echo "Commit ${SOURCE_SHA}; upstream ${ATOM_COMMIT}: OK"
+
+      - name: Set up Node 22.23.3
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.23.3'
+
+      - name: Pin npm 10.9.9
+        run: |
+          set -euo pipefail
+          [ "$(npm --version)" = "10.9.9" ] || npm install --global npm@10.9.9 --no-audit --no-fund
+          echo "node $(node --version) / npm $(npm --version)"
+
+      - name: Build artifact
+        id: build
+        run: |
+          set -euo pipefail
+          python3 scripts/build-artifact.py "$SOURCE_SHA" --output "$RUNNER_TEMP/artifacts" | tee "$RUNNER_TEMP/build.log"
+          file="archivo-historico-${SOURCE_SHA}.tar.gz"
+          sha=$(sha256sum "$RUNNER_TEMP/artifacts/$file" | cut -d' ' -f1)
+          grep -Fxq "SHA256 ${sha}" "$RUNNER_TEMP/build.log" || { echo "::error::Builder SHA-256 differs from the file on disk"; exit 1; }
+          echo "file=${file}" >> "$GITHUB_OUTPUT"
+          echo "sha256=${sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild and compare (reproducibility)
+        run: |
+          set -euo pipefail
+          python3 scripts/build-artifact.py "$SOURCE_SHA" --output "$RUNNER_TEMP/artifacts-2" > /dev/null
+          second=$(sha256sum "$RUNNER_TEMP/artifacts-2/${{ steps.build.outputs.file }}" | cut -d' ' -f1)
+          test "$second" = "${{ steps.build.outputs.sha256 }}" || { echo "::error::Second build differs (${second})"; exit 1; }
+          echo "Reproducible: ${second}"
+
+      - name: Verify package integrity (same validation as the deployer)
+        env:
+          ARTIFACT: ${{ runner.temp }}/artifacts/${{ steps.build.outputs.file }}
+          SHA256: ${{ steps.build.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+          gzip -t "$ARTIFACT"
+          python3 -I - <<'PY'
+          import importlib.util, os, pathlib, tempfile
+          spec = importlib.util.spec_from_file_location('deploy_artifact', 'scripts/deploy-artifact.py')
+          deployer = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(deployer)
+          with tempfile.TemporaryDirectory() as stage:
+              manifest = deployer.unpack(pathlib.Path(os.environ['ARTIFACT']), os.environ['SHA256'], pathlib.Path(stage))
+          if manifest['project_commit'] != os.environ['SOURCE_SHA']:
+              raise SystemExit('ERROR: manifest commit differs from the built commit')
+          print(f"Integrity OK: {len(manifest['sha256'])} files, commit {manifest['project_commit']}")
+          PY
+          size=$(stat -c %s "$ARTIFACT")
+          [ "$size" -le $((64 * 1024 * 1024)) ] || { echo "::error::Artifact exceeds the 64 MiB limit of the wrapper"; exit 1; }
+          printf '%s  %s\n' "$SHA256" "$(basename "$ARTIFACT")" > "${ARTIFACT}.sha256"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: atom-artifact-${{ env.SOURCE_SHA }}
+          path: |
+            ${{ runner.temp }}/artifacts/${{ steps.build.outputs.file }}
+            ${{ runner.temp }}/artifacts/${{ steps.build.outputs.file }}.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish to Archive
+    # No push or pull_request event can satisfy this condition.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: build-artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    # One publication at a time; a queued run waits and an in-flight deploy is never cancelled.
+    concurrency:
+      group: archive-publish
+      cancel-in-progress: false
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      MODE: ${{ inputs.action }}
+      FILE: ${{ needs.build-artifact.outputs.file }}
+      SHA256: ${{ needs.build-artifact.outputs.sha256 }}
+    steps:
+      - name: Download validated artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: atom-artifact-${{ github.sha }}
+          path: ${{ runner.temp }}/dl
+
+      - name: Re-verify artifact before sending
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/dl"
+          test "$FILE" = "archivo-historico-${SOURCE_SHA}.tar.gz" || { echo "::error::Unexpected artifact name"; exit 1; }
+          test "$(find "$dir" -type f | wc -l)" = 2 || { echo "::error::Unexpected files in artifact"; exit 1; }
+          actual=$(sha256sum "$dir/$FILE" | cut -d' ' -f1)
+          test "$actual" = "$SHA256" || { echo "::error::Downloaded artifact SHA-256 differs from the validated build"; exit 1; }
+          tar -xzOf "$dir/$FILE" manifest.json | python3 -I -c "import json,sys; sys.exit(0 if json.load(sys.stdin)['project_commit']==sys.argv[1] else 1)" "$SOURCE_SHA" \
+            || { echo "::error::Manifest commit differs from ${SOURCE_SHA}"; exit 1; }
+
+      - name: Configure SSH (pinned host key)
+        env:
+          SSH_KEY: ${{ secrets.ARCHIVE_SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.ARCHIVE_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/ssh"
+          [ -n "$SSH_KEY" ] && [ -n "$SSH_KNOWN_HOSTS" ] || { echo "::error::Archive SSH secrets are not configured"; exit 1; }
+          printf '%s\n' "$SSH_KEY" > "$RUNNER_TEMP/ssh/key"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          # The destination comes only from the pinned known_hosts entry: a single, non-hashed host.
+          mapfile -t hosts < <(awk '!/^[[:space:]]*(#|$)/ {print $1}' "$RUNNER_TEMP/ssh/known_hosts" | sort -u)
+          [ "${#hosts[@]}" -eq 1 ] || { echo "::error::ARCHIVE_SSH_KNOWN_HOSTS must pin exactly one host"; exit 1; }
+          entry=${hosts[0]%%,*}
+          case "$entry" in
+            '|'*|*'*'*|*'?'*|'!'*) echo "::error::known_hosts entry must be a plain host name or address"; exit 1;;
+            '['*']:'*) host=${entry#[}; host=${host%%]:*}; port=${entry##*:};;
+            *) host=$entry; port=22;;
+          esac
+          printf '%s' "$host" | grep -Eq '^[A-Za-z0-9.:-]+$' && printf '%s' "$port" | grep -Eq '^[0-9]+$' \
+            || { echo "::error::Unsupported host entry in known_hosts"; exit 1; }
+          echo "ARCHIVE_HOST=$host" >> "$GITHUB_ENV"
+          echo "ARCHIVE_PORT=$port" >> "$GITHUB_ENV"
+          echo "Pinned destination: ${host}:${port}"
+
+      - name: Remote check
+        run: |
+          set -euo pipefail
+          ssh_cmd() {
+            ssh -T -i "$RUNNER_TEMP/ssh/key" -o IdentitiesOnly=yes -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/ssh/known_hosts" \
+              -o ConnectTimeout=20 -o ServerAliveInterval=30 -p "$ARCHIVE_PORT" "atom-deploy@${ARCHIVE_HOST}"
+          }
+          { printf 'check %s\n' "$SHA256"; cat "$RUNNER_TEMP/dl/$FILE"; } | ssh_cmd | tee "$RUNNER_TEMP/check.log"
+          grep -Fq "Validated source ${SOURCE_SHA};" "$RUNNER_TEMP/check.log" \
+            && grep -Fq 'Check only: no services stopped and no installed files changed' "$RUNNER_TEMP/check.log" \
+            || { echo "::error::Remote check did not report the expected result"; exit 1; }
+
+      - name: Remote deploy
+        if: inputs.action == 'deploy'
+        run: |
+          set -euo pipefail
+          { printf 'deploy %s\n' "$SHA256"; cat "$RUNNER_TEMP/dl/$FILE"; } \
+            | ssh -T -i "$RUNNER_TEMP/ssh/key" -o IdentitiesOnly=yes -o BatchMode=yes \
+                -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$RUNNER_TEMP/ssh/known_hosts" \
+                -o ConnectTimeout=20 -o ServerAliveInterval=30 -p "$ARCHIVE_PORT" "atom-deploy@${ARCHIVE_HOST}" \
+            | tee "$RUNNER_TEMP/deploy.log"
+          grep -Fxq "OK: installed source ${SOURCE_SHA}; archive SHA256 ${SHA256}" "$RUNNER_TEMP/deploy.log" \
+            || { echo "::error::Remote deploy did not confirm the expected commit and SHA-256"; exit 1; }
+
+      - name: Summary
+        run: |
+          if [ "$MODE" = deploy ]; then result=published; else result="checked only"; fi
+          echo "Mode ${MODE}: ${SOURCE_SHA} (${result})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove SSH material
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/ssh"
