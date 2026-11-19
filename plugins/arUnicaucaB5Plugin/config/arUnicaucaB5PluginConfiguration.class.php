@@ -33,7 +33,7 @@ require_once __DIR__.'/../lib/arUnicaucaResultPath.class.php'; // KAN-138
 
 class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
 {
-    public static $summary = 'Theme of the Archivo Histórico del Cauca. Bootstrap 5 theme, extension of arDominionB5Plugin without modifications.';
+    public static $summary = 'Theme of the Centro de investigaciones históricas Jose Maria Llorente. Bootstrap 5 theme, extension of arDominionB5Plugin without modifications.';
     public static $version = '0.0.1';
 
     public function initialize()

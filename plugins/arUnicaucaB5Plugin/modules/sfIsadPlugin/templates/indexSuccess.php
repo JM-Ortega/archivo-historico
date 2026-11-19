@@ -70,11 +70,17 @@
       </strong>
     </div>
     <div class="ah-description-summary__item">
-      <span><?php echo __('Productor'); ?></span>
+      <span><?php echo __('Lugares'); ?></span>
       <strong>
-        <?php $summaryCreators = $resource->getCreators(); ?>
-        <?php if (count($summaryCreators)) { ?>
-          <?php echo render_title($summaryCreators[0]->getAuthorizedFormOfName(['cultureFallback' => true])); ?>
+        <?php $summaryPlaces = $resource->getPlaceAccessPoints(); ?>
+        <?php if (count($summaryPlaces)) { ?>
+          <?php
+              $summaryPlaceNames = [];
+              foreach ($summaryPlaces as $placeRelation) {
+                  $summaryPlaceNames[] = render_title($placeRelation->term->getName(['cultureFallback' => true]));
+              }
+              echo implode(' - ', $summaryPlaceNames);
+          ?>
         <?php } else { ?>
           <?php echo __('Not specified'); ?>
         <?php } ?>
@@ -85,51 +91,6 @@
       <strong><?php echo render_value_inline($resource->levelOfDescription); ?></strong>
     </div>
   </div>
-
-  <section class="ah-description-hierarchy" aria-label="<?php echo __('Hierarchy'); ?>">
-    <button
-      class="ah-description-hierarchy__toggle collapsed"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#ah-description-hierarchy-content"
-      aria-controls="ah-description-hierarchy-content"
-      aria-expanded="false">
-      <span>
-        <i class="fas fa-sitemap" aria-hidden="true"></i>
-        <?php echo __('Hierarchy'); ?>
-      </span>
-      <i class="fas fa-chevron-down" aria-hidden="true"></i>
-    </button>
-
-    <div class="collapse" id="ah-description-hierarchy-content">
-      <?php echo get_component('informationobject', 'treeView'); ?>
-    </div>
-  </section>
-
-  <section class="ah-description-quick-search" aria-labelledby="ah-description-quick-search-title">
-    <h2 id="ah-description-quick-search-title">
-      <i class="fas fa-search" aria-hidden="true"></i>
-      <?php echo __('Quick search'); ?>
-    </h2>
-    <form
-      method="get"
-      role="search"
-      action="<?php echo url_for(['module' => 'search', 'action' => 'index', 'collection' => $resource->getCollectionRoot()->id]); ?>">
-      <div class="input-group">
-        <input
-          type="text"
-          name="query"
-          class="form-control"
-          aria-label="<?php echo __('Search hierarchy'); ?>"
-          placeholder="<?php echo __('Search hierarchy'); ?>"
-          required>
-        <button class="btn atom-btn-white" type="submit">
-          <i class="fas fa-search" aria-hidden="true"></i>
-          <span class="visually-hidden"><?php echo __('Search'); ?></span>
-        </button>
-      </div>
-    </form>
-  </section>
 
   <?php echo get_component('digitalobject', 'imageflow', ['resource' => $resource]); ?>
 
@@ -160,7 +121,7 @@
     ); ?>
   <?php } ?>
 
-  <?php echo render_show(__('Reference code'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
+  <?php echo render_show(__('Signatura'), $isad->referenceCode, ['fieldLabel' => 'referenceCode']); ?>
 
   <?php echo render_show(__('Title'), render_title($resource), ['fieldLabel' => 'title']); ?>
 
@@ -179,7 +140,7 @@
 
   <?php echo render_show(__('Level of description'), render_value_inline($resource->levelOfDescription), ['fieldLabel' => 'levelOfDescription']); ?>
 
-  <?php echo render_show(__('Extent and medium'), render_value($resource->getCleanExtentAndMedium(['cultureFallback' => true])), ['fieldLabel' => 'extentAndMedium']); ?>
+  <?php echo render_show(__('Folios'), render_value($resource->getCleanExtentAndMedium(['cultureFallback' => true])), ['fieldLabel' => 'extentAndMedium']); ?>
 </section> <!-- /section#identityArea -->
 
 <section id="contextArea" class="border-bottom">
@@ -205,38 +166,6 @@
     <?php } ?>
   </div>
 
-<?php /* OCULTO-016
-     SERVÍA PARA: mostrar la institución archivística de la descripción como un enlace a su ficha.
-     MOTIVO: las fichas de instituciones ya no son accesibles (OCULTO-014); el nombre se sigue mostrando, pero como texto.
-     Código original:
-
-  <div class="repository">
-    <?php echo render_show_repository(__('Repository'), $resource); ?>
-  </div>
-
-*/ ?>
-
-<?php
-    // Igual que render_show_repository(), sin enlace: la institución propia o, si no la tiene, la del ancestro más cercano.
-    $repositoryName = null;
-    if (isset($resource->repository)) {
-        $repositoryName = render_title($resource->repository);
-    } else {
-        foreach ($resource->ancestors->orderBy('rgt') as $item) {
-            if (isset($item->repository)) {
-                $repositoryName = '<span title="'.__('Inherited from %1%', ['%1%' => $item]).'">'.render_title($item->repository).'</span>';
-
-                break;
-            }
-        }
-    }
-  ?>
-  <?php if (null !== $repositoryName) { ?>
-    <div class="repository">
-      <?php echo render_show(__('Repository'), $repositoryName); ?>
-    </div>
-  <?php } ?>
-
   <?php if (check_field_visibility('app_element_visibility_isad_archival_history')) { ?>
     <?php echo render_show(__('Archival history'), render_value($resource->getArchivalHistory(['cultureFallback' => true])), ['fieldLabel' => 'archivalHistory']); ?>
   <?php } ?>
@@ -258,7 +187,7 @@
     ); ?>
   <?php } ?>
 
-  <?php echo render_show(__('Scope and content'), render_value($resource->getScopeAndContent(['cultureFallback' => true])), ['fieldLabel' => 'scopeAndContent']); ?>
+  <?php echo render_show(__('Contenido'), render_value($resource->getScopeAndContent(['cultureFallback' => true])), ['fieldLabel' => 'scopeAndContent']); ?>
 
   <?php if (check_field_visibility('app_element_visibility_isad_appraisal_destruction')) { ?>
     <?php echo render_show(__('Appraisal, destruction and scheduling'), render_value($resource->getAppraisal(['cultureFallback' => true])), ['fieldLabel' => 'appraisalDestructionAndScheduling']); ?>
@@ -376,7 +305,7 @@
   </div>
 
   <div class="placeAccessPoints">
-    <?php echo get_partial('object/placeAccessPoints', ['resource' => $resource]); ?>
+    <?php echo get_partial('object/placeAccessPoints', ['resource' => $resource, 'label' => __('Lugar de procedencia')]); ?>
   </div>
 
   <div class="nameAccessPoints">

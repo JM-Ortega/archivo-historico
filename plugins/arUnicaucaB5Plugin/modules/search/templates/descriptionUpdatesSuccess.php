@@ -1,4 +1,4 @@
-<?php decorate_with('layout_1col'); ?>
+<?php decorate_with('layout_2col'); ?>
 <?php use_helper('Date'); ?>
 <?php use_helper('Text'); ?>
 
@@ -16,6 +16,10 @@ $hasResults = isset($pager) && $pager->getNbResults();
 // Filtros inválidos (p. ej. «Fin» anterior a «Inicio»): no se busca, el panel queda abierto y se explica el motivo.
 $hasFilterErrors = $form->hasErrors();
 ?>
+
+<?php slot('sidebar'); ?>
+  <?php echo get_partial('search/searchOptions', ['active' => 'history']); ?>
+<?php end_slot(); ?>
 
 <?php slot('title'); ?>
 
@@ -62,7 +66,10 @@ $hasFilterErrors = $form->hasErrors();
           <thead>
             <tr>
               <th class="ah-updates-col-title"><?php echo __('Title'); ?></th>
-              <th class="ah-updates-col-meta"><?php echo __('Repository'); ?></th>
+              <?php /* OCULTO-046
+                SERVÍA PARA: mostrar la institución archivística asociada a cada descripción en el historial.
+                MOTIVO: el historial se consulta con título y fecha; se oculta esta columna sin modificar el filtro ni los datos.
+              */ ?>
               <th class="ah-updates-col-meta"><?php echo $dateColumnLabel; ?></th>
             </tr>
           </thead>
@@ -79,14 +86,6 @@ $hasFilterErrors = $form->hasErrors();
                       'module' => 'informationobject',
                   ]); ?>
                 </td>
-                <td class="ah-updates-strong" data-label="<?php echo __('Repository'); ?>">
-                  <?php if (!empty($io->repository)) { ?>
-                    <?php echo link_to(render_title($io->repository->authorizedFormOfName), [
-                        'slug' => $io->repository->slug,
-                        'module' => 'repository',
-                    ]); ?>
-                  <?php } ?>
-                </td>
                 <td class="ah-updates-date" data-label="<?php echo $dateColumnLabel; ?>">
                   <?php echo $formatUpdateDate($result->createdAt); ?>
                 </td>
@@ -100,9 +99,9 @@ $hasFilterErrors = $form->hasErrors();
   <?php } elseif ($hasResults) { ?>
 
     <?php
-    $showRepositoryColumn = 'QubitInformationObject' == $className;
+    /* OCULTO-046: se conserva la consulta del repositorio, pero se oculta su columna en la tabla del historial. */
     $showTaxonomyColumn = 'QubitTerm' == $className;
-    $titleColumnClass = ($showRepositoryColumn || $showTaxonomyColumn) ? 'ah-updates-col-title' : '';
+    $titleColumnClass = $showTaxonomyColumn ? 'ah-updates-col-title' : '';
     ?>
 
     <div class="ah-updates-panel ah-updates-results">
@@ -111,9 +110,7 @@ $hasFilterErrors = $form->hasErrors();
           <thead>
             <tr>
               <th class="<?php echo $titleColumnClass; ?>"><?php echo __($nameColumnDisplay); ?></th>
-              <?php if ($showRepositoryColumn) { ?>
-                <th class="ah-updates-col-meta"><?php echo __('Repository'); ?></th>
-              <?php } elseif ($showTaxonomyColumn) { ?>
+              <?php if ($showTaxonomyColumn) { ?>
                 <th class="ah-updates-col-meta"><?php echo __('Taxonomy'); ?></th>
               <?php } ?>
               <th class="ah-updates-col-meta"><?php echo $dateColumnLabel; ?></th>
@@ -171,17 +168,7 @@ $hasFilterErrors = $form->hasErrors();
                   <?php } ?>
                 </td>
 
-                <?php if ($showRepositoryColumn) { ?>
-                  <td class="ah-updates-strong" data-label="<?php echo __('Repository'); ?>">
-                    <?php if (isset($doc['repository'])) { ?>
-                      <?php echo render_title(get_search_i18n(
-                          $doc['repository'],
-                          'authorizedFormOfName',
-                          ['allowEmpty' => false]
-                      )); ?>
-                    <?php } ?>
-                  </td>
-                <?php } elseif ($showTaxonomyColumn) { ?>
+                <?php if ($showTaxonomyColumn) { ?>
                   <td class="ah-updates-strong" data-label="<?php echo __('Taxonomy'); ?>">
                     <?php echo render_title(get_search_i18n($doc, 'name', ['allowEmpty' => false])); ?>
                   </td>

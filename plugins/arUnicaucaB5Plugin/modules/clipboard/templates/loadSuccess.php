@@ -5,17 +5,15 @@
 <?php end_slot(); ?>
 
 <?php slot('title'); ?>
-  <header class="ah-action-page__header ah-clipboard-load__header">
-    <p class="ah-action-page__kicker"><?php echo __('Gestión archivística'); ?></p>
-    <h1><?php echo __('Load clipboard'); ?></h1>
-    <p class="ah-action-page__resource">
-      <?php echo __('Restore a previously saved clipboard'); ?>
-    </p>
+  <header class="ah-page-header ah-clipboard-load-header">
+    <p class="ah-page-kicker"><?php echo __('Gestión archivística'); ?></p>
+    <h1><?php echo __('Cargar portapapeles'); ?></h1>
+    <p class="ah-page-subtitle"><?php echo __('Restore a previously saved clipboard'); ?></p>
   </header>
 <?php end_slot(); ?>
 
 <?php slot('content'); ?>
-  <div class="ah-action-page ah-clipboard-load">
+  <div class="ah-clipboard-load">
     <div class="ah-clipboard-load__notice">
       <i class="fas fa-info-circle" aria-hidden="true"></i>
       <div>
@@ -27,13 +25,15 @@
     <?php echo $form->renderFormTag(url_for(['module' => 'clipboard', 'action' => 'load']), ['id' => 'clipboard-load-form']); ?>
       <?php echo $form->renderHiddenFields(); ?>
 
-      <section class="ah-action-page__panel">
-        <h2><?php echo __('Load options'); ?></h2>
-        <?php echo render_field($form->clipboardPassword->label(__('Clipboard ID'))); ?>
-        <?php echo render_field($form->mode->label(__('Action'))); ?>
-      </section>
+      <div class="ah-clipboard-load__panel">
+        <h2 class="ah-clipboard-load__title"><?php echo __('Opciones de carga'); ?></h2>
+        <div class="ah-clipboard-load__body">
+          <?php echo render_field($form->clipboardPassword->label(__('Clipboard ID'))); ?>
+          <?php echo render_field($form->mode->label(__('Action'))); ?>
+        </div>
+      </div>
 
-      <ul class="actions ah-action-page__actions mb-3 nav gap-2">
+      <ul class="actions ah-clipboard-load__actions mb-0 nav gap-2">
         <li><input class="btn atom-btn-outline-light" type="submit" name="load" value="<?php echo __('Load'); ?>"/></li>
         <li><input class="btn atom-btn-outline-light" type="submit" name="loadView" value="<?php echo __('Load and view'); ?>"/></li>
       </ul>

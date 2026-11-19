@@ -15,7 +15,7 @@
 
   <section class="ah-about__panel">
     <div class="ah-about__panel-head">
-      <p class="ah-about__kicker">Archivo Histórico del Cauca</p>
+      <p class="ah-about__kicker">Centro de investigaciones históricas Jose Maria Llorente</p>
     </div>
     <div class="ah-about__body">
       <?php echo render_value_html($sf_data->getRaw('content')); ?>

@@ -15,10 +15,6 @@
       <?php if (QubitAcl::check($resource, 'publish')) { ?>
         <li><?php echo link_to(__('Update publication status'), [$resource, 'module' => 'informationobject', 'action' => 'updatePublicationStatus'], ['class' => 'btn atom-btn-outline-light']); ?></li>
       <?php } ?>
-      <?php if (sfContext::getInstance()->getConfiguration()->isPluginEnabled('sfEadPlugin')) { ?>
-        <li><?php echo link_to(__('Exportar EAD'), [$resource, 'module' => 'informationobject', 'action' => 'exportEad'], ['class' => 'btn atom-btn-outline-light']); ?></li>
-      <?php } ?>
-
       <?php /*
        * OCULTO-031: botón «Más» del panel de acciones.
        * Se conserva el bloque original para poder restaurarlo cuando las acciones avanzadas

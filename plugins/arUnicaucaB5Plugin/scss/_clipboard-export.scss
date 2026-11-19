@@ -1,0 +1,216 @@
+// --- Cabecera compartida: gradiente azul institucional (load y export) -------------------------
+
+.ah-clipboard-load-header,
+.ah-clipboard-export-header {
+  position: relative;
+  margin-bottom: $ah-space-4;
+  padding: $ah-space-5;
+  overflow: hidden;
+  color: $white;
+  background: linear-gradient(112deg, $ah-blue-deep 0%, $ah-blue 70%, $ah-blue-action 70%);
+  border-radius: $ah-radius-feature;
+  box-shadow: $ah-shadow-overlay;
+
+  .ah-page-kicker {
+    color: rgba($white, .78);
+
+    &::before {
+      display: none; // ocultar el trazo rojo del antetítulo sobre fondo oscuro
+    }
+  }
+
+  h1 {
+    margin: 0;
+    color: $white !important;
+  }
+
+  .ah-page-subtitle {
+    margin: $ah-space-2 0 0;
+    color: rgba($white, .78);
+    font-family: $ah-font-serif;
+    font-size: 1.05rem;
+  }
+}
+
+.ah-clipboard-export {
+  &__panel {
+    margin-bottom: $ah-space-4;
+    overflow: hidden;
+    background: $ah-panel;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  &__title {
+    @include ah-type("section-title");
+
+    margin: 0;
+    padding: $ah-space-3 $ah-space-4;
+    color: $ah-blue-deep;
+    background: $ah-surface-soft;
+    border-bottom: 1px solid $ah-line;
+  }
+
+  &__body {
+    padding: $ah-space-4;
+
+    .form-group,
+    .mb-3 {
+      margin-bottom: $ah-space-3;
+    }
+
+    label,
+    legend {
+      color: $ah-blue-deep;
+      font-weight: 700;
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"] {
+      min-height: 3rem;
+      color: $ah-text;
+      background-color: $ah-panel;
+      border-color: $ah-line-control;
+      border-radius: $ah-radius-control;
+    }
+  }
+
+  &__format {
+    margin-top: $ah-space-4;
+  }
+
+  &__fixed-format {
+    display: flex;
+    align-items: center;
+    min-height: 3rem;
+    gap: $ah-space-2;
+    padding: $ah-space-2 $ah-space-3;
+    color: $ah-blue-deep;
+    background: $ah-surface-soft;
+    border: 1px solid $ah-line-control;
+    border-radius: $ah-radius-control;
+
+    i {
+      color: $ah-blue-action;
+    }
+
+    span {
+      margin-left: auto;
+      color: $ah-text-muted;
+      font-size: $ah-font-size-small;
+    }
+  }
+
+  &__actions {
+    padding: $ah-space-3;
+    background: $ah-blue-deep;
+    border-radius: $ah-radius-control;
+
+    .btn {
+      color: $ah-panel;
+      border-color: $ah-line-strong;
+      background: transparent;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+        background: $ah-panel;
+      }
+    }
+  }
+}
+
+// --- Vista «Cargar portapapeles» (clipboard/load) -----------------------------------------------
+
+.ah-clipboard-load {
+  &__notice {
+    display: flex;
+    gap: $ah-space-3;
+    align-items: flex-start;
+    margin-bottom: $ah-space-4;
+    padding: $ah-space-3 $ah-space-4;
+    color: $ah-blue-deep;
+    background: $ah-surface-soft;
+    border: 1px solid $ah-line;
+    border-left: 3px solid $ah-blue-action;
+    border-radius: $ah-radius-control;
+
+    > i {
+      flex: 0 0 auto;
+      margin-top: .15rem;
+      color: $ah-blue-action;
+    }
+
+    p {
+      margin: 0;
+
+      + p {
+        margin-top: $ah-space-2;
+      }
+    }
+  }
+
+  &__panel {
+    margin-bottom: $ah-space-4;
+    overflow: hidden;
+    background: $ah-panel;
+    border: 1px solid $ah-line;
+    border-radius: $ah-radius-panel;
+    box-shadow: $ah-shadow-panel;
+  }
+
+  &__title {
+    @include ah-type("section-title");
+
+    margin: 0;
+    padding: $ah-space-3 $ah-space-4;
+    color: $ah-blue-deep;
+    background: $ah-surface-soft;
+    border-bottom: 1px solid $ah-line;
+  }
+
+  &__body {
+    padding: $ah-space-4;
+
+    .form-group,
+    .mb-3 {
+      margin-bottom: $ah-space-3;
+    }
+
+    label,
+    legend {
+      color: $ah-blue-deep;
+      font-weight: 700;
+    }
+
+    select,
+    input[type="text"],
+    input[type="password"] {
+      min-height: 3rem;
+      color: $ah-text;
+      background-color: $ah-panel;
+      border-color: $ah-line-control;
+      border-radius: $ah-radius-control;
+    }
+  }
+
+  &__actions {
+    padding: $ah-space-3;
+    background: $ah-blue-deep;
+    border-radius: $ah-radius-control;
+
+    .btn {
+      color: $ah-panel;
+      border-color: $ah-line-strong;
+      background: transparent;
+
+      &:hover,
+      &:focus {
+        color: $ah-blue-deep;
+        background: $ah-panel;
+      }
+    }
+  }
+}

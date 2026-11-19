@@ -74,23 +74,27 @@
 
   <div class="ah-places-layout">
 
-    <aside class="ah-places-panel ah-places-quick" aria-labelledby="ah-places-quick-title">
-      <div class="ah-places-quick-header">
-        <h2 id="ah-places-quick-title" class="ah-places-quick-title"><?php echo __('Navegar lugares'); ?></h2>
-        <p class="ah-places-quick-text"><?php echo __('Acceso rápido a los lugares presentes en las fichas.'); ?></p>
+    <aside class="ah-places-sidebar" aria-label="<?php echo __('Panel lateral de lugares'); ?>">
+      <div class="ah-places-panel ah-places-quick" aria-labelledby="ah-places-quick-title">
+        <div class="ah-places-quick-header">
+          <h2 id="ah-places-quick-title" class="ah-places-quick-title"><?php echo __('Navegar lugares'); ?></h2>
+          <p class="ah-places-quick-text"><?php echo __('Acceso rápido a los lugares presentes en las fichas.'); ?></p>
+        </div>
+        <?php if (count($quickAccess)) { ?>
+          <nav class="ah-places-quick-list" aria-label="<?php echo __('Acceso rápido por lugares'); ?>">
+            <?php foreach ($quickAccess as $place) { ?>
+              <a class="ah-places-quick-item" href="<?php echo url_for(['module' => 'term', 'slug' => $place['slug']]); ?>">
+                <span class="ah-places-quick-name"><?php echo esc_entities($place['name']); ?></span>
+                <span class="ah-places-count" aria-label="<?php echo __('%1% descripciones', ['%1%' => $place['count']]); ?>"><?php echo $place['count']; ?></span>
+              </a>
+            <?php } ?>
+          </nav>
+        <?php } else { ?>
+          <p class="ah-places-quick-empty"><?php echo __('No hay lugares registrados.'); ?></p>
+        <?php } ?>
       </div>
-      <?php if (count($quickAccess)) { ?>
-        <nav class="ah-places-quick-list" aria-label="<?php echo __('Acceso rápido por lugares'); ?>">
-          <?php foreach ($quickAccess as $place) { ?>
-            <a class="ah-places-quick-item" href="<?php echo url_for(['module' => 'term', 'slug' => $place['slug']]); ?>">
-              <span class="ah-places-quick-name"><?php echo esc_entities($place['name']); ?></span>
-              <span class="ah-places-count" aria-label="<?php echo __('%1% descripciones', ['%1%' => $place['count']]); ?>"><?php echo $place['count']; ?></span>
-            </a>
-          <?php } ?>
-        </nav>
-      <?php } else { ?>
-        <p class="ah-places-quick-empty"><?php echo __('No hay lugares registrados.'); ?></p>
-      <?php } ?>
+
+      <?php echo get_partial('search/searchOptions', ['active' => 'places']); ?>
     </aside>
 
     <div class="ah-places-main">

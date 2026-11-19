@@ -2,7 +2,7 @@
 /**
  * Shared navigation for the public search area.
  *
- * @var string $active Active item: basic, advanced, cataloging, export, history, users or privacy.
+ * @var string $active Active item: basic, advanced, cataloging, export, history, users or places.
  */
 $module = $sf_context->getModuleName();
 $action = $sf_context->getActionName();
@@ -12,7 +12,7 @@ $isCataloging = 'cataloging' === $active || ('informationobject' === $module && 
 $isUsers = 'users' === $active || ('user' === $module && 'list' === $action);
 $isAdministrator = $sf_user->isAdministrator();
 $canCatalog = $isAdministrator || $sf_user->hasCredential('editor');
-$privacyUrl = url_for(['slug' => 'privacy']);
+$isPlaces = 'places' === $active || ('taxonomy' === $module && 'index' === $action && (int) $sf_request->getParameter('id') === (int) QubitTaxonomy::PLACE_ID);
 ?>
 <section class="ah-search-navigation" aria-labelledby="search-navigation-title">
   <h2 class="ah-search-navigation__title" id="search-navigation-title">NAVEGACIÓN</h2>
@@ -40,7 +40,7 @@ $privacyUrl = url_for(['slug' => 'privacy']);
       <?php if ($isAdministrator) { ?>
         <a class="ah-search-navigation__item<?php echo 'export' === $active ? ' is-active' : ''; ?>" href="<?php echo url_for(['module' => 'jobs', 'action' => 'browse']); ?>">
           <i class="fas fa-download" aria-hidden="true"></i>
-          <span>Exportación</span>
+          <span>Procesos de exportación</span>
         </a>
         <a class="ah-search-navigation__item<?php echo 'history' === $active ? ' is-active' : ''; ?>" href="<?php echo url_for(['module' => 'search', 'action' => 'descriptionUpdates']); ?>">
           <i class="far fa-clock" aria-hidden="true"></i>
@@ -56,6 +56,13 @@ $privacyUrl = url_for(['slug' => 'privacy']);
       <?php } ?>
       <?php if ($canCatalog) { ?>
         <a
+          class="ah-search-navigation__item<?php echo $isPlaces ? ' is-active' : ''; ?>"
+          href="<?php echo url_for(['module' => 'taxonomy', 'action' => 'index', 'id' => QubitTaxonomy::PLACE_ID]); ?>"
+          <?php echo $isPlaces ? 'aria-current="page"' : ''; ?>>
+          <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+          <span>Lugares</span>
+        </a>
+        <a
           class="ah-search-navigation__item<?php echo $isCataloging ? ' is-active' : ''; ?>"
           href="<?php echo url_for(['module' => 'informationobject', 'action' => 'add']); ?>"
           <?php echo $isCataloging ? 'aria-current="page"' : ''; ?>>
@@ -63,14 +70,10 @@ $privacyUrl = url_for(['slug' => 'privacy']);
           <span>Catalogación</span>
         </a>
       <?php } ?>
-      <a class="ah-search-navigation__item<?php echo 'privacy' === $active ? ' is-active' : ''; ?>" href="<?php echo $privacyUrl; ?>">
-        <i class="fas fa-lock" aria-hidden="true"></i>
-        <span>Política de privacidad</span>
-      </a>
+      <?php /* OCULTO-044
+        SERVÍA PARA: enlazar a la página pública «Política de privacidad» desde el panel lateral de navegación.
+        MOTIVO: la opción se retira de este panel; la página y su URL no se eliminan.
+      */ ?>
     </div>
   </nav>
-  <div class="ah-search-navigation__footer">
-    <h3>Memoria abierta</h3>
-    <p>Patrimonio documental al servicio de la ciudadanía y la investigación.</p>
-  </div>
 </section>

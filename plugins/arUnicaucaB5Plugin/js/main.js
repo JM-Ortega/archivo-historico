@@ -9,6 +9,7 @@ import "./user-email";
 import "./password-toggle";
 import "./clipboard-count";
 import "./export-alerts";
+import "./clipboard-export";
 
 const initializeLoginControls = () => {
   const forgot = document.querySelector("[data-ah-login-forgot]");

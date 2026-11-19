@@ -84,6 +84,57 @@
         <source>Digital objects with restricted access or copyright will not be exported.</source>
         <target>No se exportarán los objetos digitales con acceso restringido o derechos de autor.</target>
       </trans-unit>
+  <file source-language="en" target-language="es" datatype="plaintext" original="messages" date="2026-11-18T14:30:00Z" product-name="messages">
+    <header/>
+    <body>
+      <trans-unit id="1">
+        <source>Archival description count</source>
+        <target>Descripciones archivísticas: </target>
+      </trans-unit>
+      <trans-unit id="2">
+        <source>Authority record count</source>
+        <target>Registros de autoridad: </target>
+      </trans-unit>
+      <trans-unit id="3">
+        <source>Archival institution count</source>
+        <target>Instituciones archivísticas: </target>
+      </trans-unit>
+      <trans-unit id="4">
+        <source>Accession count</source>
+        <target>Ingresos: </target>
+      </trans-unit>
+      <trans-unit id="5">
+        <source>Restore a previously saved clipboard</source>
+        <target>Restaurar un portapapeles guardado anteriormente</target>
+      </trans-unit>
+      <trans-unit id="6">
+        <source>Load and view</source>
+        <target>Cargar y ver</target>
+      </trans-unit>
+      <trans-unit id="7">
+        <source>Clear all selections</source>
+        <target>Vaciar todas las selecciones</target>
+      </trans-unit>
+      <trans-unit id="8">
+        <source>Go to clipboard</source>
+        <target>Ir al portapapeles</target>
+      </trans-unit>
+      <trans-unit id="9">
+        <source>Save clipboard</source>
+        <target>Guardar portapapeles</target>
+      </trans-unit>
+      <trans-unit id="10">
+        <source>records added</source>
+        <target>registros añadidos</target>
+      </trans-unit>
+      <trans-unit id="11">
+        <source>There was an error loading the clipboard content.</source>
+        <target>Se produjo un error al cargar el contenido del portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="12">
+        <source>The clipboard is empty for this entity type.</source>
+        <target>El portapapeles está vacío para este tipo de entidad.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
