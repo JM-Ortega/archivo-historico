@@ -131,6 +131,45 @@
 
           <div class="criteria mb-4">
 
+            <?php
+              // El filtro "Nivel de descripción" solo muestra los
+              // niveles que usan en el archivo, en ste orden.
+              // Las opciones las arma el core (browseAction::addField
+              // 'levels') con todos los términos de la taxonomía; aquí solo se
+              // filtran para mostrarlas, sin borrar ni modificar términos.
+              // Se compara con el nombre en español para que no dependa del
+              // idioma de la interfaz ni de los ids de cada instalación.
+              $ucAllowedLevels = [
+                  'Fondo',
+                  // 'Subfondo',          // OCULTO-060
+                  'Sección',
+                  'Serie',
+                  'Subserie',
+                  'Unidad documental compuesta',
+                  'Unidad documental simple',
+                  // 'Colección',         // OCULTO-061
+                  // 'Parte',             // OCULTO-062
+                  // 'Record group',      // OCULTO-063
+              ];
+
+              $ucLevelsWidget = sfOutputEscaper::unescape($form)->getWidget('levels');
+              $ucLevelIds = [];
+              foreach (array_keys($ucLevelsWidget->getOption('choices')) as $ucId) {
+                  if ('' === (string) $ucId || null === $ucTerm = QubitTerm::getById($ucId)) {
+                      continue;
+                  }
+                  $ucLevelIds[$ucTerm->getName(['culture' => 'es'])] = $ucId;
+              }
+
+              $ucLevelChoices = ['' => ''];
+              foreach ($ucAllowedLevels as $ucName) {
+                  if (isset($ucLevelIds[$ucName])) {
+                      $ucLevelChoices[$ucLevelIds[$ucName]] = QubitTerm::getById($ucLevelIds[$ucName])->__toString();
+                  }
+              }
+              $ucLevelsWidget->setOption('choices', $ucLevelChoices);
+            ?>
+
             <div class="row">
               <div class="col-md-4">
                 <?php echo render_field($form->levels->label(__('Level of description'))); ?>
