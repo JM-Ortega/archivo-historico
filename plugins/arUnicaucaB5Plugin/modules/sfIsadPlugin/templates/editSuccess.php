@@ -241,14 +241,14 @@
           <?php echo $dailyField(
               $form->identifier,
               $labelFor($labels['identifier']),
-              __('Escribe el identificador tal como figura en la descripción (por ejemplo, la signatura completa de una unidad documental: 5640 (Ind. C II -24 mn)). Déjalo vacío si no tiene.')
+              __('Escribe el identificador tal como figura en la descripción (por ejemplo, la signatura completa de una unidad documental: 5640 (Ind. C II -24 mn)). Es obligatorio en una unidad documental; en una agrupación basta con el título.')
           ); ?>
         </div>
       </div>
 
       <div class="ah-switch"<?php echo $switchAttrs('title', arUnicaucaCatalogingLevels::PROFILE_GROUPING, $form->title); ?>>
         <?php echo render_field($form->title
-            ->help(__('Opcional. Si se deja vacío, la descripción se guarda sin título.'))
+            ->help(__('En una agrupación, escribe el título o la signatura. En una unidad documental el título es la signatura.'))
             ->label(__('Title')), $resource); ?>
       </div>
 
