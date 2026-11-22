@@ -106,7 +106,22 @@
     return over;
   };
 
-  const scan = () => document.querySelectorAll("form").forEach(refresh);
+  // «Agregar nuevo» de la avanzada clona la fila completa, aviso incluido: el campo nuevo (vacío) quedaría con una copia
+  // visible del aviso del original, con el mismo id, que nada actualiza. Se descartan los avisos que no pertenecen al
+  // campo que tienen delante (el aviso propio de cada campo se recrea al hacer falta).
+  const dropStale = () => {
+    document.querySelectorAll(`.${WARNING_CLASS}`).forEach((warning) => {
+      const field = warning.previousElementSibling;
+      if (!(field instanceof HTMLInputElement) || warning.id !== `${field.id || field.name}-limit-warning`) {
+        warning.remove();
+      }
+    });
+  };
+
+  const scan = () => {
+    dropStale();
+    document.querySelectorAll("form").forEach(refresh);
+  };
 
   const onField = (event) => {
     if (event.target.form) {
