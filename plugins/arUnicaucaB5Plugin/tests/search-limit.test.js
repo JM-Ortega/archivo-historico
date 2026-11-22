@@ -7,6 +7,7 @@ class FakeEl {
   constructor() { this.attrs = {}; this.dataset = {}; this.disabled = false; }
   setAttribute(k, v) { this.attrs[k] = v; }
   removeAttribute(k) { delete this.attrs[k]; }
+  getAttribute(k) { return this.attrs[k]; }
 }
 class FakeInput extends FakeEl {
   constructor(name, id, form, value = "") {
@@ -19,6 +20,12 @@ class FakeForm {
   constructor() { this.inputs = []; this.buttons = []; }
   button(disabled = false) { const b = new FakeEl(); b.disabled = disabled; this.buttons.push(b); return b; }
   querySelectorAll(sel) { return "input" === sel ? this.inputs : this.buttons; }
+}
+
+class FakeGroup {
+  constructor() { this.classList = { contains: (c) => "input-group" === c }; this.inputs = []; this.after = null; }
+  querySelectorAll() { return this.inputs; }
+  insertAdjacentElement(_, el) { adopt(el, this); this.after = el; document.byId[el.id] = el; return el; }
 }
 
 // Un aviso conoce el campo que tiene delante y puede quitarse del DOM (como en el navegador).
@@ -62,22 +69,23 @@ eval(fs.readFileSync(path.join(__dirname, "../js/search-limit.js"), "utf8"));
 
 const type = (input, text) => { input.value = text; listeners.input({ target: input }); };
 const submit = (form) => { let stopped = false; listeners.submit({ target: form, preventDefault() { stopped = true; }, stopImmediatePropagation() {} }); return stopped; };
+const blocked = (button) => "true" === button.attrs["aria-disabled"];
 const later = () => new Promise((resolve) => setTimeout(resolve, 80));
 
 (async () => {
   // Al cargar con un valor ya excedido, el botón nace bloqueado.
-  assert.ok(restoredBtn.disabled, "al cargar con texto excedido el botón queda bloqueado");
+  assert.ok(blocked(restoredBtn), "al cargar con texto excedido el botón queda bloqueado");
 
   // Caja básica: 250 exactos pasan; 251 avisan, bloquean y detienen el envío.
   type(basic, "a".repeat(250));
   assert.strictEqual(basic.after, null, "250 exactos no avisan");
-  assert.ok(!basicBtn.disabled, "250 exactos dejan el botón activo");
+  assert.ok(!blocked(basicBtn), "250 exactos dejan el botón activo");
   assert.strictEqual(submit(basicForm), false, "250 exactos se envían");
 
   type(basic, "a".repeat(251));
   assert.ok(basic.after && !basic.after.hidden, "251 avisan");
   assert.strictEqual(basic.after.textContent, "Máx. 250 caracteres · sobra 1");
-  assert.ok(basicBtn.disabled, "251 bloquean el botón");
+  assert.ok(blocked(basicBtn), "251 bloquean el botón");
   assert.strictEqual(basicBtn.attrs.title, "Reduce el texto para poder buscar");
   assert.strictEqual(basic.attrs["aria-invalid"], "true");
   assert.strictEqual(basic.dataset.ucOverLimit, "1");
@@ -89,7 +97,7 @@ const later = () => new Promise((resolve) => setTimeout(resolve, 80));
   // Refresco automático: al bajar del máximo todo se libera solo.
   type(basic, "a".repeat(10));
   assert.ok(basic.after.hidden, "al bajar del máximo el aviso se oculta");
-  assert.ok(!basicBtn.disabled, "al bajar del máximo el botón se libera");
+  assert.ok(!blocked(basicBtn), "al bajar del máximo el botón se libera");
   assert.strictEqual(basicBtn.attrs.title, undefined);
   assert.strictEqual(basic.attrs["aria-invalid"], undefined);
   assert.strictEqual(submit(basicForm), false, "ya cumple: se envía");
@@ -102,39 +110,39 @@ const later = () => new Promise((resolve) => setTimeout(resolve, 80));
   const sq1 = new FakeInput("sq1", "", advForm);
   type(sq0, "á".repeat(200));
   assert.strictEqual(sq0.after, null, "criterio: 200 no avisa");
-  assert.ok(!advBtn.disabled);
+  assert.ok(!blocked(advBtn));
   type(sq0, "á".repeat(201));
   assert.ok(sq0.after && !sq0.after.hidden, "criterio: 201 avisa");
   assert.strictEqual(sq0.after.textContent, "Máx. 200 caracteres · sobra 1");
-  assert.ok(advBtn.disabled, "criterio excedido bloquea buscar");
+  assert.ok(blocked(advBtn), "criterio excedido bloquea buscar");
   type(sq1, "ok");
-  assert.ok(advBtn.disabled, "otro criterio válido no libera mientras sq0 siga excedido");
+  assert.ok(blocked(advBtn), "otro criterio válido no libera mientras sq0 siga excedido");
   type(sq0, "corto");
-  assert.ok(!advBtn.disabled, "al corregir el último excedido se libera");
+  assert.ok(!blocked(advBtn), "al corregir el último excedido se libera");
   assert.ok(stillDisabled.disabled && !stillDisabled.dataset.ucLimitBlocked, "no se libera lo que bloqueó otro");
 
   // «Agregar nuevo» y quitar criterio (cambios en el DOM) refrescan solos.
   const sq2 = new FakeInput("sq2", "", advForm);
   type(sq2, "x".repeat(201));
-  assert.ok(advBtn.disabled);
+  assert.ok(blocked(advBtn));
   advForm.inputs.splice(advForm.inputs.indexOf(sq2), 1); // el usuario quita el criterio
   observed();
   await later();
-  assert.ok(!advBtn.disabled, "quitar el criterio excedido libera el botón");
+  assert.ok(!blocked(advBtn), "quitar el criterio excedido libera el botón");
 
   // Restablecer: el valor cambia sin evento «input»; se refresca solo.
   type(sq0, "z".repeat(201));
-  assert.ok(advBtn.disabled);
+  assert.ok(blocked(advBtn));
   sq0.value = "";
   listeners.reset({});
   await later();
-  assert.ok(!advBtn.disabled, "restablecer libera el botón");
+  assert.ok(!blocked(advBtn), "restablecer libera el botón");
 
   // Volver con «Atrás».
   type(sq0, "z".repeat(201));
   sq0.value = "z".repeat(5);
   winListeners.pageshow();
-  assert.ok(!advBtn.disabled, "pageshow vuelve a revisar");
+  assert.ok(!blocked(advBtn), "pageshow vuelve a revisar");
 
   // «Agregar nuevo» clona la fila con el aviso del original dentro (visto en el navegador): el campo nuevo, vacío, queda con
   // una copia visible con el id del original. Se descarta; el aviso del original sigue y el del campo nuevo es solo suyo.
@@ -166,7 +174,39 @@ const later = () => new Promise((resolve) => setTimeout(resolve, 80));
   const other = new FakeInput("sf0", "x", otherForm);
   type(other, "z".repeat(999));
   assert.strictEqual(other.after, null, "otros campos no se tocan");
-  assert.ok(!otherBtn.disabled, "formularios sin campos con límite no se bloquean");
+  assert.ok(!blocked(otherBtn), "formularios sin campos con límite no se bloquean");
+
+
+  // Firefox conserva el «disabled» puesto por script al recargar (F5) y entonces ya no se puede liberar: se bloquea con
+  // aria-disabled, que no se conserva, y el envío lo detiene el evento «submit».
+  type(basic, "a".repeat(251));
+  assert.ok(blocked(basicBtn) && !basicBtn.disabled, "se bloquea con aria-disabled y nunca con la propiedad disabled");
+  assert.strictEqual(basicBtn.dataset.ucLimitBlocked, "1");
+  type(basic, "a".repeat(10));
+  assert.ok(!blocked(basicBtn) && !basicBtn.disabled, "al corregir queda activo");
+
+  // Si el último campo con límite desaparece (otro script lo quita o lo renombra), el botón no se queda bloqueado.
+  const goneForm = new FakeForm(); forms.push(goneForm);
+  const goneBtn = goneForm.button();
+  const gone = new FakeInput("sq0", "gone", goneForm);
+  type(gone, "x".repeat(205));
+  assert.ok(blocked(goneBtn), "con el campo excedido el botón se bloquea");
+  goneForm.inputs.splice(goneForm.inputs.indexOf(gone), 1);
+  observed();
+  await later();
+  assert.ok(!blocked(goneBtn), "si desaparece el último campo excedido, el botón se libera");
+
+  // Un campo dentro de un .input-group (buscador de la jerarquía): el aviso va después del grupo, no entre el campo y su botón.
+  const groupForm = new FakeForm(); forms.push(groupForm);
+  groupForm.button();
+  const treeInput = new FakeInput("query", "tree-q", groupForm);
+  const group = new FakeGroup(); group.inputs.push(treeInput); treeInput.parentElement = group;
+  type(treeInput, "z".repeat(251));
+  assert.ok(group.after && !group.after.hidden, "en un .input-group el aviso va después del grupo");
+  assert.strictEqual(treeInput.after, null, "y no entre el campo y su botón");
+  observed();
+  await later();
+  assert.ok(group.after && document.warnings.includes(group.after), "ese aviso no se descarta como ajeno");
 
   console.log("ok: search-limit.js (aviso corto, bloqueo del botón y refresco automático)");
 })().catch((error) => { console.error(error); process.exit(1); });

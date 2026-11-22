@@ -32,6 +32,12 @@
     return rule ? rule.max : null;
   };
 
+  // En un .input-group (buscador de la jerarquía) el campo y su botón son hermanos: el aviso va después del grupo, no en medio.
+  const anchorFor = (input) => {
+    const parent = input.parentElement;
+    return parent && parent.classList && parent.classList.contains("input-group") ? parent : input;
+  };
+
   const warningFor = (input, create) => {
     const id = `${input.id || input.name}-limit-warning`;
     let warning = document.getElementById(id);
@@ -40,7 +46,7 @@
       warning.id = id;
       warning.className = WARNING_CLASS;
       warning.setAttribute("role", "status"); // Se anuncia a lectores de pantalla sin quitar el foco del campo.
-      input.insertAdjacentElement("afterend", warning);
+      anchorFor(input).insertAdjacentElement("afterend", warning);
     }
     return warning;
   };
@@ -72,14 +78,16 @@
   };
 
   // Bloquea o libera los botones de enviar del formulario. Solo libera los que bloqueó este script.
+  // Se usa aria-disabled y no la propiedad `disabled`: Firefox conserva el `disabled` puesto por script al recargar (F5), y
+  // entonces este script ya no podría liberarlo aunque el texto fuera válido. El envío lo detiene el evento «submit».
   const toggleSubmit = (form, blocked) => {
     form.querySelectorAll(SUBMIT_CONTROLS).forEach((control) => {
-      if (blocked && !control.disabled) {
-        control.disabled = true;
+      if (blocked && !control.disabled && !control.dataset[BLOCKED]) {
+        control.setAttribute("aria-disabled", "true");
         control.dataset[BLOCKED] = "1";
         control.setAttribute("title", BLOCKED_HINT);
       } else if (!blocked && control.dataset[BLOCKED]) {
-        control.disabled = false;
+        control.removeAttribute("aria-disabled");
         delete control.dataset[BLOCKED];
         control.removeAttribute("title");
       }
@@ -91,18 +99,15 @@
     if (!form) {
       return false;
     }
-    let limited = false;
     let over = false;
     form.querySelectorAll("input").forEach((input) => {
       const result = check(input);
       if (null !== result) {
-        limited = true;
         over = over || result;
       }
     });
-    if (limited) {
-      toggleSubmit(form, over);
-    }
+    // Siempre: si el último campo excedido desaparece, hay que liberar el botón que este script había bloqueado.
+    toggleSubmit(form, over);
     return over;
   };
 
@@ -111,8 +116,15 @@
   // campo que tienen delante (el aviso propio de cada campo se recrea al hacer falta).
   const dropStale = () => {
     document.querySelectorAll(`.${WARNING_CLASS}`).forEach((warning) => {
-      const field = warning.previousElementSibling;
-      if (!(field instanceof HTMLInputElement) || warning.id !== `${field.id || field.name}-limit-warning`) {
+      const previous = warning.previousElementSibling;
+      const isOwn = (field) => warning.id === `${field.id || field.name}-limit-warning`;
+      let owned = false;
+      if (previous instanceof HTMLInputElement) {
+        owned = isOwn(previous);
+      } else if (previous && previous.classList && previous.classList.contains("input-group")) {
+        owned = Array.from(previous.querySelectorAll("input")).some(isOwn);
+      }
+      if (!owned) {
         warning.remove();
       }
     });
