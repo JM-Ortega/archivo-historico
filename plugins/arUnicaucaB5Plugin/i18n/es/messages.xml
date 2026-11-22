@@ -161,6 +161,14 @@
         <source>Privacy Policy</source>
         <target>Política de privacidad</target>
       </trans-unit>
+      <trans-unit id="19">
+        <source>%1%Extent and medium%2% - This is a %3%mandatory%4% element.</source>
+        <target>%1%Extensión y medio%2% - Este es un elemento %3%obligatorio%4%.</target>
+      </trans-unit>
+      <trans-unit id="20">
+        <source>Not specified</source>
+        <target>Sin especificar</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>
