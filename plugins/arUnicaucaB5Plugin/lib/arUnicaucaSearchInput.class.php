@@ -31,6 +31,10 @@ class arUnicaucaSearchInput
     // Nombre de campo de ES que elige el selector sfN (p. ej. title, scopeAndContent, creators.i18n.en.authorizedFormOfName).
     private const FIELD_PATTERN = '/^[A-Za-z0-9_.]{1,100}$/';
 
+    // Forma de una signatura del Archivo: el sufijo entre paréntesis que abre con Ind., Col. o Rep. («(Ind. C II -24 mn)»).
+    // El punto es obligatorio: sin él, «(Colombia)», «(Colonial)» o «(República)» se tomarían por una signatura.
+    private const SIGNATURE_PATTERN = '/\(\s*(?:Ind|Col|Rep)\./iu';
+
     // Parámetros booleanos que AtoM interpreta con FILTER_VALIDATE_BOOLEAN.
     private const BOOLEAN_KEYS = ['topLod', 'onlyMedia', 'showAdvanced'];
 
@@ -48,6 +52,12 @@ class arUnicaucaSearchInput
                 }
 
                 $params[$key] = self::term($value, 'query' === $key ? self::MAX_QUERY_LENGTH : self::MAX_TERM_LENGTH);
+
+                // KAN-163: una signatura pegada tal cual («9052 (Ind. J II -3 cr)») se busca como frase literal.
+                if (is_string($params[$key])) {
+                    $field = isset($m[1], $params['sf'.$m[1]]) && is_string($params['sf'.$m[1]]) ? trim($params['sf'.$m[1]]) : '';
+                    $params[$key] = self::literalSignature($params[$key], 'identifier' === $field);
+                }
             } elseif (1 === preg_match('/^so(\d+)$/', $key)) {
                 $params[$key] = self::choice($value, self::OPERATORS);
             } elseif (1 === preg_match('/^sf(\d+)$/', $key)) {
@@ -89,6 +99,36 @@ class arUnicaucaSearchInput
         }
 
         return $value;
+    }
+
+    /**
+     * Signaturas del Archivo: «5640 (Ind. C II -24 mn)». En la sintaxis de búsqueda de Elasticsearch el « -24» significa
+     * «excluir 24» y los paréntesis agrupan, así que la signatura escrita tal cual no encuentra nada (el 99 % del
+     * catálogo tiene « -»). Se envuelve entre comillas para buscarla como frase: siempre en el campo «Signatura»
+     * (`$force`) y, en cualquier otro campo o en la búsqueda básica, solo si el texto tiene forma de signatura. El resto
+     * del texto conserva la sintaxis del usuario (comillas, AND, comodines...). No se toca un texto que ya viene entre
+     * comillas ni uno con comodín (`*` o `?`): quien lo escribe busca por prefijo.
+     */
+    public static function literalSignature(string $value, bool $force = false): string
+    {
+        $length = mb_strlen($value);
+        if ('' === $value || ($length > 1 && '"' === mb_substr($value, 0, 1) && '"' === mb_substr($value, -1))) {
+            return $value;
+        }
+
+        if (!$force && 1 !== preg_match(self::SIGNATURE_PATTERN, $value)) {
+            return $value;
+        }
+
+        // Entre comillas el comodín deja de serlo: quien escribe «705*» busca por prefijo y se respeta.
+        if (false !== strpbrk($value, '*?')) {
+            return $value;
+        }
+
+        // Dentro de la frase no puede haber comillas ni barras invertidas (rompen la sintaxis); una signatura no las usa.
+        $inside = trim(str_replace(['"', '\\'], '', $value));
+
+        return '' === $inside ? '' : '"'.$inside.'"';
     }
 
     private static function choice($value, array $allowed): ?string
