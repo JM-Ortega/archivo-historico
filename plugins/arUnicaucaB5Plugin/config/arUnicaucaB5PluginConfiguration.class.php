@@ -43,7 +43,8 @@ class arUnicaucaB5PluginConfiguration extends arDominionB5PluginConfiguration
         // KAN-98/KAN-99: normaliza los parámetros de búsqueda antes de que Symfony construya el request, de modo que
         // la caja básica, el panel avanzado y cualquier enlace directo pasan por la misma regla sin tocar sus templates.
         if ('cli' !== PHP_SAPI && !empty($_GET)) {
-            $_GET = arUnicaucaSearchInput::sanitize($_GET);
+            $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
+            $_GET = arUnicaucaSearchInput::sanitize($_GET, arUnicaucaSearchInput::isSearchRoute($path));
         }
 
         // Add this plugin templates before arDominionB5Plugin

@@ -35,10 +35,22 @@ class arUnicaucaSearchInput
     // El punto es obligatorio: sin él, «(Colombia)», «(Colonial)» o «(República)» se tomarían por una signatura.
     private const SIGNATURE_PATTERN = '/\(\s*(?:Ind|Col|Rep)\./iu';
 
+    // KAN-163: caracteres de la sintaxis de consulta de Elasticsearch (`query_string`) que no se conservan, porque sueltos o mal
+    // puestos hacen fallar la búsqueda («Search error encountered»): `/` (abre una expresión regular), `\`, `^`, `:`, `!`,
+    // corchetes, llaves, `~` (difusa/proximidad) y `&`/`|` (operadores `&&` y `||`: la pantalla ya ofrece Y/O/No).
+    private const SYNTAX_PATTERN = '/[\\\\\/\^:!\[\]\{\}~&|]/u';
+
     // Parámetros booleanos que AtoM interpreta con FILTER_VALIDATE_BOOLEAN.
     private const BOOLEAN_KEYS = ['topLod', 'onlyMedia', 'showAdvanced'];
 
-    public static function sanitize(array $params): array
+    // La reescritura de sintaxis (signaturas como frase, neutralizeSyntax) solo aplica en la búsqueda. Los autocompletes y el
+    // árbol también reciben `query` y deben conservar lo que se escribe: allí solo se limpian controles y longitud.
+    public static function isSearchRoute(string $path): bool
+    {
+        return 1 === preg_match('#/informationobject/browse/?$#', $path);
+    }
+
+    public static function sanitize(array $params, bool $searchRoute = true): array
     {
         foreach ($params as $key => $value) {
             $key = (string) $key;
@@ -54,9 +66,10 @@ class arUnicaucaSearchInput
                 $params[$key] = self::term($value, 'query' === $key ? self::MAX_QUERY_LENGTH : self::MAX_TERM_LENGTH);
 
                 // KAN-163: una signatura pegada tal cual («9052 (Ind. J II -3 cr)») se busca como frase literal.
-                if (is_string($params[$key])) {
+                if ($searchRoute && is_string($params[$key])) {
                     $field = isset($m[1], $params['sf'.$m[1]]) && is_string($params['sf'.$m[1]]) ? trim($params['sf'.$m[1]]) : '';
                     $params[$key] = self::literalSignature($params[$key], 'identifier' === $field);
+                    $params[$key] = self::neutralizeSyntax($params[$key]);
                 }
             } elseif (1 === preg_match('/^so(\d+)$/', $key)) {
                 $params[$key] = self::choice($value, self::OPERATORS);
@@ -129,6 +142,122 @@ class arUnicaucaSearchInput
         $inside = trim(str_replace(['"', '\\'], '', $value));
 
         return '' === $inside ? '' : '"'.$inside.'"';
+    }
+
+    /**
+     * KAN-163: evita el «Search error encountered» cuando el texto trae sintaxis de consulta mal formada.
+     *
+     * El texto llega a Elasticsearch como `query_string`, que interpreta símbolos y operadores: una `/` suelta abre una
+     * expresión regular sin cerrar, y lo mismo pasa con una comilla o un paréntesis sin pareja, `:`, `^`, `!`, `~`, `&&`,
+     * `||`, un `+` o `-` solo, o un AND/OR/NOT al borde o repetido. El analizador del índice ya trata esos símbolos como
+     * separadores de palabras, así que cambiarlos por un espacio no altera lo que se encuentra y deja legible lo que la caja
+     * vuelve a mostrar (no se escapa con `\`: se vería en la caja).
+     *
+     * Se conserva solo la sintaxis bien formada que el Archivo puede usar: palabras, frases entre comillas completas (también
+     * la signatura de literalSignature()), comodines `*` y `?`, paréntesis con pareja, `-palabra` / `+palabra` y los
+     * operadores AND, OR y NOT entre dos términos. Lo demás se vuelve espacio (lista blanca: es la opción segura).
+     */
+    public static function neutralizeSyntax(string $value): string
+    {
+        if ('' === $value) {
+            return $value;
+        }
+
+        // Una comilla sin pareja no se puede interpretar: se quitan todas (las frases completas no cambian).
+        if (1 === substr_count($value, '"') % 2) {
+            $value = str_replace('"', ' ', $value);
+        }
+
+        $parts = preg_split('/("[^"]*")/u', $value, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$value];
+
+        // Paréntesis: solo se conservan si, fuera de comillas, abren y cierran en orden.
+        $outside = '';
+        foreach ($parts as $i => $part) {
+            // Una frase entre comillas cuenta como un término (Q): si no, «("a" OR "b")» se vería como «( OR )».
+            $outside .= 0 === $i % 2 ? $part : 'Q';
+        }
+        $depth = 0;
+        $balanced = true;
+        foreach (str_split(preg_replace('/[^()]/u', '', $outside) ?? '') as $c) {
+            $depth += '(' === $c ? 1 : -1;
+            if ($depth < 0) {
+                $balanced = false;
+
+                break;
+            }
+        }
+        // Tampoco sirven un grupo vacío «()» ni un operador pegado al paréntesis «(AND a)» / «(a AND)».
+        $balanced = $balanced && 0 === $depth
+            && 1 !== preg_match('/\(\s*(?:\)|(?:AND|OR|NOT)\b)|\b(?:AND|OR|NOT)\s*\)/u', $outside);
+
+        $last = count($parts) - 1;
+        foreach ($parts as $i => $part) {
+            if (0 === $i % 2) {
+                $part = preg_replace(self::SYNTAX_PATTERN, ' ', $part) ?? '';
+                // «-OR», «+AND»: un prefijo pegado a un operador no es ni lo uno ni lo otro.
+                $part = preg_replace('/[+-](?=(?:AND|OR|NOT)\b)/u', ' ', $part) ?? '';
+                // `+` y `-` solo como prefijo de una palabra, de una frase o de un grupo («-a», «+"a b"») o dentro de ella
+                // («a-b»). Si una frase sigue a este tramo, se simula su comilla para no quitar el prefijo.
+                $probe = $part.($i < $last ? '"' : '');
+                $probe = preg_replace('/(?<![\p{L}\p{N}])[+-](?![\p{L}\p{N}"(])/u', ' ', $probe) ?? '';
+                $part = $i < $last ? substr($probe, 0, -1) : $probe;
+                $parts[$i] = $balanced ? $part : str_replace(['(', ')'], ' ', $part);
+            } else {
+                // Dentro de comillas todo es literal, salvo la barra invertida (escapa la comilla de cierre).
+                $parts[$i] = str_replace('\\', ' ', $part);
+            }
+        }
+
+        // Cada frase entre comillas va separada de lo que tiene al lado («AND"a b"» no es un operador), salvo el prefijo
+        // «-"a b"» / «+"a b"» y el paréntesis de apertura. Se arma por posición (las frases son las partes impares): un
+        // regex sobre el texto unido emparejaba la comilla de cierre de una frase con la de apertura de la siguiente.
+        $joined = '';
+        foreach ($parts as $i => $part) {
+            if (1 === $i % 2) {
+                $joined .= ('' === $joined || 1 === preg_match('/[\s+\-(]$/u', $joined) ? '' : ' ').$part.' ';
+            } else {
+                $joined .= $part;
+            }
+        }
+        $value = trim(preg_replace('/\s+/u', ' ', $joined) ?? '');
+
+        // Operadores AND, OR y NOT: solo entre dos términos. AND y OR al principio o al final se descartan, y NOT al final
+        // también; un NOT al principio se conserva (niega). Si hay varios seguidos se conserva el último, salvo «AND NOT» y
+        // «OR NOT», que son válidos.
+        preg_match_all('/"[^"]*"|\S+/u', $value, $m);
+        $out = [];
+        $pending = [];
+        foreach ($m[0] as $token) {
+            if (in_array($token, ['AND', 'OR', 'NOT'], true)) {
+                $pending[] = $token;
+
+                continue;
+            }
+            if ([] !== $out && [] !== $pending) {
+                $n = count($pending);
+                $out[] = 2 === $n && 'NOT' === $pending[1] && 'NOT' !== $pending[0] ? implode(' ', $pending) : $pending[$n - 1];
+                // «NOT -a» es una doble negación que Elasticsearch rechaza: el operador ya niega, el prefijo sobra.
+                if ('NOT' === $pending[$n - 1]) {
+                    $token = ltrim($token, '+-');
+                }
+            } elseif ([] === $out && [] !== $pending && 'NOT' === end($pending)) {
+                // «NOT oficio» al principio niega (Elasticsearch devuelve todo menos «oficio»): descartarlo daba lo contrario.
+                $out[] = 'NOT';
+                $token = ltrim($token, '+-');
+            }
+            $pending = [];
+            $out[] = $token;
+        }
+
+        // Sin espacios pegados a los paréntesis «( a )» → «(a)», pero solo fuera de las frases: dentro son literales.
+        $bits = preg_split('/("[^"]*")/u', implode(' ', $out), -1, PREG_SPLIT_DELIM_CAPTURE) ?: [];
+        foreach ($bits as $i => $bit) {
+            if (0 === $i % 2) {
+                $bits[$i] = preg_replace(['/\(\s+/u', '/\s+\)/u'], ['(', ')'], $bit) ?? '';
+            }
+        }
+
+        return trim(implode('', $bits));
     }
 
     private static function choice($value, array $allowed): ?string
