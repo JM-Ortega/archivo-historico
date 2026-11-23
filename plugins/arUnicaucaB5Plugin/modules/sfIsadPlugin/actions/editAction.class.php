@@ -211,6 +211,9 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
             case 'identifier':
                 parent::addField($name);
+                // KAN-164 (CD-09): AtoM deja `required` en falso y solo avisa después de guardar, así que se podía dejar la
+                // signatura vacía al editar y se perdía (y el validador de signatura repetida ni se ejecutaba). `required` va
+                // en el validador externo: con un valor vacío, `sfValidatorAnd` no llega a ejecutar los de dentro.
                 $this->form->setValidator($name, new sfValidatorAnd([
                     new sfValidatorString(),
                     new sfValidatorCallback([
@@ -218,7 +221,24 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
                     ], [
                         'invalid' => $this->context->i18n->__('Esta signatura ya está asignada a otra unidad documental.'),
                     ]),
+                ], [
+                    'required' => $this->mustFill('identifier'),
+                    'trim' => true,
+                ], [
+                    'required' => arUnicaucaCatalogingLevels::PROFILE_UNIT === $this->submittedProfile()
+                        ? $this->context->i18n->__('Escribe la signatura de la unidad documental.')
+                        : $this->context->i18n->__('Escribe el identificador de la descripción.'),
                 ]));
+
+                break;
+
+            case 'title':
+                parent::addField($name);
+                // KAN-164 (CD-02): una agrupación no puede quedar sin título ni signatura.
+                $this->form->setValidator($name, new sfValidatorString(
+                    ['required' => $this->mustFill('title')],
+                    ['required' => $this->context->i18n->__('Escribe el título de la descripción (o su signatura).')]
+                ));
 
                 break;
 
@@ -246,6 +266,47 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
             default:
                 return parent::addField($name);
         }
+    }
+
+    /**
+     * Perfil (unidad, agrupación o general) del nivel que llega al guardar. Fuera de un guardado no hay nada que exigir.
+     */
+    private function submittedProfile(): ?string
+    {
+        if (!$this->request->isMethod('post')) {
+            return null;
+        }
+
+        // Elegir «sin nivel» al editar es explícito: no se hereda el nivel que la ficha tenía guardado (un Fondo editado
+        // sin nivel y sin signatura se guardaba, y el mismo alta nueva se rechazaba).
+        $posted = $this->request->getPostParameter('levelOfDescription');
+        if (is_string($posted) && '' === trim($posted)) {
+            return arUnicaucaCatalogingLevels::profile(null);
+        }
+
+        $level = $this->getSubmittedLevel();
+
+        return arUnicaucaCatalogingLevels::profile($level instanceof QubitTerm ? $level : null);
+    }
+
+    /**
+     * KAN-164: qué exige el servidor al guardar (el navegador no marca ningún campo como obligatorio).
+     * - Signatura: obligatoria salvo en las agrupaciones (Fondo, Sección, Serie, Subserie), que pueden llevar solo el título.
+     * - Título: una agrupación necesita al menos el título o la signatura. En la unidad documental el título es la signatura.
+     */
+    private function mustFill(string $field): bool
+    {
+        $profile = $this->submittedProfile();
+        if (null === $profile) {
+            return false;
+        }
+
+        if ('identifier' === $field) {
+            return arUnicaucaCatalogingLevels::PROFILE_GROUPING !== $profile;
+        }
+
+        return arUnicaucaCatalogingLevels::PROFILE_GROUPING === $profile
+            && '' === trim((string) $this->request->getPostParameter('identifier'));
     }
 
     /**
