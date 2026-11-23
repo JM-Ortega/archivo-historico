@@ -5,6 +5,7 @@ import "./cataloging-parent";
 import "./places";
 import "./description-updates";
 import "./search-limit";
+import "./advanced-search-validation";
 import "./user-email";
 import "./password-toggle";
 import "./clipboard-count";
