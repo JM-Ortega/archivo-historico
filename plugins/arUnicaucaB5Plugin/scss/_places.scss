@@ -93,6 +93,21 @@ $ah-places-band: rgba($ah-surface-soft, 0.7); // bg-surface/70
     min-width: 0;
   }
 
+  &-sidebar {
+    min-width: 0;
+
+    @media (min-width: $ah-places-breakpoint-lg) {
+      position: sticky;
+      top: 7rem;
+      align-self: start;
+    }
+
+    .ah-places-quick {
+      position: static;
+      margin-bottom: $ah-space-4;
+    }
+  }
+
   &-panel {
     overflow: hidden;
     border: $border-width solid $ah-line;

@@ -15,10 +15,9 @@ Entrada rápida: [README](../README.md). Operación DEV: [runbook](dev-runbook.m
 | `migration/` | existe (solo `README.md`) | Pipeline y tooling de migración. Ver [migration/README.md](../migration/README.md) |
 | `plugins/arUnicaucaB5Plugin/` | existe | Theme institucional de AtoM (source, wrapper de build y tests del theme). Ver [theme-development.md](theme-development.md) |
 | `config/atom/` | existe | Configuración de AtoM **gestionada por el proyecto**: entrypoint runtime (`runtime-config.sh`: cultura, timezone, secreto), proveedor del secreto DEV (`dev-secrets.sh`), desired state y reconcile (`required-plugins.conf`, `reconcile*.{sh,php}`) y `tests/`. Ver [Configuración crítica](dev-runbook.md#configuración-crítica-de-atom-cultura-timezone-secreto-csrf-y-updates) y [Reconcile](dev-runbook.md#reconcile-de-atom-desired-state) |
-| `deploy/` | **reservada** | Foundation y automatización de despliegue |
+| `.github/workflows/ci.yml` | existe | Workflow `CI`: checks, construcción del artefacto y publicación manual a Archive. Ver [operacion-archive.md](operacion-archive.md) |
 
-"Reservada" significa que la ruta es la canónica pero el directorio **no existe todavía**: se crea con el primer
-contenido real, no antes. No se crean carpetas vacías (`deploy/` sigue reservada; `config/atom/` ya existe).
+No se crean carpetas vacías: un directorio se crea con su primer contenido real.
 
 ## Ownership
 
@@ -27,7 +26,7 @@ contenido real, no antes. No se crean carpetas vacías (`deploy/` sigue reservad
 | Theme | `plugins/arUnicaucaB5Plugin/` |
 | Migration | `migration/` |
 | Config / reconcile | `config/atom/` (desired state + reconcile + sus tests) |
-| Deployment | `deploy/` |
+| Deployment | `.github/workflows/ci.yml`, `scripts/build-artifact.py`, `scripts/deploy-artifact.py`, `scripts/atom-publish.py` |
 | Runtime / plataforma compartida | `compose.yaml`, `docker/`, `scripts/` transversales |
 | Upstream | ninguno: `upstream/atom` no se modifica desde este proyecto |
 
@@ -44,7 +43,10 @@ de una feature.
 - **¿Dónde vive reconcile/config?** En `config/atom/` (desired state gestionado por el proyecto). Hoy declara unas pocas
   propiedades de `setting`/plugins (`arUnicaucaB5Plugin` habilitado, `check_for_updates = 0`, `require_strong_passwords = 1` e `inherit_code_informationobject = 0`) más la configuración runtime crítica. No hay seed ni gestión de la tabla `setting` en general. Su tooling y sus
   tests viven ahí (`reconcile*.{sh,php}`, `runtime-config.sh`, `tests/`), no en `scripts/`.
-- **¿Dónde irá deployment?** En `deploy/`. Fuera de esta foundation: producción, TLS, CI/CD, Ansible/Terraform, etc.
+- **¿Dónde está el despliegue?** Workflow en `.github/workflows/ci.yml` (`CI`, publicación manual a Archive);
+  constructor, actualizador y wrapper en `scripts/build-artifact.py`, `scripts/deploy-artifact.py` y
+  `scripts/atom-publish.py`; documentación en [operacion-archive.md](operacion-archive.md),
+  [build-artifact.md](build-artifact.md) y [deploy-artifact.md](deploy-artifact.md).
 - **¿Dónde van datos reales locales?** En `migration/local/`, ignorado por Git (ver abajo).
 - **¿Qué no se modifica?** `upstream/atom/`. Comprobación: `git -C upstream/atom status --porcelain` debe salir vacío.
 
@@ -56,7 +58,8 @@ de una feature.
   Ejemplos actuales: `web-ready.sh`, `db-probe.php`, `bootstrap.sh`, `test-*.sh`.
   Ejemplo de lo que NO va aquí: el wrapper de build y la prueba del theme (`plugins/arUnicaucaB5Plugin/{tools,tests}/`).
 - Herramienta **específica de un dominio** → vive con ese dominio: un parser exclusivo de migración va bajo
-  `migration/`, un helper exclusivo de despliegue bajo `deploy/`.
+  `migration/`. Las herramientas de despliegue (`build-artifact.py`, `deploy-artifact.py`, `atom-publish.py`) están
+  en `scripts/` y las usan el workflow `CI` y la instalación en Archive.
 
 Los scripts actuales no se reorganizan sin una razón real.
 
@@ -75,8 +78,7 @@ credenciales ni temporales locales.
 
 | Entorno | Papel |
 | --- | --- |
-| WSL2 + Docker Desktop | Entorno de **referencia**, ya utilizado y validado |
-| Windows 10/11 + Docker Desktop + PowerShell | **Target a soportar**. **Aún no validado**: se probará desde un host Windows real |
+| WSL2 + Docker Desktop | Entorno de **referencia**, validado |
 | Git Bash | Puede existir (Git for Windows). **No es requisito** del proyecto |
 
 Regla: **no añadir dependencias al host cuando la operación pueda ejecutarse razonablemente dentro del runtime
@@ -84,10 +86,8 @@ Docker.** Nadie debería tener que instalar a mano PHP, Node/npm, Webpack, clien
 puede aportarlo. No se mantienen parejas `foo.sh` / `foo.ps1` solo por compatibilidad.
 
 El theme respeta la regla: Webpack/Node corren dentro de la imagen AtoM (`theme_build`); no hay Node/npm ni PHP en el host.
-Windows nativo sigue sin validarse también para este flujo.
 
-Punto abierto (no resuelto aquí): los scripts `scripts/*.sh` actuales se ejecutan en el host con Bash (y
-`web-ready.sh` además con `curl`). Cómo se cubre eso desde PowerShell se decidirá con la validación en Windows real.
+Los scripts `scripts/*.sh` se ejecutan en el host con Bash (y `web-ready.sh` además con `curl`).
 
 ### Fin de línea
 

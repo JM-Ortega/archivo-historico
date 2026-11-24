@@ -16,8 +16,10 @@ Entorno de desarrollo (DEV) para un archivo histórico basado en [AtoM](https://
 - Dónde vive cada cosa (theme, migration, config, deployment, `scripts/`) y qué no se toca: [docs/repository-layout.md](docs/repository-layout.md).
 - Construir el artefacto de código: [docs/build-artifact.md](docs/build-artifact.md).
 - Actualizar código en una instalación nativa: [docs/deploy-artifact.md](docs/deploy-artifact.md).
+- **Publicar en Archive y comprobar su estado** (GitHub Actions `check`/`deploy`, servicios, logs, límites): [docs/operacion-archive.md](docs/operacion-archive.md).
 
-El entorno Docker descrito aquí es solo DEV. El procedimiento de actualización de código nativo se documenta por separado; TLS, backups y CI/CD **no** están definidos todavía.
+El entorno Docker descrito aquí es solo DEV. La publicación de código en Archive (instalación nativa) se hace con el
+workflow manual de GitHub Actions descrito en [docs/operacion-archive.md](docs/operacion-archive.md).
 
 ## Prerrequisitos
 
@@ -28,9 +30,9 @@ El entorno Docker descrito aquí es solo DEV. El procedimiento de actualización
 - Unos pocos GB de RAM libres (Elasticsearch usa 640 MB de heap; `tools:install` admite hasta 2 GB de PHP)
 - El puerto `8080` libre en loopback (o elige otro con `ATOM_WEB_PORT`)
 
-**Plataforma:** el flujo de este documento (incluido el E2E de checkout limpio y RESET) se validó en WSL2 + Docker
-Desktop, el entorno de referencia. El target a soportar es Windows 10/11 + Docker Desktop + PowerShell; **todavía no se
-ha validado** en Windows nativo (el ciclo del theme tampoco: no requiere Node/npm en el host, pero falta el smoke real). Git Bash no es un requisito. Detalle en [docs/repository-layout.md](docs/repository-layout.md#host-y-portabilidad).
+**Plataforma:** el flujo de este documento (incluidos el ciclo del theme y el E2E de checkout limpio y RESET) se ha
+validado en WSL2 + Docker Desktop, el entorno de desarrollo de referencia. Git Bash no es un requisito. Detalle en
+[docs/repository-layout.md](docs/repository-layout.md#host-y-portabilidad).
 
 ## Primera vez
 

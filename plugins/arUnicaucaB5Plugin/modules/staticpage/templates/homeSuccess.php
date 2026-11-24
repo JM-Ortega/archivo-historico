@@ -44,9 +44,9 @@
           height="600"
           loading="lazy"
           decoding="async"
-          alt="Patio del Archivo Histórico del Cauca">
+          alt="Patio del Centro de investigaciones históricas Jose Maria Llorente">
         <div class="ah-home-hero__side-overlay" aria-hidden="true"></div>
-        <figcaption class="ah-home-hero__caption">Archivo Histórico del Cauca</figcaption>
+        <figcaption class="ah-home-hero__caption">Centro de investigaciones históricas Jose Maria Llorente</figcaption>
         <div class="ah-home-hero__corner" aria-hidden="true"></div>
       </figure>
     </div>

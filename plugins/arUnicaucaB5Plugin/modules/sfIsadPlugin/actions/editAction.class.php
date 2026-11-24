@@ -209,6 +209,39 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
 
                 break;
 
+            case 'identifier':
+                parent::addField($name);
+                // KAN-164 (CD-09): AtoM deja `required` en falso y solo avisa después de guardar, así que se podía dejar la
+                // signatura vacía al editar y se perdía (y el validador de signatura repetida ni se ejecutaba). `required` va
+                // en el validador externo: con un valor vacío, `sfValidatorAnd` no llega a ejecutar los de dentro.
+                $this->form->setValidator($name, new sfValidatorAnd([
+                    new sfValidatorString(),
+                    new sfValidatorCallback([
+                        'callback' => [$this, 'validateUniqueUnitIdentifier'],
+                    ], [
+                        'invalid' => $this->context->i18n->__('Esta signatura ya está asignada a otra unidad documental.'),
+                    ]),
+                ], [
+                    'required' => $this->mustFill('identifier'),
+                    'trim' => true,
+                ], [
+                    'required' => arUnicaucaCatalogingLevels::PROFILE_UNIT === $this->submittedProfile()
+                        ? $this->context->i18n->__('Escribe la signatura de la unidad documental.')
+                        : $this->context->i18n->__('Escribe el identificador de la descripción.'),
+                ]));
+
+                break;
+
+            case 'title':
+                parent::addField($name);
+                // KAN-164 (CD-02): una agrupación no puede quedar sin título ni signatura.
+                $this->form->setValidator($name, new sfValidatorString(
+                    ['required' => $this->mustFill('title')],
+                    ['required' => $this->context->i18n->__('Escribe el título de la descripción (o su signatura).')]
+                ));
+
+                break;
+
             // arUnicaucaB5Plugin
             case 'remitentes':
             case 'destinatarios':
@@ -235,9 +268,122 @@ class sfIsadPluginEditAction extends InformationObjectEditAction
         }
     }
 
+    /**
+     * Perfil (unidad, agrupación o general) del nivel que llega al guardar. Fuera de un guardado no hay nada que exigir.
+     */
+    private function submittedProfile(): ?string
+    {
+        if (!$this->request->isMethod('post')) {
+            return null;
+        }
+
+        // Elegir «sin nivel» al editar es explícito: no se hereda el nivel que la ficha tenía guardado (un Fondo editado
+        // sin nivel y sin signatura se guardaba, y el mismo alta nueva se rechazaba).
+        $posted = $this->request->getPostParameter('levelOfDescription');
+        if (is_string($posted) && '' === trim($posted)) {
+            return arUnicaucaCatalogingLevels::profile(null);
+        }
+
+        $level = $this->getSubmittedLevel();
+
+        return arUnicaucaCatalogingLevels::profile($level instanceof QubitTerm ? $level : null);
+    }
+
+    /**
+     * KAN-164: qué exige el servidor al guardar (el navegador no marca ningún campo como obligatorio).
+     * - Signatura: obligatoria salvo en las agrupaciones (Fondo, Sección, Serie, Subserie), que pueden llevar solo el título.
+     * - Título: una agrupación necesita al menos el título o la signatura. En la unidad documental el título es la signatura.
+     */
+    private function mustFill(string $field): bool
+    {
+        $profile = $this->submittedProfile();
+        if (null === $profile) {
+            return false;
+        }
+
+        if ('identifier' === $field) {
+            return arUnicaucaCatalogingLevels::PROFILE_GROUPING !== $profile;
+        }
+
+        return arUnicaucaCatalogingLevels::PROFILE_GROUPING === $profile
+            && '' === trim((string) $this->request->getPostParameter('identifier'));
+    }
+
+    /**
+     * Prevent duplicate signatures among simple and compound documentary units.
+     */
+    public function validateUniqueUnitIdentifier(sfValidatorBase $validator, $value)
+    {
+        $identifier = trim((string) $value);
+        if ('' === $identifier) {
+            return $value;
+        }
+
+        $level = $this->getSubmittedLevel();
+
+        if (!$level instanceof QubitTerm || arUnicaucaCatalogingLevels::PROFILE_UNIT !== arUnicaucaCatalogingLevels::profile($level)) {
+            return $value;
+        }
+
+        $unitLevelIds = [];
+        foreach (QubitTerm::getLevelsOfDescription() as $term) {
+            if (arUnicaucaCatalogingLevels::PROFILE_UNIT === arUnicaucaCatalogingLevels::profile($term)) {
+                $unitLevelIds[] = (int) $term->id;
+            }
+        }
+
+        if ([] === $unitLevelIds) {
+            return $value;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($unitLevelIds), '?'));
+        $parameters = array_merge([$identifier], $unitLevelIds, [(int) $this->resource->id]);
+        $count = QubitPdo::fetchColumn(
+            "SELECT COUNT(*) FROM information_object
+             WHERE identifier = ? AND level_of_description_id IN ({$placeholders}) AND id <> ?",
+            $parameters
+        );
+
+        if (0 < (int) $count) {
+            throw new sfValidatorError($validator, 'invalid', ['value' => $value]);
+        }
+
+        return $value;
+    }
+
+    protected function getSubmittedLevel()
+    {
+        $value = $this->form->getValue('levelOfDescription');
+        if (!is_string($value) || '' === $value) {
+            $value = $this->request->getPostParameter('levelOfDescription');
+        }
+
+        if (is_string($value) && '' !== $value) {
+            $params = $this->context->routing->parse(Qubit::pathInfo($value));
+            if (isset($params['_sf_route']->resource)) {
+                return $params['_sf_route']->resource;
+            }
+        }
+
+        return $this->resource->levelOfDescription;
+    }
+
     protected function processField($field)
     {
         switch ($field->getName()) {
+            case 'title':
+                $level = $this->getSubmittedLevel();
+                if ($level instanceof QubitTerm
+                    && arUnicaucaCatalogingLevels::PROFILE_UNIT === arUnicaucaCatalogingLevels::profile($level)
+                ) {
+                    $identifier = trim((string) $this->form->getValue('identifier'));
+                    $this->resource['title'] = '' === $identifier ? null : $identifier;
+
+                    break;
+                }
+
+                return parent::processField($field);
+
             case 'creators':
                 $value = $filtered = [];
                 foreach ($this->form->getValue('creators') as $item) {

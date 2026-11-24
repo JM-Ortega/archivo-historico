@@ -86,4 +86,89 @@
       </trans-unit>
     </body>
   </file>
+  <file source-language="en" target-language="es" datatype="plaintext" original="messages" date="2026-11-18T14:30:00Z" product-name="messages">
+    <header/>
+    <body>
+      <trans-unit id="1">
+        <source>Archival description count</source>
+        <target>Descripciones archivísticas: </target>
+      </trans-unit>
+      <trans-unit id="2">
+        <source>Authority record count</source>
+        <target>Registros de autoridad: </target>
+      </trans-unit>
+      <trans-unit id="3">
+        <source>Archival institution count</source>
+        <target>Instituciones archivísticas: </target>
+      </trans-unit>
+      <trans-unit id="4">
+        <source>Accession count</source>
+        <target>Ingresos: </target>
+      </trans-unit>
+      <trans-unit id="5">
+        <source>Restore a previously saved clipboard</source>
+        <target>Restaurar un portapapeles guardado anteriormente</target>
+      </trans-unit>
+      <trans-unit id="6">
+        <source>Load and view</source>
+        <target>Cargar y ver</target>
+      </trans-unit>
+      <trans-unit id="7">
+        <source>Clear all selections</source>
+        <target>Vaciar todas las selecciones</target>
+      </trans-unit>
+      <trans-unit id="8">
+        <source>Go to clipboard</source>
+        <target>Ir al portapapeles</target>
+      </trans-unit>
+      <trans-unit id="9">
+        <source>Save clipboard</source>
+        <target>Guardar portapapeles</target>
+      </trans-unit>
+      <trans-unit id="10">
+        <source>records added</source>
+        <target>registros añadidos</target>
+      </trans-unit>
+      <trans-unit id="11">
+        <source>There was an error loading the clipboard content.</source>
+        <target>Se produjo un error al cargar el contenido del portapapeles.</target>
+      </trans-unit>
+      <trans-unit id="12">
+        <source>The clipboard is empty for this entity type.</source>
+        <target>El portapapeles está vacío para este tipo de entidad.</target>
+      </trans-unit>
+      <trans-unit id="13">
+        <source>My profile</source>
+        <target>Mi perfil</target>
+      </trans-unit>
+      <trans-unit id="14">
+        <source>Log out</source>
+        <target>Cerrar sesión</target>
+      </trans-unit>
+      <trans-unit id="15">
+        <source>Quick links</source>
+        <target>Enlaces rápidos</target>
+      </trans-unit>
+      <trans-unit id="16">
+        <source>About</source>
+        <target>Acerca de</target>
+      </trans-unit>
+      <trans-unit id="17">
+        <source>Home</source>
+        <target>Inicio</target>
+      </trans-unit>
+      <trans-unit id="18">
+        <source>Privacy Policy</source>
+        <target>Política de privacidad</target>
+      </trans-unit>
+      <trans-unit id="19">
+        <source>%1%Extent and medium%2% - This is a %3%mandatory%4% element.</source>
+        <target>%1%Extensión y medio%2% - Este es un elemento %3%obligatorio%4%.</target>
+      </trans-unit>
+      <trans-unit id="20">
+        <source>Not specified</source>
+        <target>Sin especificar</target>
+      </trans-unit>
+    </body>
+  </file>
 </xliff>

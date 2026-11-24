@@ -17,7 +17,7 @@ final.
 - Cada fuente que orienta el cambio manda en lo suyo:
   - **Archivo Histórico** → la necesidad funcional (qué necesita quien usa el Archivo).
   - **AtoM** → las capacidades y el comportamiento que ya existen.
-  - **Identidad visual del Archivo Histórico del Cauca** → la presentación y la UX aplicable (ver
+  - **Identidad visual del Centro de investigaciones históricas Jose Maria Llorente** → la presentación y la UX aplicable (ver
     [Identidad visual](#identidad-visual-del-archivo-histórico-del-cauca)).
   - **Arquitectura del Proyecto I** → los límites de extensión y la mantenibilidad.
   - **Referencias externas** → inspiración de patrones de UX, no especificación.
@@ -221,7 +221,7 @@ publicado únicamente en `127.0.0.1`. No cambia `NODE_ENV`.
 
 `_layout_start_webpack.php` es una plantilla de build, no un override de recarga inmediata: editarla requiere `theme_build`.
 
-## Identidad visual del Archivo Histórico del Cauca
+## Identidad visual del Centro de investigaciones históricas Jose Maria Llorente
 
 Frontera: **la tipografía es global; la identidad cromática es de las vistas personalizadas.** El shell, la navegación y las
 pantallas nativas conservan los colores, fondos, superficies y comportamiento de Dominion. Cascada de `scss/main.scss`:
@@ -463,7 +463,7 @@ también funciona, probado en aislado). Verificación: el HTML contiene `<meta n
 
 ## Windows
 
-El entorno **validado** es WSL2 + Docker Desktop. Windows 10/11 nativo + Docker Desktop + PowerShell sigue **pendiente de un
-smoke real**: no se declara validado. La foundation evita depender de Node/npm host, PHP host, UID/GID fijos o inotify/watch
+El entorno **validado** es WSL2 + Docker Desktop. Con un checkout en Windows nativo se ha observado que `theme_watch`
+no recompila al editar; para ese caso existe el [fallback con polling](#fallback-con-polling-opt-in). La foundation evita depender de Node/npm host, PHP host, UID/GID fijos o inotify/watch
 para su corrección; `.gitattributes` fija LF en `*.js`, `*.scss`, `*.sh`, `*.php` (Webpack y Bash leen esos ficheros en un
 contenedor Linux). No hay `.ps1` duplicados.

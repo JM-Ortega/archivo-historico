@@ -20,8 +20,8 @@ class arUnicaucaCatalogingLevels
         ['code' => 'archivo-historico:seccion'],
         ['en' => 'Series'],
         ['en' => 'Subseries'],
-        ['en' => 'File'],
         ['en' => 'Item'],
+        ['en' => 'File'],
     ];
 
     /**

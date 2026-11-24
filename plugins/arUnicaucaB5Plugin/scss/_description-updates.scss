@@ -22,6 +22,14 @@ body.search.descriptionUpdates {
     font-family: $ah-font-sans;
   }
 
+  #sidebar {
+    position: relative;
+
+    @include media-breakpoint-up(md) {
+      left: 0;
+    }
+  }
+
   // --- Panel tipo papel -----------------------------------------------------------------------------------------------
 
   .ah-updates-panel {

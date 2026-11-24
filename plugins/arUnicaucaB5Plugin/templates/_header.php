@@ -25,8 +25,7 @@
 <header id="top-bar" class="navbar navbar-expand-lg navbar-dark d-print-none ah-site-header" role="navigation" aria-label="<?php echo __('Main navigation'); ?>">
   <div class="container-fluid ah-site-header-inner">
     <a class="navbar-brand ah-site-brand" href="<?php echo url_for('@homepage'); ?>" title="<?php echo __('Home'); ?>" rel="home">
-      <span class="ah-site-brand-kicker">Patrimonio documental del Cauca</span>
-      <span class="ah-site-brand-name">Archivo Histórico del Cauca</span>
+      <span class="ah-site-brand-name">Centro de investigaciones históricas Jose Maria Llorente</span>
       <span class="ah-site-brand-subtitle">Memoria del Mundo de América Latina y el Caribe</span>
     </a>
 

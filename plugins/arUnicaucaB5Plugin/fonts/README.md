@@ -1,6 +1,6 @@
 # Fuentes de la identidad (self-hosted)
 
-Familias de la identidad visual del Archivo Histórico del Cauca: **Merriweather** (títulos y encabezados) y **Lato**
+Familias de la identidad visual del Centro de investigaciones históricas Jose Maria Llorente: **Merriweather** (títulos y encabezados) y **Lato**
 (interfaz). Se registran en `scss/_fonts.scss`; Webpack emite los ficheros a `dist/` y se sirven desde el propio AtoM, sin
 peticiones a terceros. Solo subset `latin` (U+0000-00FF y adicionales: cubre el español). El navegador solo descarga una
 cara cuando una página la usa.
